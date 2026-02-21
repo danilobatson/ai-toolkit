@@ -105,11 +105,11 @@
   },
   "keywords": [
     "ai", "toolkit", "llm", "mcp", "model-context-protocol",
-    "healthcare", "rag", "embeddings", "typescript", "sdk"
+    "rag", "agents", "embeddings", "typescript", "sdk"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/danilobatson/healthcare-ai-portfolio",
+    "url": "https://github.com/danilobatson/ai-toolkit",
     "directory": "packages/toolkit"
   }
 }

@@ -1,15 +1,15 @@
 {
-  "name": "@jamaalbuilds/hai-cli",
+  "name": "@jamaalbuilds/aitk",
   "version": "0.1.0",
   "description": "CLI for scaffolding full-stack AI projects. One command, complete stack.",
   "author": "Danilo Batson <djbatson19@gmail.com>",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "hai": "./dist/index.js"
+    "aitk": "./dist/index.js"
   },
   "main": "./dist/index.js",
-  "files": ["dist", "templates", "README.md"],
+  "files": ["dist", "README.md"],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -29,12 +29,12 @@
     "vitest": "^3.0.0"
   },
   "keywords": [
-    "cli", "ai", "scaffolding", "fullstack", "mcp",
-    "healthcare", "fastapi", "nextjs", "typescript"
+    "cli", "ai", "toolkit", "scaffolding", "fullstack", "mcp",
+    "rag", "agents", "fastapi", "nextjs", "typescript"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/danilobatson/healthcare-ai-portfolio",
+    "url": "https://github.com/danilobatson/ai-toolkit",
     "directory": "packages/cli"
   }
 }
