@@ -54,10 +54,12 @@ CLAUDE.md
 
 export function envExample(config: ProjectConfig): string {
   return `# ─── LLM ───────────────────────────────────────────
+# Set at least one. Auto-detected in priority order.
 ANTHROPIC_API_KEY=
 OPENAI_API_KEY=
-LLM_PRIMARY_MODEL=claude-sonnet-4-20250514
-LLM_FALLBACK_MODEL=gpt-4o
+GOOGLE_API_KEY=
+GROQ_API_KEY=
+# Ollama: no key needed, just run "ollama serve"
 
 # ─── Database (Neon) ──────────────────────────────────
 DATABASE_URL=postgresql://user:pass@localhost:5432/${config.name}

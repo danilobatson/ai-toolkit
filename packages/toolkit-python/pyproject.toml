@@ -15,9 +15,11 @@ dependencies = [
 [project.optional-dependencies]
 anthropic = ["anthropic>=0.40.0"]
 openai = ["openai>=1.60.0"]
+google = ["google-genai>=1.0.0"]
+groq = ["groq>=0.13.0"]
 redis = ["redis>=5.0.0"]
-llm = ["anthropic>=0.40.0", "openai>=1.60.0"]  # both providers
-all = ["anthropic>=0.40.0", "openai>=1.60.0", "redis>=5.0.0"]
+llm = ["anthropic>=0.40.0", "openai>=1.60.0", "google-genai>=1.0.0", "groq>=0.13.0"]
+all = ["anthropic>=0.40.0", "openai>=1.60.0", "google-genai>=1.0.0", "groq>=0.13.0", "redis>=5.0.0"]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
