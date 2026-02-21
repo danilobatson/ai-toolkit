@@ -1,3 +1,10 @@
 // @jamaalbuilds/ai-toolkit/mcp
-// Implemented when first project needs it. See PORTFOLIO_PROJECTS_v4.md for spec.
-export {};
+export {
+  McpServerBuilder,
+  McpTestHarness,
+  type McpContent,
+  type McpServerConfig,
+  type McpToolResponse,
+  type ResourceDefinition,
+  type ToolDefinition,
+} from "./server-builder.js";
