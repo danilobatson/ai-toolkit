@@ -1,15 +1,15 @@
 """
 Embedding client with batching, caching, and dimension configuration.
 
-Uses OpenAI text-embedding-3-small (1536 dims, $0.02/1M tokens).
-Anthropic doesn't have a dedicated embedding model — OpenAI is the
-industry standard for this job.
+Provider-agnostic for embedding models. Model is always explicit.
+Common choices: OpenAI text-embedding-3-small (1536 dims, $0.02/1M tokens),
+text-embedding-3-large (3072 dims, $0.13/1M tokens).
 
 Usage::
 
     from ai_toolkit.llm import EmbeddingClient
 
-    embeddings = EmbeddingClient()
+    embeddings = EmbeddingClient(model="text-embedding-3-small")
 
     # Single text
     vector = await embeddings.embed("What are diabetes guidelines?")
@@ -24,7 +24,6 @@ Usage::
 from __future__ import annotations
 
 import hashlib
-import json
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -34,10 +33,8 @@ from ai_toolkit.errors import LLMError
 
 # ─── Types ───────────────────────────────────────────────────────────────────
 
-EMBEDDING_PRICING: dict[str, float] = {
-    "text-embedding-3-small": 0.02,  # per 1M tokens
-    "text-embedding-3-large": 0.13,
-}
+# Embedding pricing is registered in providers._PRICING via register_pricing().
+# Use estimate_embedding_cost() below for cost calculation.
 
 
 @dataclass
@@ -99,15 +96,15 @@ class EmbeddingClient:
     Features:
     - **Batching** — Embeds N chunks in one API call (up to batch_size limit)
     - **Caching** — Redis cache keyed by hash(text + model + dims). 7-day TTL.
-    - **Dimension config** — text-embedding-3-small supports 1536, 1024, 512
-    - **Cost tracking** — Running total of tokens and dollars spent
+    - **Dimension config** — Some models support dimension reduction (e.g., 1536, 1024, 512)
+    - **Cost tracking** — Running total of tokens and dollars spent via shared pricing registry
     """
 
     def __init__(
         self,
         *,
         api_key: str | None = None,
-        model: str = "text-embedding-3-small",
+        model: str,
         dimensions: int = 1536,
         batch_size: int = 100,
         cache: Any | None = None,  # CacheClient from ai_toolkit.cache
@@ -324,6 +321,8 @@ class EmbeddingClient:
             pass  # Cache failure is non-fatal
 
     def _estimate_cost(self, tokens: int) -> float:
-        """Estimate cost in USD."""
-        price_per_million = EMBEDDING_PRICING.get(self._model, 0.0)
-        return tokens * price_per_million / 1_000_000
+        """Estimate cost in USD using the shared pricing registry."""
+        from ai_toolkit.llm.providers import estimate_cost
+
+        # Embeddings only have input tokens (no output), so pass 0 for output
+        return estimate_cost(self._model, tokens, 0)

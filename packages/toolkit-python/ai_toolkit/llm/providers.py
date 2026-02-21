@@ -117,6 +117,7 @@ class LLMProvider(abc.ABC):
 # ─── Pricing Registry ────────────────────────────────────────────────────────
 
 # Per 1M tokens. Users can extend via register_pricing().
+# For embedding models, "input" is the embedding cost and "output" is 0.
 _PRICING: dict[str, dict[str, float]] = {
     # Anthropic
     "claude-sonnet-4-20250514": {"input": 3.00, "output": 15.00},
@@ -132,6 +133,9 @@ _PRICING: dict[str, dict[str, float]] = {
     "llama-3.3-70b-versatile": {"input": 0.59, "output": 0.79},
     "llama-3.1-8b-instant": {"input": 0.05, "output": 0.08},
     "mixtral-8x7b-32768": {"input": 0.24, "output": 0.24},
+    # Embedding models (input only, output = 0)
+    "text-embedding-3-small": {"input": 0.02, "output": 0.0},
+    "text-embedding-3-large": {"input": 0.13, "output": 0.0},
     # Ollama — always free
     # (local models have no API cost, but user can register compute costs)
 }
