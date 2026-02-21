@@ -48,4 +48,23 @@ llm = create_llm_client(providers=[GoogleProvider()])  # uses gemini-2.0-flash
 
 All defaults are overridable: `GoogleProvider(model="gemini-1.5-flash")`
 
+## Modules
+
+| Module | What | Optional Dep |
+|--------|------|-------------|
+| `config/` | Pydantic Settings, env validation | — |
+| `errors/` | Typed error hierarchy | — |
+| `cache/` | Redis async client | `[redis]` |
+| `llm/` | 5 providers, retry, fallback, circuit breaker, streaming, cost | `[llm]` |
+| `llm/embeddings` | Batching, caching, cost tracking | `[openai]` |
+| `llm/structured` | Pydantic model extraction | `[llm]` |
+| `llm/prompts` | Langfuse + local fallback, variable substitution | `[observability]` |
+| `ingestion/` | PDF/DOCX/HTML/text extraction, chunker, pipeline | `[ingestion]` |
+| `guardrails/` | PII, topic filter, injection, hallucination, content filter | — |
+| `evaluation/` | RAGAS metrics (fast + LLM-as-judge) | `[llm]` |
+| `workflow/` | Inngest ai_step, human_in_the_loop, budget tracking | `[workflow]` |
+| `auth/` | FastAPI deps: get_org_id, require_api_key | — |
+| `security/` | RateLimiter (Redis), AuditLogger (JSON) | `[redis]` |
+| `observability/` | Langfuse init, structured logger | `[observability]` |
+
 ## Part of [@jamaalbuilds/ai-toolkit](https://github.com/danilobatson/ai-toolkit)

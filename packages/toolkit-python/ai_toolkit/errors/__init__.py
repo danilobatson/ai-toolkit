@@ -1,7 +1,7 @@
 """Error hierarchy for the AI Toolkit."""
 
 from .base import ToolkitError
-from .types import AuthError, CacheError, LLMError, RateLimitError, ValidationError
+from .types import AuthError, CacheError, LLMError, RateLimitError, StorageError, ValidationError
 
 __all__ = [
     "ToolkitError",
@@ -9,5 +9,6 @@ __all__ = [
     "RateLimitError",
     "AuthError",
     "ValidationError",
+    "StorageError",
     "CacheError",
 ]

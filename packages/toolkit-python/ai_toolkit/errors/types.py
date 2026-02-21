@@ -68,6 +68,20 @@ class ValidationError(ToolkitError):
         self.fields = fields
 
 
+class StorageError(ToolkitError):
+    """Storage operation failed."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "STORAGE_ERROR",
+        retryable: bool = True,
+        cause: Exception | None = None,
+    ) -> None:
+        super().__init__(message, code=code, status_code=502, retryable=retryable, cause=cause)
+
+
 class CacheError(ToolkitError):
     """Cache operation failed."""
 
