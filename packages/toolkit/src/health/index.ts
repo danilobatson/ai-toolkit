@@ -1,3 +1,6 @@
-// @jamaalbuilds/ai-toolkit/health
-// Implemented when first project needs it. See PORTFOLIO_PROJECTS_v4.md for spec.
-export {};
+export { createHealthCheck } from "./check.js";
+export type {
+  HealthCheckConfig,
+  HealthCheckResult,
+  HealthReport,
+} from "./check.js";

@@ -1,3 +1,11 @@
-// @jamaalbuilds/ai-toolkit/security
-// Implemented when first project needs it. See PORTFOLIO_PROJECTS_v4.md for spec.
-export {};
+export {
+  createRateLimiter,
+  createAuditLogger,
+} from "./rate-limiter.js";
+export type {
+  RateLimitConfig,
+  RateLimitResult,
+  RateLimiter,
+  AuditEvent,
+  AuditLogger,
+} from "./rate-limiter.js";

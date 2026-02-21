@@ -1,3 +1,8 @@
-// @jamaalbuilds/ai-toolkit/auth
-// Implemented when first project needs it. See PORTFOLIO_PROJECTS_v4.md for spec.
-export {};
+export {
+  getOrgId,
+  getUserId,
+  requireApiKey,
+  createApiKeyGuard,
+  getTenantContext,
+} from "./middleware.js";
+export type { TenantContext } from "./middleware.js";

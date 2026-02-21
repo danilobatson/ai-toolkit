@@ -1,3 +1,7 @@
-// @jamaalbuilds/ai-toolkit/llm
-// Implemented when first project needs it. See PORTFOLIO_PROJECTS_v4.md for spec.
-export {};
+export { createLLM } from "./client.js";
+export type {
+  LLMClient,
+  LLMConfig,
+  LLMResponse,
+  CompletionOptions,
+} from "./client.js";

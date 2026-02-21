@@ -1,3 +1,2 @@
-// @jamaalbuilds/ai-toolkit/observability
-// Implemented when first project needs it. See PORTFOLIO_PROJECTS_v4.md for spec.
-export {};
+export { initLangfuse, createLogger } from "./logger.js";
+export type { Logger, LangfuseConfig } from "./logger.js";

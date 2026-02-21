@@ -1,3 +1,11 @@
-// @jamaalbuilds/ai-toolkit/storage
-// Implemented when first project needs it. See PORTFOLIO_PROJECTS_v4.md for spec.
-export {};
+export {
+  validateFile,
+  uploadDocument,
+  deleteDocument,
+  listDocuments,
+} from "./blob.js";
+export type {
+  FileValidationOptions,
+  UploadOptions,
+  UploadResult,
+} from "./blob.js";
