@@ -273,6 +273,7 @@ dependencies = [
     "uvicorn[standard]>=0.34.0",
     "pydantic>=2.10.0",
     "pydantic-settings>=2.7.0",
+    "ai-toolkit[llm]",
 ]
 
 [project.optional-dependencies]
