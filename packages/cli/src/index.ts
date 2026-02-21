@@ -6,7 +6,7 @@ import { doctorCommand } from "./commands/doctor.js";
 const program = new Command();
 
 program
-  .name("hai")
+  .name("aitk")
   .description("CLI for scaffolding full-stack AI projects")
   .version("0.1.0");
 

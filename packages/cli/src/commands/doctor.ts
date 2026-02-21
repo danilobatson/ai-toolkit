@@ -29,7 +29,7 @@ export const doctorCommand = new Command("doctor")
   .description("Validate your development environment")
   .action(() => {
     console.log();
-    console.log(chalk.bold("  hai doctor"));
+    console.log(chalk.bold("  aitk doctor"));
     console.log(chalk.dim("  Checking development environment...\n"));
 
     const results = runAllChecks();
@@ -57,7 +57,7 @@ export const doctorCommand = new Command("doctor")
         ),
       );
       console.log(
-        chalk.dim("  Fix the issues above, then run `hai doctor` again.\n"),
+        chalk.dim("  Fix the issues above, then run `aitk doctor` again.\n"),
       );
       process.exitCode = 1;
     }
