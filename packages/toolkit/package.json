@@ -1,0 +1,115 @@
+{
+  "name": "@jamaalbuilds/ai-toolkit",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for building AI-powered full-stack applications. LLM client, MCP tools, caching, auth, observability, and more.",
+  "author": "Danilo Batson <djbatson19@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "import": "./dist/config/index.js"
+    },
+    "./errors": {
+      "types": "./dist/errors/index.d.ts",
+      "import": "./dist/errors/index.js"
+    },
+    "./llm": {
+      "types": "./dist/llm/index.d.ts",
+      "import": "./dist/llm/index.js"
+    },
+    "./mcp": {
+      "types": "./dist/mcp/index.d.ts",
+      "import": "./dist/mcp/index.js"
+    },
+    "./storage": {
+      "types": "./dist/storage/index.d.ts",
+      "import": "./dist/storage/index.js"
+    },
+    "./neon": {
+      "types": "./dist/neon/index.d.ts",
+      "import": "./dist/neon/index.js"
+    },
+    "./auth": {
+      "types": "./dist/auth/index.d.ts",
+      "import": "./dist/auth/index.js"
+    },
+    "./observability": {
+      "types": "./dist/observability/index.d.ts",
+      "import": "./dist/observability/index.js"
+    },
+    "./security": {
+      "types": "./dist/security/index.d.ts",
+      "import": "./dist/security/index.js"
+    },
+    "./data": {
+      "types": "./dist/data/index.d.ts",
+      "import": "./dist/data/index.js"
+    },
+    "./cache": {
+      "types": "./dist/cache/index.d.ts",
+      "import": "./dist/cache/index.js"
+    },
+    "./api": {
+      "types": "./dist/api/index.d.ts",
+      "import": "./dist/api/index.js"
+    },
+    "./health": {
+      "types": "./dist/health/index.d.ts",
+      "import": "./dist/health/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "biome check src/",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": ">=0.30.0",
+    "@modelcontextprotocol/sdk": ">=1.0.0",
+    "@vercel/blob": ">=0.20.0",
+    "@neondatabase/serverless": ">=0.9.0",
+    "ioredis": ">=5.0.0",
+    "langfuse": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/sdk": { "optional": true },
+    "@modelcontextprotocol/sdk": { "optional": true },
+    "@vercel/blob": { "optional": true },
+    "@neondatabase/serverless": { "optional": true },
+    "ioredis": { "optional": true },
+    "langfuse": { "optional": true }
+  },
+  "keywords": [
+    "ai", "toolkit", "llm", "mcp", "model-context-protocol",
+    "healthcare", "rag", "embeddings", "typescript", "sdk"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danilobatson/healthcare-ai-portfolio",
+    "directory": "packages/toolkit"
+  }
+}

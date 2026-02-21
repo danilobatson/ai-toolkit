@@ -1,0 +1,40 @@
+{
+  "name": "@jamaalbuilds/hai-cli",
+  "version": "0.1.0",
+  "description": "CLI for scaffolding full-stack AI projects. One command, complete stack.",
+  "author": "Danilo Batson <djbatson19@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "hai": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": ["dist", "templates", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "biome check src/",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "commander": "^13.0.0",
+    "chalk": "^5.4.0",
+    "ora": "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "keywords": [
+    "cli", "ai", "scaffolding", "fullstack", "mcp",
+    "healthcare", "fastapi", "nextjs", "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danilobatson/healthcare-ai-portfolio",
+    "directory": "packages/cli"
+  }
+}
