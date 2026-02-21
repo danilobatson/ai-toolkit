@@ -28,6 +28,12 @@ from .providers import (
     estimate_cost,
     register_pricing,
 )
+from .structured import (
+    StructuredClient,
+    StructuredResponse,
+    extract,
+    extract_batch,
+)
 
 __all__ = [
     # Client
@@ -48,6 +54,11 @@ __all__ = [
     "EmbeddingClient",
     "EmbeddingResult",
     "EmbeddingStats",
+    # Structured output
+    "StructuredClient",
+    "StructuredResponse",
+    "extract",
+    "extract_batch",
     # Utilities
     "estimate_cost",
     "register_pricing",
