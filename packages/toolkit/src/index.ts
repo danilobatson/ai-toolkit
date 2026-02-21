@@ -25,3 +25,47 @@ export type {
   ApiResult,
   HealthReport,
 } from "./data/index.js";
+
+// Auth
+export {
+  getOrgId,
+  getUserId,
+  requireApiKey,
+  createApiKeyGuard,
+  getTenantContext,
+} from "./auth/index.js";
+export type { TenantContext } from "./auth/index.js";
+
+// Security
+export { createRateLimiter, createAuditLogger } from "./security/index.js";
+export type {
+  RateLimitConfig,
+  RateLimitResult,
+  RateLimiter,
+  AuditEvent,
+  AuditLogger,
+} from "./security/index.js";
+
+// LLM
+export { createLLM } from "./llm/index.js";
+export type { LLMClient, LLMConfig, LLMResponse, CompletionOptions } from "./llm/index.js";
+
+// Storage
+export { validateFile, uploadDocument, deleteDocument, listDocuments } from "./storage/index.js";
+export type { FileValidationOptions, UploadOptions, UploadResult } from "./storage/index.js";
+
+// Neon
+export { createDb, withTenant } from "./neon/index.js";
+export type { DbClient, DbConfig } from "./neon/index.js";
+
+// Observability
+export { initLangfuse, createLogger } from "./observability/index.js";
+export type { Logger, LangfuseConfig } from "./observability/index.js";
+
+// Health
+export { createHealthCheck } from "./health/index.js";
+export type { HealthCheckConfig, HealthCheckResult } from "./health/index.js";
+
+// Testing
+export { mockCache, mockLLM, mockDb } from "./testing/index.js";
+export type { MockLLMOptions, MockLLMResult } from "./testing/index.js";

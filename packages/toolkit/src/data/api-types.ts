@@ -36,17 +36,7 @@ export type ApiResult<T> =
   | { success: false; error: ErrorResponse["error"] };
 
 /**
- * Standard health check response shape.
+ * HealthReport is defined in health/check.ts.
+ * Re-exported here for backward compatibility.
  */
-export interface HealthReport {
-  status: "healthy" | "degraded" | "unhealthy";
-  timestamp: string;
-  checks: Record<
-    string,
-    {
-      status: "pass" | "fail";
-      latencyMs?: number;
-      message?: string;
-    }
-  >;
-}
+export type { HealthReport } from "../health/check.js";

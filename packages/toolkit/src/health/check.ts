@@ -18,7 +18,7 @@
  *
  * export async function GET() {
  *   const report = await check();
- *   return Response.json(report, { status: report.healthy ? 200 : 503 });
+ *   return Response.json(report, { status: report.status === 'healthy' ? 200 : 503 });
  * }
  * ```
  */
@@ -26,17 +26,20 @@
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface HealthCheckResult {
-  name: string;
-  healthy: boolean;
-  latencyMs: number;
-  error?: string;
+  status: "pass" | "fail";
+  latencyMs?: number;
+  message?: string;
 }
 
+/**
+ * Matches the HealthReport shape from data/api-types.ts.
+ * This is the wire format returned by health endpoints.
+ */
 export interface HealthReport {
-  healthy: boolean;
+  status: "healthy" | "degraded" | "unhealthy";
   timestamp: string;
   uptime: number;
-  checks: HealthCheckResult[];
+  checks: Record<string, HealthCheckResult>;
 }
 
 export interface HealthCheckConfig {
@@ -61,7 +64,7 @@ export function createHealthCheck(
   const timeoutMs = config.timeoutMs ?? 5000;
 
   return async function healthCheck(): Promise<HealthReport> {
-    const results: HealthCheckResult[] = [];
+    const checks: Record<string, HealthCheckResult> = {};
 
     for (const [name, checkFn] of Object.entries(config.checks)) {
       const start = Date.now();
@@ -72,26 +75,27 @@ export function createHealthCheck(
             setTimeout(() => reject(new Error("Timeout")), timeoutMs),
           ),
         ]);
-        results.push({
-          name,
-          healthy: true,
+        checks[name] = {
+          status: "pass",
           latencyMs: Date.now() - start,
-        });
+        };
       } catch (error) {
-        results.push({
-          name,
-          healthy: false,
+        checks[name] = {
+          status: "fail",
           latencyMs: Date.now() - start,
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
+          message: error instanceof Error ? error.message : "Unknown error",
+        };
       }
     }
 
+    const allPass = Object.values(checks).every((c) => c.status === "pass");
+    const anyPass = Object.values(checks).some((c) => c.status === "pass");
+
     return {
-      healthy: results.every((r) => r.healthy),
+      status: allPass ? "healthy" : anyPass ? "degraded" : "unhealthy",
       timestamp: new Date().toISOString(),
       uptime: Math.floor((Date.now() - startTime) / 1000),
-      checks: results,
+      checks,
     };
   };
 }
