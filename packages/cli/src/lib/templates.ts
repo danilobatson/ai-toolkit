@@ -5,10 +5,30 @@
  * Inline templates (not external files) so the CLI is self-contained.
  */
 
+// ─── Version defaults ────────────────────────────────────────────────────
+// Single place to update when dependencies release new versions.
+// Users can override via ProjectConfig.versions.
+
+export const DEFAULT_VERSIONS = {
+  postgres: "pg17",
+  redis: "7-alpine",
+  python: "3.12",
+  node: "22",
+} as const;
+
 export interface ProjectConfig {
   name: string;
   backend: "fastapi" | "nestjs";
   frontend: "nextjs";
+  /** Override any default version. Unspecified keys use DEFAULT_VERSIONS. */
+  versions?: Partial<typeof DEFAULT_VERSIONS>;
+}
+
+/** Resolve versions with user overrides falling back to defaults. */
+function resolveVersions(
+  config: ProjectConfig,
+): typeof DEFAULT_VERSIONS {
+  return { ...DEFAULT_VERSIONS, ...config.versions };
 }
 
 // ─── Root files ───────────────────────────────────────────────────────────
@@ -91,9 +111,10 @@ ENVIRONMENT=development
 }
 
 export function dockerCompose(config: ProjectConfig): string {
+  const v = resolveVersions(config);
   return `services:
   postgres:
-    image: pgvector/pgvector:pg17
+    image: pgvector/pgvector:${v.postgres}
     ports:
       - "5432:5432"
     environment:
@@ -109,7 +130,7 @@ export function dockerCompose(config: ProjectConfig): string {
       retries: 5
 
   redis:
-    image: redis:7-alpine
+    image: redis:${v.redis}
     ports:
       - "6379:6379"
     volumes:
@@ -127,6 +148,7 @@ volumes:
 }
 
 export function readme(config: ProjectConfig): string {
+  const v = resolveVersions(config);
   return `# ${config.name}
 
 > Built with [@jamaalbuilds/ai-toolkit](https://www.npmjs.com/package/@jamaalbuilds/ai-toolkit)
@@ -154,7 +176,7 @@ yarn dev
 \`\`\`
 frontend/ (Next.js)  →  backend/ (FastAPI)  →  Neon PostgreSQL + pgvector
                                              →  Redis (cache)
-                                             →  Anthropic / OpenAI (LLM)
+                                             →  LLM (any provider via ai-toolkit)
                                              →  Vercel Blob (storage)
                                              →  Langfuse (observability)
 \`\`\`
@@ -164,11 +186,11 @@ frontend/ (Next.js)  →  backend/ (FastAPI)  →  Neon PostgreSQL + pgvector
 | Layer | Technology |
 |-------|-----------|
 | Frontend | Next.js, TypeScript, Tailwind CSS |
-| Backend | FastAPI, Python 3.12+ |
+| Backend | FastAPI, Python ${v.python}+ |
 | Database | PostgreSQL + pgvector (Neon in production) |
 | Cache | Redis |
 | SDK | @jamaalbuilds/ai-toolkit (TypeScript + Python) |
-| LLM | Anthropic Claude / OpenAI GPT |
+| LLM | Any provider (Anthropic, OpenAI, Google, Groq, Ollama) |
 | Observability | Langfuse |
 
 ## Development
@@ -190,6 +212,7 @@ cd backend && pytest
 }
 
 export function projectClaudeMd(config: ProjectConfig): string {
+  const v = resolveVersions(config);
   return `# ${config.name} — Claude Code Context
 
 ## What This Is
@@ -220,7 +243,7 @@ ${config.name}/
 ## Coding Standards
 
 - Frontend: TypeScript strict mode, ESM, App Router
-- Backend: Python 3.12+, strict mypy, ruff, 100 char lines
+- Backend: Python ${v.python}+, strict mypy, ruff, 100 char lines
 - All errors use ToolkitError hierarchy from the SDK
 - Config validated at startup (Zod frontend, Pydantic backend)
 - BFF pattern: frontend calls backend via @jamaalbuilds/ai-toolkit/api client
@@ -238,11 +261,12 @@ cd frontend && yarn dev                       # Start frontend
 // ─── Backend (FastAPI) ────────────────────────────────────────────────────
 
 export function backendPyproject(config: ProjectConfig): string {
+  const v = resolveVersions(config);
   return `[project]
 name = "${config.name}-backend"
 version = "0.1.0"
 description = "${config.name} backend"
-requires-python = ">=3.12"
+requires-python = ">=${v.python}"
 
 dependencies = [
     "fastapi>=0.115.0",
@@ -268,14 +292,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py${v.python.replace(".", "")}"
 line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "${v.python}"
 strict = true
 
 [tool.pytest.ini_options]
@@ -284,8 +308,9 @@ testpaths = ["tests"]
 `;
 }
 
-export function backendPythonVersion(): string {
-  return `3.12
+export function backendPythonVersion(config: ProjectConfig): string {
+  const v = resolveVersions(config);
+  return `${v.python}
 `;
 }
 

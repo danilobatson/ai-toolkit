@@ -163,7 +163,7 @@ class AnthropicProvider(LLMProvider):
     def __init__(
         self,
         *,
-        model: str,
+        model: str = "claude-sonnet-4-20250514",
         api_key: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,
@@ -293,7 +293,7 @@ class OpenAIProvider(LLMProvider):
     def __init__(
         self,
         *,
-        model: str,
+        model: str = "gpt-4o",
         api_key: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,
@@ -436,7 +436,7 @@ class GoogleProvider(LLMProvider):
     def __init__(
         self,
         *,
-        model: str,
+        model: str = "gemini-2.0-flash",
         api_key: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,
@@ -567,7 +567,7 @@ class GroqProvider(LLMProvider):
     def __init__(
         self,
         *,
-        model: str,
+        model: str = "llama-3.3-70b-versatile",
         api_key: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,
@@ -696,7 +696,7 @@ class OllamaProvider(LLMProvider):
     def __init__(
         self,
         *,
-        model: str,
+        model: str = "llama3.2",
         base_url: str = "http://localhost:11434/v1",
         max_tokens: int = 4096,
         temperature: float = 0.0,

@@ -40,7 +40,7 @@ function generateFiles(config: ProjectConfig): FileEntry[] {
 
     // Backend
     { path: "backend/pyproject.toml", content: backendPyproject(config) },
-    { path: "backend/.python-version", content: backendPythonVersion() },
+    { path: "backend/.python-version", content: backendPythonVersion(config) },
     { path: "backend/app/__init__.py", content: backendAppInit() },
     { path: "backend/app/config.py", content: backendConfig(config) },
     { path: "backend/app/main.py", content: backendMain(config) },

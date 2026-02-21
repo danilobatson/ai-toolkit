@@ -104,7 +104,7 @@ class EmbeddingClient:
         self,
         *,
         api_key: str | None = None,
-        model: str,
+        model: str = "text-embedding-3-small",
         dimensions: int = 1536,
         batch_size: int = 100,
         cache: Any | None = None,  # CacheClient from ai_toolkit.cache
