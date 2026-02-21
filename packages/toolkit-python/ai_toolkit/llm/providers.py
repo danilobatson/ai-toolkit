@@ -15,7 +15,7 @@ Usage::
 
     from ai_toolkit.llm.providers import GoogleProvider, AnthropicProvider
 
-    # Single provider
+    # Single provider (model is always explicit — no hidden defaults)
     llm = create_llm_client(providers=[GoogleProvider(model="gemini-2.0-flash")])
 
     # Fallback chain: free primary → paid backup
@@ -159,7 +159,7 @@ class AnthropicProvider(LLMProvider):
     def __init__(
         self,
         *,
-        model: str = "claude-sonnet-4-20250514",
+        model: str,
         api_key: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,
@@ -289,7 +289,7 @@ class OpenAIProvider(LLMProvider):
     def __init__(
         self,
         *,
-        model: str = "gpt-4o",
+        model: str,
         api_key: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,
@@ -432,7 +432,7 @@ class GoogleProvider(LLMProvider):
     def __init__(
         self,
         *,
-        model: str = "gemini-2.0-flash",
+        model: str,
         api_key: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,
@@ -563,7 +563,7 @@ class GroqProvider(LLMProvider):
     def __init__(
         self,
         *,
-        model: str = "llama-3.3-70b-versatile",
+        model: str,
         api_key: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,
@@ -692,7 +692,7 @@ class OllamaProvider(LLMProvider):
     def __init__(
         self,
         *,
-        model: str = "llama3.2",
+        model: str,
         base_url: str = "http://localhost:11434/v1",
         max_tokens: int = 4096,
         temperature: float = 0.0,
@@ -810,32 +810,37 @@ def auto_detect_providers() -> list[LLMProvider]:
     """
     Build a provider list from available environment variables.
 
-    Checks in order: ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY,
-    GROQ_API_KEY. Returns providers for all keys found.
+    Checks in order: GOOGLE_API_KEY (free tier), GROQ_API_KEY (free tier),
+    ANTHROPIC_API_KEY, OPENAI_API_KEY. Returns providers for all keys found.
+
+    Model defaults used here are intentionally simple. For production,
+    pass explicit providers with your chosen models to create_llm_client().
     """
     providers: list[LLMProvider] = []
 
-    if os.environ.get("ANTHROPIC_API_KEY"):
+    # Free tiers first
+    if os.environ.get("GOOGLE_API_KEY"):
         try:
-            providers.append(AnthropicProvider())
+            providers.append(GoogleProvider(model="gemini-2.0-flash"))
         except LLMError:
             pass  # SDK not installed
 
-    if os.environ.get("OPENAI_API_KEY"):
-        try:
-            providers.append(OpenAIProvider())
-        except LLMError:
-            pass
-
-    if os.environ.get("GOOGLE_API_KEY"):
-        try:
-            providers.append(GoogleProvider())
-        except LLMError:
-            pass
-
     if os.environ.get("GROQ_API_KEY"):
         try:
-            providers.append(GroqProvider())
+            providers.append(GroqProvider(model="llama-3.3-70b-versatile"))
+        except LLMError:
+            pass
+
+    # Paid providers as fallback
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        try:
+            providers.append(AnthropicProvider(model="claude-sonnet-4-20250514"))
+        except LLMError:
+            pass
+
+    if os.environ.get("OPENAI_API_KEY"):
+        try:
+            providers.append(OpenAIProvider(model="gpt-4o"))
         except LLMError:
             pass
 

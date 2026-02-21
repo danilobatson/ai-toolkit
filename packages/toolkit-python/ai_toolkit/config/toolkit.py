@@ -14,7 +14,8 @@ def init_toolkit() -> ToolkitSettings:
     Usage::
 
         settings = init_toolkit()
-        settings.anthropic_api_key  # validated, guaranteed str if present
-        settings.has("redis")       # check feature availability
+        settings.has("llm")       # True if any LLM key is set
+        settings.has("google")    # True if GOOGLE_API_KEY is set
+        settings.has("redis")     # check feature availability
     """
     return ToolkitSettings()  # type: ignore[call-arg]

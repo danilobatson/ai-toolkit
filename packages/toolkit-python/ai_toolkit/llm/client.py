@@ -292,12 +292,11 @@ def create_llm_client(
         # Auto-detect from env vars
         llm = create_llm_client()
 
-        # Explicit — free tier primary, paid fallback
-        from ai_toolkit.llm.providers import GoogleProvider, AnthropicProvider
-        llm = create_llm_client(providers=[
-            GoogleProvider(model="gemini-2.0-flash"),
-            AnthropicProvider(),
-        ])
+        # Explicit providers — free tier primary, paid fallback
+    llm = create_llm_client(providers=[
+        GoogleProvider(model="gemini-2.0-flash"),
+        AnthropicProvider(model="claude-sonnet-4-20250514"),
+    ])
 
         # Local only — no API key needed
         from ai_toolkit.llm.providers import OllamaProvider

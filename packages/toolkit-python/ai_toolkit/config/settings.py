@@ -1,8 +1,8 @@
 """
 Pydantic BaseSettings for all toolkit environment variables.
 
-Validates at startup. Missing ANTHROPIC_API_KEY? Clear error immediately,
-not a cryptic failure 10 minutes later on the first LLM call.
+Provider-agnostic — supports any LLM provider. Set whichever API keys
+you have. The LLM client auto-detects available providers from env vars.
 """
 
 from pydantic import Field
@@ -14,13 +14,11 @@ class ToolkitSettings(BaseSettings):
 
     model_config = {"env_prefix": "", "case_sensitive": True}
 
-    # LLM
+    # LLM — set whichever keys you have, auto-detected in priority order
     anthropic_api_key: str | None = Field(default=None, alias="ANTHROPIC_API_KEY")
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
-    llm_primary_model: str = Field(
-        default="claude-sonnet-4-20250514", alias="LLM_PRIMARY_MODEL"
-    )
-    llm_fallback_model: str = Field(default="gpt-4o", alias="LLM_FALLBACK_MODEL")
+    google_api_key: str | None = Field(default=None, alias="GOOGLE_API_KEY")
+    groq_api_key: str | None = Field(default=None, alias="GROQ_API_KEY")
 
     # Database
     database_url: str | None = Field(default=None, alias="DATABASE_URL")
@@ -48,6 +46,14 @@ class ToolkitSettings(BaseSettings):
         checks: dict[str, bool] = {
             "anthropic": self.anthropic_api_key is not None,
             "openai": self.openai_api_key is not None,
+            "google": self.google_api_key is not None,
+            "groq": self.groq_api_key is not None,
+            "llm": any([
+                self.anthropic_api_key,
+                self.openai_api_key,
+                self.google_api_key,
+                self.groq_api_key,
+            ]),
             "redis": self.redis_url is not None,
             "database": self.database_url is not None,
             "langfuse": (

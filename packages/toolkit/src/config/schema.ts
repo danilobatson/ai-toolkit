@@ -3,20 +3,16 @@ import { z } from "zod";
 /**
  * Zod schema for all toolkit environment variables.
  *
- * Validates at startup. Missing ANTHROPIC_API_KEY? Clear error immediately,
- * not a cryptic failure 10 minutes later on the first LLM call.
- *
+ * Provider-agnostic — set whichever LLM API keys you have.
  * All fields optional — you only need what your project uses.
  * initToolkit() validates only the fields required by the modules you enable.
  */
 export const toolkitConfigSchema = z.object({
-  // LLM
+  // LLM — set whichever keys you have, auto-detected
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   OPENAI_API_KEY: z.string().min(1).optional(),
-  LLM_PRIMARY_MODEL: z
-    .string()
-    .default("claude-sonnet-4-20250514"),
-  LLM_FALLBACK_MODEL: z.string().default("gpt-4o"),
+  GOOGLE_API_KEY: z.string().min(1).optional(),
+  GROQ_API_KEY: z.string().min(1).optional(),
 
   // MCP
   MCP_SERVER_NAME: z.string().optional(),
