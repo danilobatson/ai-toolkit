@@ -9,10 +9,20 @@ from .client import (
     create_llm_client,
     estimate_cost,
 )
+from .embeddings import (
+    BatchEmbeddingResult,
+    EmbeddingClient,
+    EmbeddingResult,
+    EmbeddingStats,
+)
 
 __all__ = [
+    "BatchEmbeddingResult",
     "CircuitBreaker",
     "CircuitState",
+    "EmbeddingClient",
+    "EmbeddingResult",
+    "EmbeddingStats",
     "LLMClient",
     "LLMConfig",
     "LLMResponse",
