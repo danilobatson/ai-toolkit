@@ -93,7 +93,8 @@
     "@vercel/blob": ">=0.20.0",
     "@neondatabase/serverless": ">=0.9.0",
     "ioredis": ">=5.0.0",
-    "langfuse": ">=3.0.0"
+    "langfuse": ">=3.0.0",
+    "openai": ">=4.0.0"
   },
   "peerDependenciesMeta": {
     "@anthropic-ai/sdk": { "optional": true },
@@ -101,7 +102,8 @@
     "@vercel/blob": { "optional": true },
     "@neondatabase/serverless": { "optional": true },
     "ioredis": { "optional": true },
-    "langfuse": { "optional": true }
+    "langfuse": { "optional": true },
+    "openai": { "optional": true }
   },
   "keywords": [
     "ai", "toolkit", "llm", "mcp", "model-context-protocol",

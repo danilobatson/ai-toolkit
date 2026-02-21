@@ -25,6 +25,7 @@ from .providers import (
     LLMResponse,
     OllamaProvider,
     OpenAIProvider,
+    auto_detect_providers,
     estimate_cost,
     register_pricing,
 )
@@ -64,6 +65,7 @@ __all__ = [
     "Prompt",
     "PromptManager",
     # Utilities
+    "auto_detect_providers",
     "estimate_cost",
     "register_pricing",
 ]

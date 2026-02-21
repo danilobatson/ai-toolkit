@@ -52,6 +52,21 @@ export interface LLMClient {
   readonly model: string;
 }
 
+// ─── Pricing Registry ────────────────────────────────────────────────────────
+
+const PRICING: Record<string, { input: number; output: number }> = {
+  "claude-sonnet-4-20250514": { input: 3.0, output: 15.0 },
+  "claude-haiku-4-5-20251001": { input: 0.8, output: 4.0 },
+  "gpt-4o": { input: 2.5, output: 10.0 },
+  "gpt-4o-mini": { input: 0.15, output: 0.6 },
+};
+
+function estimateCost(model: string, inputTokens: number, outputTokens: number): number {
+  const p = PRICING[model];
+  if (!p) return 0;
+  return (inputTokens * p.input + outputTokens * p.output) / 1_000_000;
+}
+
 // ─── Provider Defaults ──────────────────────────────────────────────────────
 
 const PROVIDER_DEFAULTS: Record<string, { model: string; envKey: string }> = {
@@ -139,7 +154,7 @@ function createAnthropicClient(model: string, apiKey: string): LLMClient {
           provider: "anthropic",
           inputTokens: response.usage.input_tokens,
           outputTokens: response.usage.output_tokens,
-          cost: 0, // TODO: pricing registry
+          cost: estimateCost(response.model, response.usage.input_tokens, response.usage.output_tokens),
           latencyMs: Date.now() - start,
         };
       } catch (error) {
@@ -202,7 +217,7 @@ function createOpenAIClient(model: string, apiKey: string): LLMClient {
           provider: "openai",
           inputTokens: response.usage?.prompt_tokens ?? 0,
           outputTokens: response.usage?.completion_tokens ?? 0,
-          cost: 0,
+          cost: estimateCost(response.model, response.usage?.prompt_tokens ?? 0, response.usage?.completion_tokens ?? 0),
           latencyMs: Date.now() - start,
         };
       } catch (error) {

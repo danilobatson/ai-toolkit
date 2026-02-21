@@ -22,7 +22,7 @@
  */
 
 import type { CacheClient } from "../cache/client.js";
-import { RateLimitError } from "../errors/types.js";
+import { RateLimitError, ValidationError } from "../errors/types.js";
 
 // ─── Rate Limiter ───────────────────────────────────────────────────────────
 
@@ -110,6 +110,10 @@ export interface AuditLogger {
 }
 
 export function createAuditLogger(serviceName: string): AuditLogger {
+  if (!serviceName) {
+    throw new ValidationError("serviceName is required for createAuditLogger");
+  }
+
   return {
     log(action: string, event?: Omit<AuditEvent, "action">): void {
       const entry = {
