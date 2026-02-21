@@ -19,8 +19,10 @@ google = ["google-genai>=1.0.0"]
 groq = ["groq>=0.13.0"]
 redis = ["redis>=5.0.0"]
 ingestion = ["pypdf>=5.0.0", "python-docx>=1.0.0", "beautifulsoup4>=4.12.0"]
+workflow = ["inngest>=0.4.0"]
+observability = ["langfuse>=2.0.0"]
 llm = ["anthropic>=0.40.0", "openai>=1.60.0", "google-genai>=1.0.0", "groq>=0.13.0"]
-all = ["anthropic>=0.40.0", "openai>=1.60.0", "google-genai>=1.0.0", "groq>=0.13.0", "redis>=5.0.0", "pypdf>=5.0.0", "python-docx>=1.0.0", "beautifulsoup4>=4.12.0", "httpx>=0.28.0"]
+all = ["anthropic>=0.40.0", "openai>=1.60.0", "google-genai>=1.0.0", "groq>=0.13.0", "redis>=5.0.0", "pypdf>=5.0.0", "python-docx>=1.0.0", "beautifulsoup4>=4.12.0", "httpx>=0.28.0", "inngest>=0.4.0", "langfuse>=2.0.0"]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",

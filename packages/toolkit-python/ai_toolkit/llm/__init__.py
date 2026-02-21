@@ -34,6 +34,7 @@ from .structured import (
     extract,
     extract_batch,
 )
+from .prompts import Prompt, PromptManager
 
 __all__ = [
     # Client
@@ -59,6 +60,9 @@ __all__ = [
     "StructuredResponse",
     "extract",
     "extract_batch",
+    # Prompts
+    "Prompt",
+    "PromptManager",
     # Utilities
     "estimate_cost",
     "register_pricing",
