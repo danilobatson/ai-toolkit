@@ -32,3 +32,8 @@ coverage/
 # Docker
 *.log
 CLAUDE.md
+AUDIT_REPORT.md
+.claude/
+AI_TOOLKIT_MASTERPLAN.md
+AI_TOOLKIT_PROMPTS.md
+.claude/
