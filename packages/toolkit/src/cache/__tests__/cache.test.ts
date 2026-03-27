@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemoryCacheAdapter, createCache } from "../client.js";
+import { createCache, MemoryCacheAdapter } from "../client.js";
 
 describe("MemoryCacheAdapter", () => {
 	it("creates with createCache when no redisUrl", () => {

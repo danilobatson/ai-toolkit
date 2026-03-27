@@ -21,19 +21,13 @@ function grep(pattern: string, path: string, exclude?: string): string[] {
 }
 
 describe("semantic checks", () => {
-	it.todo(
-		"no raw throw new Error() in source — pre-existing: mcp/server-builder.ts (5), testing/mocks.ts (1), neon/db.ts (2)",
-		() => {
-			const matches = grep("throw new Error(", SRC);
-			expect(matches).toHaveLength(0);
-		},
-	);
+	it.todo("no raw throw new Error() in source — pre-existing: mcp/server-builder.ts (5), testing/mocks.ts (1), neon/db.ts (2)", () => {
+		const matches = grep("throw new Error(", SRC);
+		expect(matches).toHaveLength(0);
+	});
 
 	it("no hardcoded provider URLs (except Langfuse default)", () => {
-		const matches = grep(
-			"https\\?://api\\.|https\\?://cloud\\.",
-			SRC,
-		);
+		const matches = grep("https\\?://api\\.|https\\?://cloud\\.", SRC);
 		// Langfuse default URL is acceptable — it's overridable via config
 		const nonLangfuse = matches.filter(
 			(line) => !line.includes("langfuse") && !line.includes("LANGFUSE"),

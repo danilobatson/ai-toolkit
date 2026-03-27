@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { AuthError } from "../../errors/types.js";
-import { getOrgId, getTenantContext, getUserId, requireApiKey } from "../middleware.js";
+import {
+	getOrgId,
+	getTenantContext,
+	getUserId,
+	requireApiKey,
+} from "../middleware.js";
 
 function makeRequest(headers: Record<string, string>) {
 	return { headers };

@@ -19,9 +19,9 @@ describe("validateFile", () => {
 	});
 
 	it("rejects disallowed MIME type", () => {
-		expect(() =>
-			validateFile({ size: 100, type: "application/exe" }),
-		).toThrow(/not allowed/i);
+		expect(() => validateFile({ size: 100, type: "application/exe" })).toThrow(
+			/not allowed/i,
+		);
 	});
 
 	it("throws StorageError on validation failure", () => {
