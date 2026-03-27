@@ -1,6 +1,6 @@
-export { createHealthCheck } from "./check.js";
 export type {
-  HealthCheckConfig,
-  HealthCheckResult,
-  HealthReport,
+	HealthCheckConfig,
+	HealthCheckResult,
+	HealthReport,
 } from "./check.js";
+export { createHealthCheck } from "./check.js";

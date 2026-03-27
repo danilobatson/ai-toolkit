@@ -1,31 +1,31 @@
 import { ApiClientError, RateLimitError } from "../errors/types.js";
 
 export interface ApiClientConfig {
-  /** Base URL of the backend (e.g., http://localhost:8000) */
-  baseUrl: string;
+	/** Base URL of the backend (e.g., http://localhost:8000) */
+	baseUrl: string;
 
-  /** API key for service-to-service auth (sent as X-API-Key header) */
-  apiKey?: string;
+	/** API key for service-to-service auth (sent as X-API-Key header) */
+	apiKey?: string;
 
-  /** Request timeout in milliseconds. Default: 30000 (30s) */
-  timeout?: number;
+	/** Request timeout in milliseconds. Default: 30000 (30s) */
+	timeout?: number;
 
-  /** Max retries on 5xx errors. Default: 2 */
-  maxRetries?: number;
+	/** Max retries on 5xx errors. Default: 2 */
+	maxRetries?: number;
 
-  /** Additional default headers */
-  headers?: Record<string, string>;
+	/** Additional default headers */
+	headers?: Record<string, string>;
 }
 
 interface RequestOptions {
-  /** Additional headers for this specific request */
-  headers?: Record<string, string>;
+	/** Additional headers for this specific request */
+	headers?: Record<string, string>;
 
-  /** Override timeout for this request */
-  timeout?: number;
+	/** Override timeout for this request */
+	timeout?: number;
 
-  /** AbortSignal for request cancellation */
-  signal?: AbortSignal;
+	/** AbortSignal for request cancellation */
+	signal?: AbortSignal;
 }
 
 /**
@@ -36,185 +36,188 @@ interface RequestOptions {
  * and correlation ID forwarding.
  */
 export class ApiClient {
-  private baseUrl: string;
-  private apiKey?: string;
-  private timeout: number;
-  private maxRetries: number;
-  private defaultHeaders: Record<string, string>;
+	private baseUrl: string;
+	private apiKey?: string;
+	private timeout: number;
+	private maxRetries: number;
+	private defaultHeaders: Record<string, string>;
 
-  constructor(config: ApiClientConfig) {
-    // Strip trailing slash
-    this.baseUrl = config.baseUrl.replace(/\/$/, "");
-    this.apiKey = config.apiKey;
-    this.timeout = config.timeout ?? 30_000;
-    this.maxRetries = config.maxRetries ?? 2;
-    this.defaultHeaders = {
-      "Content-Type": "application/json",
-      ...config.headers,
-    };
-  }
+	constructor(config: ApiClientConfig) {
+		// Strip trailing slash
+		this.baseUrl = config.baseUrl.replace(/\/$/, "");
+		this.apiKey = config.apiKey;
+		this.timeout = config.timeout ?? 30_000;
+		this.maxRetries = config.maxRetries ?? 2;
+		this.defaultHeaders = {
+			"Content-Type": "application/json",
+			...config.headers,
+		};
+	}
 
-  async get<T>(path: string, options?: RequestOptions): Promise<T> {
-    return this.request<T>("GET", path, undefined, options);
-  }
+	async get<T>(path: string, options?: RequestOptions): Promise<T> {
+		return this.request<T>("GET", path, undefined, options);
+	}
 
-  async post<T>(
-    path: string,
-    body?: unknown,
-    options?: RequestOptions,
-  ): Promise<T> {
-    return this.request<T>("POST", path, body, options);
-  }
+	async post<T>(
+		path: string,
+		body?: unknown,
+		options?: RequestOptions,
+	): Promise<T> {
+		return this.request<T>("POST", path, body, options);
+	}
 
-  async put<T>(
-    path: string,
-    body?: unknown,
-    options?: RequestOptions,
-  ): Promise<T> {
-    return this.request<T>("PUT", path, body, options);
-  }
+	async put<T>(
+		path: string,
+		body?: unknown,
+		options?: RequestOptions,
+	): Promise<T> {
+		return this.request<T>("PUT", path, body, options);
+	}
 
-  async patch<T>(
-    path: string,
-    body?: unknown,
-    options?: RequestOptions,
-  ): Promise<T> {
-    return this.request<T>("PATCH", path, body, options);
-  }
+	async patch<T>(
+		path: string,
+		body?: unknown,
+		options?: RequestOptions,
+	): Promise<T> {
+		return this.request<T>("PATCH", path, body, options);
+	}
 
-  async delete<T>(path: string, options?: RequestOptions): Promise<T> {
-    return this.request<T>("DELETE", path, undefined, options);
-  }
+	async delete<T>(path: string, options?: RequestOptions): Promise<T> {
+		return this.request<T>("DELETE", path, undefined, options);
+	}
 
-  private async request<T>(
-    method: string,
-    path: string,
-    body?: unknown,
-    options?: RequestOptions,
-  ): Promise<T> {
-    const url = `${this.baseUrl}${path}`;
-    const timeout = options?.timeout ?? this.timeout;
+	private async request<T>(
+		method: string,
+		path: string,
+		body?: unknown,
+		options?: RequestOptions,
+	): Promise<T> {
+		const url = `${this.baseUrl}${path}`;
+		const timeout = options?.timeout ?? this.timeout;
 
-    const headers: Record<string, string> = {
-      ...this.defaultHeaders,
-      ...options?.headers,
-    };
+		const headers: Record<string, string> = {
+			...this.defaultHeaders,
+			...options?.headers,
+		};
 
-    if (this.apiKey) {
-      headers["X-API-Key"] = this.apiKey;
-    }
+		if (this.apiKey) {
+			headers["X-API-Key"] = this.apiKey;
+		}
 
-    let lastError: Error | undefined;
+		let lastError: Error | undefined;
 
-    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
+		for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+			try {
+				const controller = new AbortController();
+				const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-        const response = await fetch(url, {
-          method,
-          headers,
-          body: body ? JSON.stringify(body) : undefined,
-          signal: options?.signal ?? controller.signal,
-        });
+				const response = await fetch(url, {
+					method,
+					headers,
+					body: body ? JSON.stringify(body) : undefined,
+					signal: options?.signal ?? controller.signal,
+				});
 
-        clearTimeout(timeoutId);
+				clearTimeout(timeoutId);
 
-        if (response.ok) {
-          // Handle 204 No Content
-          if (response.status === 204) return undefined as T;
+				if (response.ok) {
+					// Handle 204 No Content
+					if (response.status === 204) return undefined as T;
 
-          return (await response.json()) as T;
-        }
+					return (await response.json()) as T;
+				}
 
-        // 429 Rate Limited — wrap as RateLimitError
-        if (response.status === 429) {
-          const retryAfter = response.headers.get("Retry-After");
-          throw new RateLimitError(
-            `Rate limited: ${method} ${path}`,
-            { retryAfter: retryAfter ? parseInt(retryAfter, 10) : undefined },
-          );
-        }
+				// 429 Rate Limited — wrap as RateLimitError
+				if (response.status === 429) {
+					const retryAfter = response.headers.get("Retry-After");
+					throw new RateLimitError(`Rate limited: ${method} ${path}`, {
+						retryAfter: retryAfter ? parseInt(retryAfter, 10) : undefined,
+					});
+				}
 
-        // 4xx Client errors — don't retry
-        if (response.status >= 400 && response.status < 500) {
-          const errorBody = await response.text().catch(() => "Unknown error");
-          throw new ApiClientError(
-            `${method} ${path} failed: ${response.status} ${errorBody}`,
-            {
-              url,
-              method,
-              statusCode: response.status,
-              retryable: false,
-            },
-          );
-        }
+				// 4xx Client errors — don't retry
+				if (response.status >= 400 && response.status < 500) {
+					const errorBody = await response.text().catch(() => "Unknown error");
+					throw new ApiClientError(
+						`${method} ${path} failed: ${response.status} ${errorBody}`,
+						{
+							url,
+							method,
+							statusCode: response.status,
+							retryable: false,
+						},
+					);
+				}
 
-        // 5xx Server errors — retry
-        if (response.status >= 500) {
-          lastError = new ApiClientError(
-            `${method} ${path} failed: ${response.status}`,
-            {
-              url,
-              method,
-              statusCode: response.status,
-              retryable: true,
-            },
-          );
+				// 5xx Server errors — retry
+				if (response.status >= 500) {
+					lastError = new ApiClientError(
+						`${method} ${path} failed: ${response.status}`,
+						{
+							url,
+							method,
+							statusCode: response.status,
+							retryable: true,
+						},
+					);
 
-          // Don't retry on last attempt
-          if (attempt < this.maxRetries) {
-            const delay = Math.pow(2, attempt) * 500; // 500ms, 1s, 2s
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            continue;
-          }
-        }
-      } catch (error) {
-        // Already one of our error types — rethrow
-        if (error instanceof ApiClientError || error instanceof RateLimitError) {
-          throw error;
-        }
+					// Don't retry on last attempt
+					if (attempt < this.maxRetries) {
+						const delay = 2 ** attempt * 500; // 500ms, 1s, 2s
+						await new Promise((resolve) => setTimeout(resolve, delay));
+					}
+				}
+			} catch (error) {
+				// Already one of our error types — rethrow
+				if (
+					error instanceof ApiClientError ||
+					error instanceof RateLimitError
+				) {
+					throw error;
+				}
 
-        // AbortError = timeout
-        if (error instanceof DOMException && error.name === "AbortError") {
-          lastError = new ApiClientError(
-            `${method} ${path} timed out after ${timeout}ms`,
-            {
-              url,
-              method,
-              code: "API_CLIENT_TIMEOUT",
-              statusCode: 504,
-              retryable: true,
-            },
-          );
-        } else {
-          // Network error, DNS failure, etc.
-          lastError = new ApiClientError(
-            `${method} ${path} failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-            {
-              url,
-              method,
-              code: "API_CLIENT_NETWORK_ERROR",
-              statusCode: 502,
-              retryable: true,
-              cause: error instanceof Error ? error : undefined,
-            },
-          );
-        }
+				// AbortError = timeout
+				if (error instanceof DOMException && error.name === "AbortError") {
+					lastError = new ApiClientError(
+						`${method} ${path} timed out after ${timeout}ms`,
+						{
+							url,
+							method,
+							code: "API_CLIENT_TIMEOUT",
+							statusCode: 504,
+							retryable: true,
+						},
+					);
+				} else {
+					// Network error, DNS failure, etc.
+					lastError = new ApiClientError(
+						`${method} ${path} failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+						{
+							url,
+							method,
+							code: "API_CLIENT_NETWORK_ERROR",
+							statusCode: 502,
+							retryable: true,
+							cause: error instanceof Error ? error : undefined,
+						},
+					);
+				}
 
-        if (attempt < this.maxRetries) {
-          const delay = Math.pow(2, attempt) * 500;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          continue;
-        }
-      }
-    }
+				if (attempt < this.maxRetries) {
+					const delay = 2 ** attempt * 500;
+					await new Promise((resolve) => setTimeout(resolve, delay));
+				}
+			}
+		}
 
-    throw lastError ?? new ApiClientError(
-      `${method} ${path} failed after ${this.maxRetries + 1} attempts`,
-      { url, method, retryable: false },
-    );
-  }
+		throw (
+			lastError ??
+			new ApiClientError(
+				`${method} ${path} failed after ${this.maxRetries + 1} attempts`,
+				{ url, method, retryable: false },
+			)
+		);
+	}
 }
 
 /**
@@ -232,5 +235,5 @@ export class ApiClient {
  * ```
  */
 export function createApiClient(config: ApiClientConfig): ApiClient {
-  return new ApiClient(config);
+	return new ApiClient(config);
 }

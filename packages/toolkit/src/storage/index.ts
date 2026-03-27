@@ -1,11 +1,11 @@
-export {
-  validateFile,
-  uploadDocument,
-  deleteDocument,
-  listDocuments,
-} from "./blob.js";
 export type {
-  FileValidationOptions,
-  UploadOptions,
-  UploadResult,
+	FileValidationOptions,
+	UploadOptions,
+	UploadResult,
+} from "./blob.js";
+export {
+	deleteDocument,
+	listDocuments,
+	uploadDocument,
+	validateFile,
 } from "./blob.js";

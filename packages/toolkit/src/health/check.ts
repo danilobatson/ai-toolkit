@@ -26,9 +26,9 @@
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface HealthCheckResult {
-  status: "pass" | "fail";
-  latencyMs?: number;
-  message?: string;
+	status: "pass" | "fail";
+	latencyMs?: number;
+	message?: string;
 }
 
 /**
@@ -36,17 +36,17 @@ export interface HealthCheckResult {
  * This is the wire format returned by health endpoints.
  */
 export interface HealthReport {
-  status: "healthy" | "degraded" | "unhealthy";
-  timestamp: string;
-  uptime: number;
-  checks: Record<string, HealthCheckResult>;
+	status: "healthy" | "degraded" | "unhealthy";
+	timestamp: string;
+	uptime: number;
+	checks: Record<string, HealthCheckResult>;
 }
 
 export interface HealthCheckConfig {
-  /** Named health check functions. Each should throw on failure. */
-  checks: Record<string, () => Promise<void>>;
-  /** Timeout per check in ms. Default: 5000 */
-  timeoutMs?: number;
+	/** Named health check functions. Each should throw on failure. */
+	checks: Record<string, () => Promise<void>>;
+	/** Timeout per check in ms. Default: 5000 */
+	timeoutMs?: number;
 }
 
 // ─── Factory ────────────────────────────────────────────────────────────────
@@ -59,43 +59,43 @@ const startTime = Date.now();
  * Returns an async function that runs all checks and returns a HealthReport.
  */
 export function createHealthCheck(
-  config: HealthCheckConfig,
+	config: HealthCheckConfig,
 ): () => Promise<HealthReport> {
-  const timeoutMs = config.timeoutMs ?? 5000;
+	const timeoutMs = config.timeoutMs ?? 5000;
 
-  return async function healthCheck(): Promise<HealthReport> {
-    const checks: Record<string, HealthCheckResult> = {};
+	return async function healthCheck(): Promise<HealthReport> {
+		const checks: Record<string, HealthCheckResult> = {};
 
-    for (const [name, checkFn] of Object.entries(config.checks)) {
-      const start = Date.now();
-      try {
-        await Promise.race([
-          checkFn(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Timeout")), timeoutMs),
-          ),
-        ]);
-        checks[name] = {
-          status: "pass",
-          latencyMs: Date.now() - start,
-        };
-      } catch (error) {
-        checks[name] = {
-          status: "fail",
-          latencyMs: Date.now() - start,
-          message: error instanceof Error ? error.message : "Unknown error",
-        };
-      }
-    }
+		for (const [name, checkFn] of Object.entries(config.checks)) {
+			const start = Date.now();
+			try {
+				await Promise.race([
+					checkFn(),
+					new Promise((_, reject) =>
+						setTimeout(() => reject(new Error("Timeout")), timeoutMs),
+					),
+				]);
+				checks[name] = {
+					status: "pass",
+					latencyMs: Date.now() - start,
+				};
+			} catch (error) {
+				checks[name] = {
+					status: "fail",
+					latencyMs: Date.now() - start,
+					message: error instanceof Error ? error.message : "Unknown error",
+				};
+			}
+		}
 
-    const allPass = Object.values(checks).every((c) => c.status === "pass");
-    const anyPass = Object.values(checks).some((c) => c.status === "pass");
+		const allPass = Object.values(checks).every((c) => c.status === "pass");
+		const anyPass = Object.values(checks).some((c) => c.status === "pass");
 
-    return {
-      status: allPass ? "healthy" : anyPass ? "degraded" : "unhealthy",
-      timestamp: new Date().toISOString(),
-      uptime: Math.floor((Date.now() - startTime) / 1000),
-      checks,
-    };
-  };
+		return {
+			status: allPass ? "healthy" : anyPass ? "degraded" : "unhealthy",
+			timestamp: new Date().toISOString(),
+			uptime: Math.floor((Date.now() - startTime) / 1000),
+			checks,
+		};
+	};
 }

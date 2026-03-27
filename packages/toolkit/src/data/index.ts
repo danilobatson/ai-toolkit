@@ -1,6 +1,6 @@
 export type {
-  PaginatedResponse,
-  ErrorResponse,
-  ApiResult,
-  HealthReport,
+	ApiResult,
+	ErrorResponse,
+	HealthReport,
+	PaginatedResponse,
 } from "./api-types.js";

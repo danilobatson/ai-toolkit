@@ -7,9 +7,9 @@ import { initCommand } from "./commands/init.js";
 const program = new Command();
 
 program
-  .name("aitk")
-  .description("CLI for scaffolding full-stack AI projects")
-  .version("0.1.0");
+	.name("aitk")
+	.description("CLI for scaffolding full-stack AI projects")
+	.version("0.1.0");
 
 // Commands
 program.addCommand(doctorCommand);

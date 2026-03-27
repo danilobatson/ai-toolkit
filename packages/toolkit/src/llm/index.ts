@@ -1,7 +1,7 @@
-export { createLLM } from "./client.js";
 export type {
-  LLMClient,
-  LLMConfig,
-  LLMResponse,
-  CompletionOptions,
+	CompletionOptions,
+	LLMClient,
+	LLMConfig,
+	LLMResponse,
 } from "./client.js";
+export { createLLM } from "./client.js";

@@ -1,2 +1,2 @@
-export { initLangfuse, createLogger } from "./logger.js";
-export type { Logger, LangfuseConfig } from "./logger.js";
+export type { LangfuseConfig, Logger } from "./logger.js";
+export { createLogger, initLangfuse } from "./logger.js";

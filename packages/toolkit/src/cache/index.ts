@@ -1,7 +1,7 @@
 export {
-  createCache,
-  MemoryCacheAdapter,
-  RedisCacheAdapter,
-  type CacheClient,
-  type CacheOptions,
+	type CacheClient,
+	type CacheOptions,
+	createCache,
+	MemoryCacheAdapter,
+	RedisCacheAdapter,
 } from "./client.js";

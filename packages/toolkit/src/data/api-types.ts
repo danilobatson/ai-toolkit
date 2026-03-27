@@ -3,14 +3,14 @@
  * Used by all list endpoints across all projects.
  */
 export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    total: number;
-    page: number;
-    pageSize: number;
-    totalPages: number;
-    hasMore: boolean;
-  };
+	data: T[];
+	pagination: {
+		total: number;
+		page: number;
+		pageSize: number;
+		totalPages: number;
+		hasMore: boolean;
+	};
 }
 
 /**
@@ -18,13 +18,13 @@ export interface PaginatedResponse<T> {
  * Matches the ToolkitError.toJSON() output.
  */
 export interface ErrorResponse {
-  error: {
-    code: string;
-    message: string;
-    statusCode: number;
-    retryable: boolean;
-    fields?: Record<string, string>;
-  };
+	error: {
+		code: string;
+		message: string;
+		statusCode: number;
+		retryable: boolean;
+		fields?: Record<string, string>;
+	};
 }
 
 /**
@@ -32,8 +32,8 @@ export interface ErrorResponse {
  * Avoids try/catch for expected errors (validation, not-found).
  */
 export type ApiResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: ErrorResponse["error"] };
+	| { success: true; data: T }
+	| { success: false; error: ErrorResponse["error"] };
 
 /**
  * HealthReport is defined in health/check.ts.

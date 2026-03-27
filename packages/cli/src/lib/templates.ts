@@ -10,31 +10,29 @@
 // Users can override via ProjectConfig.versions.
 
 export const DEFAULT_VERSIONS = {
-  postgres: "pg17",
-  redis: "7-alpine",
-  python: "3.12",
-  node: "22",
+	postgres: "pg17",
+	redis: "7-alpine",
+	python: "3.12",
+	node: "22",
 } as const;
 
 export interface ProjectConfig {
-  name: string;
-  backend: "fastapi" | "nestjs";
-  frontend: "nextjs";
-  /** Override any default version. Unspecified keys use DEFAULT_VERSIONS. */
-  versions?: Partial<typeof DEFAULT_VERSIONS>;
+	name: string;
+	backend: "fastapi" | "nestjs";
+	frontend: "nextjs";
+	/** Override any default version. Unspecified keys use DEFAULT_VERSIONS. */
+	versions?: Partial<typeof DEFAULT_VERSIONS>;
 }
 
 /** Resolve versions with user overrides falling back to defaults. */
-function resolveVersions(
-  config: ProjectConfig,
-): typeof DEFAULT_VERSIONS {
-  return { ...DEFAULT_VERSIONS, ...config.versions };
+function resolveVersions(config: ProjectConfig): typeof DEFAULT_VERSIONS {
+	return { ...DEFAULT_VERSIONS, ...config.versions };
 }
 
 // ─── Root files ───────────────────────────────────────────────────────────
 
 export function gitignore(): string {
-  return `# Dependencies
+	return `# Dependencies
 node_modules/
 __pycache__/
 *.pyc
@@ -73,7 +71,7 @@ CLAUDE.md
 }
 
 export function envExample(config: ProjectConfig): string {
-  return `# ─── LLM ───────────────────────────────────────────
+	return `# ─── LLM ───────────────────────────────────────────
 # Set at least one. Auto-detected in priority order.
 ANTHROPIC_API_KEY=
 OPENAI_API_KEY=
@@ -111,8 +109,8 @@ ENVIRONMENT=development
 }
 
 export function dockerCompose(config: ProjectConfig): string {
-  const v = resolveVersions(config);
-  return `services:
+	const v = resolveVersions(config);
+	return `services:
   postgres:
     image: pgvector/pgvector:${v.postgres}
     ports:
@@ -148,8 +146,8 @@ volumes:
 }
 
 export function readme(config: ProjectConfig): string {
-  const v = resolveVersions(config);
-  return `# ${config.name}
+	const v = resolveVersions(config);
+	return `# ${config.name}
 
 > Built with [@jamaalbuilds/ai-toolkit](https://www.npmjs.com/package/@jamaalbuilds/ai-toolkit)
 
@@ -212,8 +210,8 @@ cd backend && pytest
 }
 
 export function projectClaudeMd(config: ProjectConfig): string {
-  const v = resolveVersions(config);
-  return `# ${config.name} — Claude Code Context
+	const v = resolveVersions(config);
+	return `# ${config.name} — Claude Code Context
 
 ## What This Is
 
@@ -261,8 +259,8 @@ cd frontend && yarn dev                       # Start frontend
 // ─── Backend (FastAPI) ────────────────────────────────────────────────────
 
 export function backendPyproject(config: ProjectConfig): string {
-  const v = resolveVersions(config);
-  return `[project]
+	const v = resolveVersions(config);
+	return `[project]
 name = "${config.name}-backend"
 version = "0.1.0"
 description = "${config.name} backend"
@@ -310,18 +308,18 @@ testpaths = ["tests"]
 }
 
 export function backendPythonVersion(config: ProjectConfig): string {
-  const v = resolveVersions(config);
-  return `${v.python}
+	const v = resolveVersions(config);
+	return `${v.python}
 `;
 }
 
 export function backendAppInit(): string {
-  return `"""${""} backend application."""
+	return `"""${""} backend application."""
 `;
 }
 
 export function backendConfig(config: ProjectConfig): string {
-  return `"""Application configuration — extends AI Toolkit settings."""
+	return `"""Application configuration — extends AI Toolkit settings."""
 
 from ai_toolkit.config import ToolkitSettings
 
@@ -345,7 +343,7 @@ def get_settings() -> Settings:
 }
 
 export function backendMain(config: ProjectConfig): string {
-  return `"""FastAPI application entrypoint."""
+	return `"""FastAPI application entrypoint."""
 
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
@@ -395,7 +393,7 @@ app = create_app()
 }
 
 export function backendHealthRoute(): string {
-  return `"""Health check endpoint."""
+	return `"""Health check endpoint."""
 
 from fastapi import APIRouter
 
@@ -410,77 +408,77 @@ async def health_check() -> dict[str, str]:
 }
 
 export function backendRoutesInit(): string {
-  return `"""API routes."""
+	return `"""API routes."""
 `;
 }
 
 // ─── Frontend (Next.js) ──────────────────────────────────────────────────
 
 export function frontendPackageJson(config: ProjectConfig): string {
-  return JSON.stringify(
-    {
-      name: `${config.name}-frontend`,
-      version: "0.1.0",
-      private: true,
-      scripts: {
-        dev: "next dev",
-        build: "next build",
-        start: "next start",
-        lint: "next lint",
-        typecheck: "tsc --noEmit",
-        test: "vitest run",
-      },
-      dependencies: {
-        "@jamaalbuilds/ai-toolkit": "^0.1.0",
-        next: "^15.2.0",
-        react: "^19.0.0",
-        "react-dom": "^19.0.0",
-      },
-      devDependencies: {
-        "@types/node": "^22.0.0",
-        "@types/react": "^19.0.0",
-        "@types/react-dom": "^19.0.0",
-        typescript: "^5.7.0",
-        vitest: "^3.0.0",
-      },
-    },
-    null,
-    2,
-  );
+	return JSON.stringify(
+		{
+			name: `${config.name}-frontend`,
+			version: "0.1.0",
+			private: true,
+			scripts: {
+				dev: "next dev",
+				build: "next build",
+				start: "next start",
+				lint: "next lint",
+				typecheck: "tsc --noEmit",
+				test: "vitest run",
+			},
+			dependencies: {
+				"@jamaalbuilds/ai-toolkit": "^0.1.0",
+				next: "^15.2.0",
+				react: "^19.0.0",
+				"react-dom": "^19.0.0",
+			},
+			devDependencies: {
+				"@types/node": "^22.0.0",
+				"@types/react": "^19.0.0",
+				"@types/react-dom": "^19.0.0",
+				typescript: "^5.7.0",
+				vitest: "^3.0.0",
+			},
+		},
+		null,
+		2,
+	);
 }
 
 export function frontendTsconfig(): string {
-  return JSON.stringify(
-    {
-      compilerOptions: {
-        target: "ES2022",
-        lib: ["dom", "dom.iterable", "ES2022"],
-        allowJs: true,
-        skipLibCheck: true,
-        strict: true,
-        noEmit: true,
-        esModuleInterop: true,
-        module: "esnext",
-        moduleResolution: "bundler",
-        resolveJsonModule: true,
-        isolatedModules: true,
-        jsx: "preserve",
-        incremental: true,
-        plugins: [{ name: "next" }],
-        paths: {
-          "@/*": ["./src/*"],
-        },
-      },
-      include: ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-      exclude: ["node_modules"],
-    },
-    null,
-    2,
-  );
+	return JSON.stringify(
+		{
+			compilerOptions: {
+				target: "ES2022",
+				lib: ["dom", "dom.iterable", "ES2022"],
+				allowJs: true,
+				skipLibCheck: true,
+				strict: true,
+				noEmit: true,
+				esModuleInterop: true,
+				module: "esnext",
+				moduleResolution: "bundler",
+				resolveJsonModule: true,
+				isolatedModules: true,
+				jsx: "preserve",
+				incremental: true,
+				plugins: [{ name: "next" }],
+				paths: {
+					"@/*": ["./src/*"],
+				},
+			},
+			include: ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+			exclude: ["node_modules"],
+		},
+		null,
+		2,
+	);
 }
 
 export function frontendNextConfig(): string {
-  return `/** @type {import('next').NextConfig} */
+	return `/** @type {import('next').NextConfig} */
 const nextConfig = {};
 
 export default nextConfig;
@@ -488,7 +486,7 @@ export default nextConfig;
 }
 
 export function frontendLayout(config: ProjectConfig): string {
-  return `import type { Metadata } from "next";
+	return `import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "${config.name}",
@@ -510,7 +508,7 @@ export default function RootLayout({
 }
 
 export function frontendPage(config: ProjectConfig): string {
-  return `export default function Home() {
+	return `export default function Home() {
   return (
     <main style={{ padding: "2rem", fontFamily: "system-ui" }}>
       <h1>${config.name}</h1>
@@ -522,7 +520,7 @@ export function frontendPage(config: ProjectConfig): string {
 }
 
 export function frontendApiClient(): string {
-  return `import { createApiClient } from "@jamaalbuilds/ai-toolkit/api";
+	return `import { createApiClient } from "@jamaalbuilds/ai-toolkit/api";
 
 /**
  * Typed HTTP client for calling the backend.

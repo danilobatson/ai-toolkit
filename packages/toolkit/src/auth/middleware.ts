@@ -30,40 +30,40 @@ import { AuthError } from "../errors/types.js";
 
 /** Extract a header value from a Request or headers-like object. */
 function getHeader(
-  request: Request | { headers: Record<string, string | undefined> },
-  name: string,
+	request: Request | { headers: Record<string, string | undefined> },
+	name: string,
 ): string | undefined {
-  if (request instanceof Request) {
-    return request.headers.get(name) ?? undefined;
-  }
-  // Plain object with headers (e.g., Express req, NestJS)
-  const headers = request.headers;
-  return headers[name] ?? headers[name.toLowerCase()];
+	if (request instanceof Request) {
+		return request.headers.get(name) ?? undefined;
+	}
+	// Plain object with headers (e.g., Express req, NestJS)
+	const headers = request.headers;
+	return headers[name] ?? headers[name.toLowerCase()];
 }
 
 /**
  * Extract org_id from X-Org-Id header. Throws AuthError if missing.
  */
 export function getOrgId(
-  request: Request | { headers: Record<string, string | undefined> },
+	request: Request | { headers: Record<string, string | undefined> },
 ): string {
-  const orgId = getHeader(request, "x-org-id");
-  if (!orgId) {
-    throw new AuthError("Missing X-Org-Id header", {
-      code: "AUTH_MISSING_ORG",
-      statusCode: 401,
-    });
-  }
-  return orgId;
+	const orgId = getHeader(request, "x-org-id");
+	if (!orgId) {
+		throw new AuthError("Missing X-Org-Id header", {
+			code: "AUTH_MISSING_ORG",
+			statusCode: 401,
+		});
+	}
+	return orgId;
 }
 
 /**
  * Extract user_id from X-User-Id header. Returns undefined if missing.
  */
 export function getUserId(
-  request: Request | { headers: Record<string, string | undefined> },
+	request: Request | { headers: Record<string, string | undefined> },
 ): string | undefined {
-  return getHeader(request, "x-user-id");
+	return getHeader(request, "x-user-id");
 }
 
 /**
@@ -71,29 +71,30 @@ export function getUserId(
  * Throws AuthError if invalid.
  */
 export function requireApiKey(
-  request: Request | { headers: Record<string, string | undefined> },
-  expectedKey?: string,
+	request: Request | { headers: Record<string, string | undefined> },
+	expectedKey?: string,
 ): string {
-  const expected = expectedKey ?? process.env.API_KEY ?? process.env.BACKEND_API_KEY;
-  if (!expected) {
-    throw new AuthError("API_KEY not configured", {
-      code: "AUTH_NO_KEY_CONFIGURED",
-      statusCode: 500,
-    });
-  }
+	const expected =
+		expectedKey ?? process.env.API_KEY ?? process.env.BACKEND_API_KEY;
+	if (!expected) {
+		throw new AuthError("API_KEY not configured", {
+			code: "AUTH_NO_KEY_CONFIGURED",
+			statusCode: 500,
+		});
+	}
 
-  const authHeader = getHeader(request, "authorization") ?? "";
-  const apiKeyHeader = getHeader(request, "x-api-key");
-  const token = apiKeyHeader ?? authHeader.replace(/^Bearer\s+/i, "").trim();
+	const authHeader = getHeader(request, "authorization") ?? "";
+	const apiKeyHeader = getHeader(request, "x-api-key");
+	const token = apiKeyHeader ?? authHeader.replace(/^Bearer\s+/i, "").trim();
 
-  if (!token || token !== expected) {
-    throw new AuthError("Invalid API key", {
-      code: "AUTH_INVALID_KEY",
-      statusCode: 401,
-    });
-  }
+	if (!token || token !== expected) {
+		throw new AuthError("Invalid API key", {
+			code: "AUTH_INVALID_KEY",
+			statusCode: 401,
+		});
+	}
 
-  return token;
+	return token;
 }
 
 /**
@@ -109,15 +110,17 @@ export function requireApiKey(
  * ```
  */
 export function createApiKeyGuard(expectedKey: string) {
-  return class ApiKeyGuard {
-    canActivate(context: {
-      switchToHttp: () => { getRequest: () => { headers: Record<string, string | undefined> } };
-    }): boolean {
-      const request = context.switchToHttp().getRequest();
-      requireApiKey(request, expectedKey);
-      return true;
-    }
-  };
+	return class ApiKeyGuard {
+		canActivate(context: {
+			switchToHttp: () => {
+				getRequest: () => { headers: Record<string, string | undefined> };
+			};
+		}): boolean {
+			const request = context.switchToHttp().getRequest();
+			requireApiKey(request, expectedKey);
+			return true;
+		}
+	};
 }
 
 /**
@@ -125,15 +128,15 @@ export function createApiKeyGuard(expectedKey: string) {
  * Convenience for routes that need both org and user.
  */
 export interface TenantContext {
-  orgId: string;
-  userId?: string;
+	orgId: string;
+	userId?: string;
 }
 
 export function getTenantContext(
-  request: Request | { headers: Record<string, string | undefined> },
+	request: Request | { headers: Record<string, string | undefined> },
 ): TenantContext {
-  return {
-    orgId: getOrgId(request),
-    userId: getUserId(request),
-  };
+	return {
+		orgId: getOrgId(request),
+		userId: getUserId(request),
+	};
 }
