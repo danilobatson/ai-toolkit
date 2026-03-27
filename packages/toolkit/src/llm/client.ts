@@ -19,6 +19,31 @@
 
 import { LLMError } from "../errors/types.js";
 
+// ─── Internal types for dynamic SDK responses ───────────────────────────────
+
+/** Shape of an Anthropic messages.create() response (fields we actually read). */
+interface AnthropicMessageResponse {
+  content: Array<{ type: string; text?: string }>;
+  model: string;
+  usage: { input_tokens: number; output_tokens: number };
+}
+
+/** Shape of an OpenAI chat.completions.create() response (fields we actually read). */
+interface OpenAICompletionResponse {
+  choices: Array<{ message?: { content?: string } }>;
+  model: string;
+  usage?: { prompt_tokens: number; completion_tokens: number };
+}
+
+/** Helper to extract HTTP status from SDK error objects. */
+function getErrorStatus(error: unknown): number | undefined {
+  if (typeof error === "object" && error !== null && "status" in error) {
+    const status = (error as { status: unknown }).status;
+    return typeof status === "number" ? status : undefined;
+  }
+  return undefined;
+}
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface LLMResponse {
@@ -119,11 +144,13 @@ function createAnthropicClient(model: string, apiKey: string): LLMClient {
     model,
 
     async complete(prompt: string, options?: CompletionOptions): Promise<LLMResponse> {
-      let Anthropic: any;
+      let Anthropic: unknown;
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         Anthropic = require("@anthropic-ai/sdk");
-        if (Anthropic.default) Anthropic = Anthropic.default;
+        if (typeof Anthropic === "object" && Anthropic !== null && "default" in Anthropic) {
+          Anthropic = (Anthropic as Record<string, unknown>).default;
+        }
       } catch {
         throw new LLMError(
           "Anthropic SDK not installed. Run: yarn add @anthropic-ai/sdk",
@@ -131,7 +158,8 @@ function createAnthropicClient(model: string, apiKey: string): LLMClient {
         );
       }
 
-      const client = new Anthropic({ apiKey });
+      const AnthropicCtor = Anthropic as new (opts: { apiKey: string }) => { messages: { create(params: Record<string, unknown>): Promise<AnthropicMessageResponse> } };
+      const client = new AnthropicCtor({ apiKey });
       const start = Date.now();
 
       try {
@@ -144,8 +172,8 @@ function createAnthropicClient(model: string, apiKey: string): LLMClient {
         });
 
         const content = response.content
-          .filter((b: any) => b.type === "text")
-          .map((b: any) => b.text)
+          .filter((b) => b.type === "text")
+          .map((b) => b.text ?? "")
           .join("");
 
         return {
@@ -163,7 +191,7 @@ function createAnthropicClient(model: string, apiKey: string): LLMClient {
           {
             provider: "anthropic",
             model,
-            retryable: (error as any)?.status >= 500,
+            retryable: (getErrorStatus(error) ?? 0) >= 500,
             cause: error instanceof Error ? error : undefined,
           },
         );
@@ -180,10 +208,10 @@ function createOpenAIClient(model: string, apiKey: string): LLMClient {
     model,
 
     async complete(prompt: string, options?: CompletionOptions): Promise<LLMResponse> {
-      let OpenAI: any;
+      let OpenAI: unknown;
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const mod = require("openai");
+        const mod: Record<string, unknown> = require("openai");
         OpenAI = mod.default ?? mod;
       } catch {
         throw new LLMError(
@@ -192,11 +220,12 @@ function createOpenAIClient(model: string, apiKey: string): LLMClient {
         );
       }
 
-      const client = new OpenAI({ apiKey });
+      const OpenAICtor = OpenAI as new (opts: { apiKey: string }) => { chat: { completions: { create(params: Record<string, unknown>): Promise<OpenAICompletionResponse> } } };
+      const client = new OpenAICtor({ apiKey });
       const start = Date.now();
 
       try {
-        const messages: any[] = [];
+        const messages: Array<{ role: string; content: string }> = [];
         if (options?.system) {
           messages.push({ role: "system", content: options.system });
         }
@@ -226,7 +255,7 @@ function createOpenAIClient(model: string, apiKey: string): LLMClient {
           {
             provider: "openai",
             model,
-            retryable: (error as any)?.status >= 500,
+            retryable: (getErrorStatus(error) ?? 0) >= 500,
             cause: error instanceof Error ? error : undefined,
           },
         );
