@@ -11,12 +11,18 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.9",
+    "husky": "9.1.7",
+    "lint-staged": "16.4.0",
     "turbo": "2.8.10",
     "typescript": "5.9.3"
+  },
+  "lint-staged": {
+    "*.ts": ["biome check --no-errors-on-unmatched"]
   },
   "packageManager": "yarn@1.22.22",
   "engines": {
