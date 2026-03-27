@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ValidationError } from "../errors/types.js";
 
 /**
  * Zod schema for all toolkit environment variables.
@@ -69,7 +70,7 @@ export function parseConfig(
       .map((issue) => `  ${issue.path.join(".")}: ${issue.message}`)
       .join("\n");
 
-    throw new Error(
+    throw new ValidationError(
       `Toolkit config validation failed:\n${issues}\n\nCheck your .env file or environment variables.`,
     );
   }
