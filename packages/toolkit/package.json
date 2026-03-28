@@ -40,6 +40,10 @@
       "types": "./dist/auth/index.d.ts",
       "import": "./dist/auth/index.js"
     },
+    "./monitor": {
+      "types": "./dist/monitor/index.d.ts",
+      "import": "./dist/monitor/index.js"
+    },
     "./observability": {
       "types": "./dist/observability/index.d.ts",
       "import": "./dist/observability/index.js"
@@ -98,7 +102,7 @@
     "@vercel/blob": ">=0.20.0",
     "ai": "6.0.141",
     "ioredis": ">=5.0.0",
-    "langfuse": ">=3.0.0",
+    "langfuse": "3.38.6",
     "openai": ">=4.0.0"
   },
   "peerDependenciesMeta": {
