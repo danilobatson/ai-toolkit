@@ -125,6 +125,23 @@ async function loadAISDK(): Promise<AISDKFunctions> {
 	}
 }
 
+// ─── Stream Helpers ────────────────────────────────────────────────────────
+
+function wrapStreamWithCallback(
+	textStream: AsyncIterable<string>,
+	onChunk?: (chunk: string) => void,
+): AsyncIterable<string> {
+	if (!onChunk) return textStream;
+	const cb = onChunk;
+	const original = textStream;
+	return (async function* () {
+		for await (const chunk of original) {
+			cb(chunk);
+			yield chunk;
+		}
+	})();
+}
+
 // ─── Usage Helpers ──────────────────────────────────────────────────────────
 
 function extractUsage(usage: unknown): TokenUsage {
@@ -320,21 +337,8 @@ export function createAI(config?: AIConfig): AIClient {
 				return usage;
 			});
 
-			// If onChunk callback provided, create a tee'd stream
-			let textStream = typedResult.textStream;
-			if (options?.onChunk) {
-				const cb = options.onChunk;
-				const original = textStream;
-				textStream = (async function* () {
-					for await (const chunk of original) {
-						cb(chunk);
-						yield chunk;
-					}
-				})();
-			}
-
 			return {
-				textStream,
+				textStream: wrapStreamWithCallback(typedResult.textStream, options?.onChunk),
 				text: typedResult.text,
 				usage: usagePromise,
 				provider: resolvedProvider,
