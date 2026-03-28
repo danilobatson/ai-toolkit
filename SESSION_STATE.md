@@ -1,11 +1,27 @@
 # AI Toolkit — Session State
 > Last updated: 2026-03-28
-> Last session: Complete CI and infrastructure setup
+> Last session: Fix deferred code quality issues
 
 ## Current Phase
 Phase 2 — Integration, polish, remaining modules.
 
 ## What Was Just Completed
+
+### Session 21: Code Quality Refactoring
+1. **ai/ai-client.ts** — extracted `wrapStreamWithCallback` helper, stream method now under 50 lines
+2. **database/vector.ts** — extracted `loadDrizzleHelpers` and `getDistanceExpression`, vectorSearch reduced from 117 to ~50 lines
+3. **monitor/monitor.ts** — extracted `recordTraceCost`, `scoreLangfuse`, `addToBucket` helpers; trace reduced from 88 to ~40 lines, getCostReport from 66 to ~45 lines
+4. **agents/types.ts** — replaced `z.record(z.unknown())` with proper `GraphAgentNodeSchema` and `GraphEdgeSchema`; removed duplicate manual validation in agents.ts
+5. **database/database.ts** — `defaultDriver()` now uses provider param: neon → neon-http, others → postgres-js
+6. **workflow/workflow.ts** — `aiStep` accepts optional `pricing` config (`inputCostPerMillionTokens`, `outputCostPerMillionTokens`), defaults to $3/$15
+
+Commits:
+- `fe002fb refactor(ai): extract wrapStreamWithCallback to reduce stream method length`
+- `43723b9 refactor(database): extract vectorSearch helpers to reduce function length`
+- `e5802ac refactor(monitor): extract trace and cost report helpers to reduce function length`
+- `b1d20e6 refactor(agents): tighten Zod schemas with proper shapes, remove duplicate validation`
+- `bcee839 fix(database): use provider param in defaultDriver for neon auto-detection`
+- `761142d feat(workflow): make aiStep cost estimates configurable via pricing option`
 
 ### Session 20: CI & Infrastructure Setup
 1. **biome.json** — explicit lint rules: noExplicitAny (error), noUnusedImports (error), useConst (error), noConsole (warn with overrides for monitor/observability/CLI/rate-limiter), organizeImports (on)
@@ -39,7 +55,7 @@ Phase 2 continues:
 - None
 
 ## Test Baseline
-- Total tests: 586 passing, 0 todo (30 test files)
+- Total tests: 588 passing, 0 todo (30 test files)
 - Build: PASS (typecheck clean)
 - Lint: PASS (biome clean with biome.json, 91 files checked)
 - Semantic checks: 5/5 passing
