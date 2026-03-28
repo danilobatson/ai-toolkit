@@ -117,6 +117,7 @@
     "@langchain/core": "1.1.36",
     "@langchain/textsplitters": "1.0.1",
     "@llamaindex/liteparse": "1.4.0",
+    "inngest": "4.1.0",
     "langfuse": "3.38.6",
     "openai": ">=4.0.0"
   },
@@ -134,6 +135,7 @@
     "@langchain/core": { "optional": true },
     "@langchain/textsplitters": { "optional": true },
     "@llamaindex/liteparse": { "optional": true },
+    "inngest": { "optional": true },
     "langfuse": { "optional": true },
     "openai": { "optional": true }
   },
