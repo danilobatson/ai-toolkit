@@ -60,6 +60,10 @@
       "types": "./dist/cache/index.d.ts",
       "import": "./dist/cache/index.js"
     },
+    "./chain": {
+      "types": "./dist/chain/index.d.ts",
+      "import": "./dist/chain/index.js"
+    },
     "./api": {
       "types": "./dist/api/index.d.ts",
       "import": "./dist/api/index.js"
@@ -102,6 +106,8 @@
     "@vercel/blob": ">=0.20.0",
     "ai": "6.0.141",
     "ioredis": ">=5.0.0",
+    "@langchain/core": "1.1.36",
+    "@langchain/textsplitters": "1.0.1",
     "langfuse": "3.38.6",
     "openai": ">=4.0.0"
   },
@@ -116,6 +122,8 @@
     "@vercel/blob": { "optional": true },
     "ai": { "optional": true },
     "ioredis": { "optional": true },
+    "@langchain/core": { "optional": true },
+    "@langchain/textsplitters": { "optional": true },
     "langfuse": { "optional": true },
     "openai": { "optional": true }
   },

@@ -33,6 +33,32 @@ export {
 // Cache
 export type { CacheClient, CacheOptions } from "./cache/index.js";
 export { createCache } from "./cache/index.js";
+// Chain
+export type {
+	Chain,
+	ChainConfig,
+	ChainDocument,
+	ChainStep,
+	ChatMessage,
+	ParseConfig,
+	Parser,
+	PromptConfig,
+	PromptTemplate,
+	RAGConfig,
+	RAGResult,
+	Retriever,
+	Splitter,
+	SplitterConfig,
+	SplitterLanguage,
+} from "./chain/index.js";
+export {
+	createChain,
+	createLanguageSplitter,
+	createSplitter,
+	parse,
+	prompt,
+	rag,
+} from "./chain/index.js";
 // Config
 export type { ToolkitConfig, ToolkitInstances } from "./config/index.js";
 export { initToolkit, parseConfig } from "./config/index.js";
