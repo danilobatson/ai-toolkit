@@ -73,6 +73,12 @@ export function validateFile(
 	const maxBytes = (options?.maxSizeMB ?? DEFAULT_MAX_SIZE_MB) * 1024 * 1024;
 	const allowedTypes = options?.allowedTypes ?? DEFAULT_ALLOWED_TYPES;
 
+	if (file.name !== undefined && !file.name.trim()) {
+		throw new StorageError("Filename must not be empty", {
+			code: "STORAGE_INVALID_FILENAME",
+		});
+	}
+
 	if (file.size > maxBytes) {
 		throw new StorageError(
 			`File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB (max: ${options?.maxSizeMB ?? DEFAULT_MAX_SIZE_MB}MB)`,

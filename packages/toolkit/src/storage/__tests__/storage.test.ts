@@ -24,6 +24,15 @@ describe("validateFile", () => {
 		);
 	});
 
+	it("rejects empty filename", () => {
+		expect(() =>
+			validateFile({ size: 100, type: "application/pdf", name: "" }),
+		).toThrow(/filename/i);
+		expect(() =>
+			validateFile({ size: 100, type: "application/pdf", name: "   " }),
+		).toThrow(/filename/i);
+	});
+
 	it("throws StorageError on validation failure", () => {
 		try {
 			validateFile(

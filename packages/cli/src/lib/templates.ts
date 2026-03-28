@@ -283,9 +283,6 @@ dev = [
     "httpx>=0.28.0",
 ]
 
-[tool.uv.sources]
-ai-toolkit = { path = "../../ai-toolkit/packages/toolkit-python", editable = true }
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

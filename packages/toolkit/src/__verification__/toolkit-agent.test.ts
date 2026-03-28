@@ -3,9 +3,12 @@
  * TypeScript and lint miss. These enforce project architecture rules.
  */
 import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const SRC = "packages/toolkit/src";
+const ROOT = join(import.meta.dirname, "../../../..");
+const SRC = join(ROOT, "packages/toolkit/src");
 
 function grep(pattern: string, path: string, exclude?: string): string[] {
 	const excludeFlag = exclude ? ` | grep -v "${exclude}"` : "";
@@ -46,16 +49,21 @@ describe("semantic checks", () => {
 	});
 
 	it("no ^ in dependency versions", () => {
-		try {
-			const result = execSync(
-				`grep -r '"\\^' packages/*/package.json package.json | grep -v node_modules`,
-				{ encoding: "utf-8" },
-			);
-			const matches = result.trim().split("\n").filter(Boolean);
-			expect(matches).toHaveLength(0);
-		} catch {
-			// grep exits 1 when no matches — that's success
-			expect(true).toBe(true);
+		const pkgFiles = [
+			join(ROOT, "package.json"),
+			join(ROOT, "packages/toolkit/package.json"),
+			join(ROOT, "packages/cli/package.json"),
+		];
+		const matches: string[] = [];
+		for (const file of pkgFiles) {
+			const content = readFileSync(file, "utf-8");
+			const lines = content.split("\n");
+			for (let i = 0; i < lines.length; i++) {
+				if (lines[i].includes('"^')) {
+					matches.push(`${file}:${i + 1}: ${lines[i].trim()}`);
+				}
+			}
 		}
+		expect(matches).toHaveLength(0);
 	});
 });
