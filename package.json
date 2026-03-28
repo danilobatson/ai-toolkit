@@ -12,7 +12,12 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "clean": "turbo clean",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:coverage": "turbo test -- --coverage",
+    "lint:fix": "turbo lint -- --fix",
+    "verify": "turbo typecheck && turbo lint && turbo test && turbo build",
+    "verify:quick": "turbo typecheck && turbo lint",
+    "semantic-checks": "cd packages/toolkit && npx vitest run src/__verification__/toolkit-agent.test.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.9",
