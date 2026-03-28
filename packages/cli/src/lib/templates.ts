@@ -339,7 +339,7 @@ def get_settings() -> Settings:
 `;
 }
 
-export function backendMain(config: ProjectConfig): string {
+export function backendMain(_config: ProjectConfig): string {
 	return `"""FastAPI application entrypoint."""
 
 from contextlib import asynccontextmanager
