@@ -21,6 +21,7 @@ describe("createAI", () => {
 	});
 
 	it("throws LLMError when no provider keys set", () => {
+		expect.assertions(2);
 		delete process.env.GROQ_API_KEY;
 		delete process.env.OPENROUTER_API_KEY;
 		delete process.env.ANTHROPIC_API_KEY;
@@ -71,12 +72,14 @@ describe("createAI", () => {
 	it("exposes generate, stream, structured methods", () => {
 		process.env.GROQ_API_KEY = "gsk_test";
 		const ai = createAI();
+		expect(ai.provider).toBe("groq");
 		expect(typeof ai.generate).toBe("function");
 		expect(typeof ai.stream).toBe("function");
 		expect(typeof ai.structured).toBe("function");
 	});
 
 	it("generate rejects empty prompt with ValidationError", async () => {
+		expect.assertions(2);
 		process.env.GROQ_API_KEY = "gsk_test";
 		const ai = createAI();
 		await expect(ai.generate("")).rejects.toThrow(/prompt is required/i);

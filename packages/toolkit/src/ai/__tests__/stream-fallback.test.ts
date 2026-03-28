@@ -63,8 +63,9 @@ describe("stream()", () => {
 
 		const ai = createAI({ provider: "groq" });
 		const result = await ai.stream("test prompt");
-		expect(result).toBeDefined();
-		expect(result.textStream).toBeDefined();
+		expect(result).toHaveProperty("textStream");
+		expect(result).toHaveProperty("provider");
+		expect(result.usedFallback).toBe(false);
 	});
 
 	it("BEHAVIOR — textStream yields chunks", async () => {
@@ -113,6 +114,7 @@ describe("stream()", () => {
 	});
 
 	it("ENVIRONMENT — rejects empty prompt with ValidationError", async () => {
+		expect.assertions(2);
 		const ai = createAI({ provider: "groq" });
 		await expect(ai.stream("")).rejects.toThrow(/prompt is required/i);
 
@@ -255,5 +257,109 @@ describe("executeWithFallback (via generate)", () => {
 
 		const ai = createAI({ provider: "groq" });
 		await expect(ai.generate("test")).rejects.toThrow(/server error/i);
+	});
+});
+
+describe("rate limiting", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockDetectProvider.mockReturnValue("groq");
+		mockGetDefaultModel.mockReturnValue("llama-3.3-70b-versatile");
+		mockGetDefaultFallback.mockReturnValue(undefined);
+		mockLoadModel.mockResolvedValue({ modelId: "test-model" });
+		mockEstimateCost.mockReturnValue({
+			inputCost: 0,
+			outputCost: 0,
+			totalCost: 0,
+		});
+	});
+
+	it("BEHAVIOR — throws LLMError when maxRequestsPerMinute exceeded", async () => {
+		mockGenerateText.mockResolvedValue({
+			text: "ok",
+			usage: { promptTokens: 5, completionTokens: 5 },
+			finishReason: "stop",
+		});
+
+		const ai = createAI({
+			provider: "groq",
+			maxRequestsPerMinute: 2,
+		});
+
+		await ai.generate("first");
+		await ai.generate("second");
+		await expect(ai.generate("third")).rejects.toThrow(/requests\/minute exceeded/i);
+	});
+
+	it("BEHAVIOR — throws LLMError when maxTokensPerDay exceeded", async () => {
+		mockGenerateText.mockResolvedValue({
+			text: "ok",
+			usage: { promptTokens: 50, completionTokens: 50 },
+			finishReason: "stop",
+		});
+
+		const ai = createAI({
+			provider: "groq",
+			maxTokensPerDay: 100,
+		});
+
+		// First call uses 100 tokens (50+50), filling the budget
+		await ai.generate("first");
+		// Second call should be blocked
+		await expect(ai.generate("second")).rejects.toThrow(/tokens\/day exceeded/i);
+	});
+
+	it("DATA QUALITY — rate limit error has retryable flag", async () => {
+		mockGenerateText.mockResolvedValue({
+			text: "ok",
+			usage: { promptTokens: 5, completionTokens: 5 },
+			finishReason: "stop",
+		});
+
+		const ai = createAI({
+			provider: "groq",
+			maxRequestsPerMinute: 1,
+		});
+
+		await ai.generate("first");
+		try {
+			await ai.generate("second");
+		} catch (err) {
+			expect(err).toBeInstanceOf(LLMError);
+			expect((err as LLMError).retryable).toBe(true);
+		}
+	});
+});
+
+describe("stream() — abort signal", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockDetectProvider.mockReturnValue("groq");
+		mockGetDefaultModel.mockReturnValue("llama-3.3-70b-versatile");
+		mockGetDefaultFallback.mockReturnValue(undefined);
+		mockLoadModel.mockResolvedValue({ modelId: "test-model" });
+		mockEstimateCost.mockReturnValue({
+			inputCost: 0,
+			outputCost: 0,
+			totalCost: 0,
+		});
+	});
+
+	it("BEHAVIOR — passes abortSignal to streamText", async () => {
+		const controller = new AbortController();
+		mockStreamText.mockResolvedValueOnce({
+			textStream: (async function* () {
+				yield "hello";
+			})(),
+			text: Promise.resolve("hello"),
+			usage: Promise.resolve({ promptTokens: 5, completionTokens: 5 }),
+		});
+
+		const ai = createAI({ provider: "groq" });
+		await ai.stream("test", { abortSignal: controller.signal });
+
+		expect(mockStreamText).toHaveBeenCalledWith(
+			expect.objectContaining({ abortSignal: controller.signal }),
+		);
 	});
 });

@@ -5,6 +5,7 @@ import { createLLM } from "../client.js";
 
 describe("createLLM", () => {
 	it("throws LLMError when no provider keys set", () => {
+		expect.assertions(2);
 		// Ensure env vars are not set
 		const origAnthropic = process.env.ANTHROPIC_API_KEY;
 		const origOpenai = process.env.OPENAI_API_KEY;

@@ -131,6 +131,7 @@ describe("parseDocument", () => {
 
 	// ── Level 5: PATTERN ────────────────────────────────────────────────────
 	it("throws ToolkitError on invalid input", async () => {
+		expect.assertions(1);
 		try {
 			await parseDocument("");
 		} catch (error) {
@@ -226,6 +227,7 @@ describe("chunk", () => {
 
 	// ── Level 5: PATTERN ────────────────────────────────────────────────────
 	it("all errors are ToolkitError instances", async () => {
+		expect.assertions(1);
 		try {
 			await chunk(null as unknown as string);
 		} catch (error) {
@@ -376,6 +378,7 @@ describe("ingest", () => {
 
 	// ── Level 5: PATTERN ────────────────────────────────────────────────────
 	it("all errors are ToolkitError instances", async () => {
+		expect.assertions(1);
 		try {
 			await ingest("", createMockEmbedder(), createMockStore());
 		} catch (error) {
@@ -498,6 +501,7 @@ describe("search", () => {
 
 	// ── Level 5: PATTERN ────────────────────────────────────────────────────
 	it("all errors are ToolkitError instances", async () => {
+		expect.assertions(1);
 		try {
 			await search("", createMockEmbedder(), createMockStore());
 		} catch (error) {
@@ -584,6 +588,7 @@ describe("createKnowledge", () => {
 
 	// ── Level 5: PATTERN ────────────────────────────────────────────────────
 	it("all errors are ToolkitError instances", () => {
+		expect.assertions(1);
 		try {
 			createKnowledge(null as unknown as Parameters<typeof createKnowledge>[0]);
 		} catch (error) {

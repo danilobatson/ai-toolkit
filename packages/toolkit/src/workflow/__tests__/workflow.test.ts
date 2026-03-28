@@ -430,6 +430,7 @@ describe("workflow", () => {
 
 	describe("PATTERN", () => {
 		it("all errors are ToolkitError instances", async () => {
+			expect.assertions(2);
 			try {
 				await createWorkflow({} as never);
 			} catch (error) {
@@ -439,6 +440,7 @@ describe("workflow", () => {
 		});
 
 		it("error codes use WORKFLOW_ prefix", async () => {
+			expect.assertions(1);
 			try {
 				await createWorkflow({ id: "" });
 			} catch (error) {

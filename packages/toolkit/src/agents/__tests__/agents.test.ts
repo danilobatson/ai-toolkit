@@ -121,7 +121,8 @@ describe("agents", () => {
 				name: "test-agent",
 				systemPrompt: "You are a test agent.",
 			});
-			expect(agent).toBeDefined();
+			expect(agent.name).toBe("test-agent");
+			expect(typeof agent.handler).toBe("function");
 		});
 
 		it("createGraph does not throw on valid config", async () => {
@@ -136,12 +137,14 @@ describe("agents", () => {
 					{ from: "agent-a", to: "__end__" },
 				],
 			});
-			expect(graph).toBeDefined();
+			expect(typeof graph.invoke).toBe("function");
+			expect(graph.compiledGraph).toBeTruthy();
 		});
 
 		it("route does not throw on valid condition", () => {
 			const result = route(() => "next-agent");
-			expect(result).toBeDefined();
+			expect(result.__isRoute).toBe(true);
+			expect(typeof result.condition).toBe("function");
 		});
 	});
 

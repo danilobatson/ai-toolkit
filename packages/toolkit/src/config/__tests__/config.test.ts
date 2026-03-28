@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ValidationError } from "../../errors/types.js";
 import { initToolkit, parseConfig } from "../index.js";
+import { toolkitConfigSchema } from "../schema.js";
 
 describe("parseConfig", () => {
 	it("parses valid env and returns config", () => {
@@ -65,7 +66,8 @@ describe("parseConfig", () => {
 describe("initToolkit", () => {
 	it("returns object with config and has() method", () => {
 		const toolkit = initToolkit({});
-		expect(toolkit.config).toBeDefined();
+		expect(typeof toolkit.config).toBe("object");
+		expect(toolkit.config).not.toBeNull();
 		expect(typeof toolkit.has).toBe("function");
 	});
 
@@ -80,5 +82,45 @@ describe("initToolkit", () => {
 		const toolkit = initToolkit({});
 		expect(toolkit.has("anthropic")).toBe(false);
 		expect(toolkit.has("redis")).toBe(false);
+	});
+});
+
+describe("toolkitConfigSchema", () => {
+	it("BEHAVIOR — safeParse returns success for valid env", () => {
+		const result = toolkitConfigSchema.safeParse({
+			ANTHROPIC_API_KEY: "sk-ant-test",
+			NODE_ENV: "test",
+		});
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.ANTHROPIC_API_KEY).toBe("sk-ant-test");
+			expect(result.data.NODE_ENV).toBe("test");
+		}
+	});
+
+	it("BEHAVIOR — safeParse returns failure for invalid DATABASE_URL", () => {
+		const result = toolkitConfigSchema.safeParse({
+			DATABASE_URL: "not-a-url",
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(result.error.issues.length).toBeGreaterThan(0);
+		}
+	});
+
+	it("DATA QUALITY — applies defaults for optional fields", () => {
+		const result = toolkitConfigSchema.safeParse({});
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.LOG_LEVEL).toBe("info");
+			expect(result.data.CACHE_DEFAULT_TTL).toBe(300);
+			expect(result.data.NODE_ENV).toBe("development");
+			expect(result.data.MCP_SERVER_VERSION).toBe("1.0.0");
+		}
+	});
+
+	it("ENVIRONMENT — rejects invalid NODE_ENV via safeParse", () => {
+		const result = toolkitConfigSchema.safeParse({ NODE_ENV: "staging" });
+		expect(result.success).toBe(false);
 	});
 });
