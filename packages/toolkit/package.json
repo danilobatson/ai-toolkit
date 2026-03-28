@@ -91,7 +91,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LLMS.md"
   ],
   "scripts": {
     "build": "tsc",
