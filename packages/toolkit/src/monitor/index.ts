@@ -9,16 +9,32 @@
  * import { createMonitor, trace, evaluate, getCostReport, createLogger } from '@jamaalbuilds/ai-toolkit/monitor';
  *
  * const monitor = createMonitor(); // reads from env vars
- * const result = await trace(monitor, 'rag-query', async (span) => {
- *   span.update({ input: query });
- *   const answer = await generate(ai, query);
- *   span.update({ output: answer.text });
+ * const { result, traceId } = await trace(monitor, 'rag-query', async (span) => {
+ *   span.update({ input: 'What is RAG?', model: 'gpt-4o' });
+ *   const answer = await generate(ai, 'What is RAG?');
+ *   span.update({ output: answer.text, usage: { promptTokens: 100, completionTokens: 50 } });
  *   return answer;
  * });
  *
- * await evaluate(monitor, { traceId: result.traceId, name: 'relevance', value: 0.95 });
+ * await evaluate(monitor, { traceId, name: 'relevance', value: 0.95 });
  * const report = getCostReport(monitor);
  * ```
  */
 
-// Barrel — populated by /writer
+export { createLogger } from "./logger.js";
+export { createMonitor, evaluate, getCostReport, trace } from "./monitor.js";
+export type {
+	CostEntry,
+	CostReport,
+	EvaluateOptions,
+	Logger,
+	LogLevel,
+	ModelCostSummary,
+	MonitorClient,
+	MonitorConfig,
+	ScoreDataType,
+	TokenUsage,
+	TraceAttributes,
+	TraceResult,
+	TraceSpan,
+} from "./types.js";

@@ -78,9 +78,28 @@ export {
 // Health
 export type { HealthCheckConfig, HealthCheckResult } from "./health/index.js";
 export { createHealthCheck } from "./health/index.js";
-// Observability
-export type { LangfuseConfig, Logger } from "./observability/index.js";
-export { createLogger, initLangfuse } from "./observability/index.js";
+// Monitor (v5 — replaces observability/)
+export type {
+	CostEntry,
+	CostReport,
+	EvaluateOptions,
+	Logger,
+	LogLevel,
+	ModelCostSummary,
+	MonitorClient,
+	MonitorConfig,
+	ScoreDataType,
+	TraceAttributes,
+	TraceResult,
+	TraceSpan,
+} from "./monitor/index.js";
+export {
+	createLogger,
+	createMonitor,
+	evaluate,
+	getCostReport,
+	trace,
+} from "./monitor/index.js";
 // Security
 export type {
 	AuditEvent,
