@@ -24,8 +24,10 @@ function grep(pattern: string, path: string, exclude?: string): string[] {
 }
 
 describe("semantic checks", () => {
-	it.todo("no raw throw new Error() in source — pre-existing: mcp/server-builder.ts (5), testing/mocks.ts (1), neon/db.ts (2)", () => {
-		const matches = grep("throw new Error(", SRC);
+	it("no raw throw new Error() in source (excluding deprecated neon/ and intentional testing/)", () => {
+		const matches = grep("throw new Error(", SRC)
+			.filter((line) => !line.includes("neon/"))
+			.filter((line) => !line.includes("testing/"));
 		expect(matches).toHaveLength(0);
 	});
 
