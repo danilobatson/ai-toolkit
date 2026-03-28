@@ -74,6 +74,9 @@ These are the PUBLIC names developers import. Map them to the underlying librari
 8. **No `any`** in public API. Use `unknown` + type guards if type is truly unknown.
 
 9. **No `^` in dependency versions** — pin exact versions for stability.
+   **Peer dep strategy:** Libraries we wrap directly get exact pins (tested version).
+   Libraries users likely already have (`ioredis`, `openai`, `@vercel/blob`, etc.)
+   use `>=` minimum — we only need a minimum API surface and must not force downgrades.
 
 10. **Tests use mock providers** — zero external API calls in tests.
 
