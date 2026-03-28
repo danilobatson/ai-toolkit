@@ -45,16 +45,14 @@ interface LangfuseClientLike {
 	getTraceUrl(traceId: string): Promise<string>;
 }
 
-function tryLoadLangfuse(config: {
+async function tryLoadLangfuse(config: {
 	publicKey: string;
 	secretKey: string;
 	baseUrl: string;
-}): LangfuseClientLike | null {
+}): Promise<LangfuseClientLike | null> {
 	try {
-		// Variable-based dynamic import to prevent TS from resolving peer dep
 		const moduleName = "langfuse";
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const { LangfuseClient } = require(moduleName);
+		const { LangfuseClient } = await import(moduleName);
 		return new LangfuseClient({
 			publicKey: config.publicKey,
 			secretKey: config.secretKey,
@@ -99,7 +97,9 @@ function createNoopMonitor(): MonitorClient {
  * console.log(monitor.enabled); // true if Langfuse keys found
  * ```
  */
-export function createMonitor(config?: MonitorConfig): MonitorClient {
+export async function createMonitor(
+	config?: MonitorConfig,
+): Promise<MonitorClient> {
 	if (config?.enabled === false) {
 		return createNoopMonitor();
 	}
@@ -113,7 +113,7 @@ export function createMonitor(config?: MonitorConfig): MonitorClient {
 		return createNoopMonitor();
 	}
 
-	const langfuse = tryLoadLangfuse({ publicKey, secretKey, baseUrl });
+	const langfuse = await tryLoadLangfuse({ publicKey, secretKey, baseUrl });
 
 	if (!langfuse) {
 		return createNoopMonitor();

@@ -2,6 +2,7 @@
 // Stateless functions that work with any embedder + store combination.
 
 import { ToolkitError } from "../errors/index.js";
+import { builtInSplit } from "../internal/split.js";
 import { parseDocument } from "./parser.js";
 import type {
 	ChunkOptions,
@@ -306,60 +307,4 @@ async function tryLoadChainSplitter(): Promise<SplitterFactory | null> {
 	} catch {
 		return null;
 	}
-}
-
-// ─── Internal: Built-in Splitter (fallback) ──────────────────────────────────
-
-function builtInSplit(
-	text: string,
-	separators: string[],
-	chunkSize: number,
-	chunkOverlap: number,
-): string[] {
-	if (text.length <= chunkSize) {
-		return text.trim() ? [text] : [];
-	}
-
-	let splits: string[] = [text];
-	for (const sep of separators) {
-		if (sep === "") {
-			splits = text.split("");
-			break;
-		}
-		if (text.includes(sep)) {
-			const parts: string[] = [];
-			const segments = text.split(sep);
-			for (let i = 0; i < segments.length; i++) {
-				if (i === 0) {
-					parts.push(segments[i]);
-				} else {
-					parts.push(sep + segments[i]);
-				}
-			}
-			splits = parts.filter((s) => s.length > 0);
-			break;
-		}
-	}
-
-	const chunks: string[] = [];
-	let current = "";
-
-	for (const split of splits) {
-		if (current.length + split.length > chunkSize && current.length > 0) {
-			chunks.push(current.trim());
-			if (chunkOverlap > 0 && current.length > chunkOverlap) {
-				current = current.slice(-chunkOverlap) + split;
-			} else {
-				current = split;
-			}
-		} else {
-			current += split;
-		}
-	}
-
-	if (current.trim()) {
-		chunks.push(current.trim());
-	}
-
-	return chunks;
 }

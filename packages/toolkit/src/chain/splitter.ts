@@ -5,77 +5,13 @@
  */
 
 import { ToolkitError } from "../errors/index.js";
+import { builtInSplit } from "../internal/split.js";
 import type {
 	ChainDocument,
 	Splitter,
 	SplitterConfig,
 	SplitterLanguage,
 } from "./types.js";
-
-// ─── Built-in Splitter ────────────────────────────────────────────────────
-
-function builtInSplit(
-	text: string,
-	separators: string[],
-	chunkSize: number,
-	chunkOverlap: number,
-	keepSeparator: boolean,
-): string[] {
-	if (text.length <= chunkSize) {
-		return text.trim() ? [text] : [];
-	}
-
-	// Find the best separator that creates splits
-	let splits: string[] = [text];
-	for (const sep of separators) {
-		if (sep === "") {
-			// Character-level split
-			splits = text.split("");
-			break;
-		}
-		if (text.includes(sep)) {
-			if (keepSeparator) {
-				const parts: string[] = [];
-				const segments = text.split(sep);
-				for (let i = 0; i < segments.length; i++) {
-					if (i === 0) {
-						parts.push(segments[i]);
-					} else {
-						parts.push(sep + segments[i]);
-					}
-				}
-				splits = parts.filter((s) => s.length > 0);
-			} else {
-				splits = text.split(sep).filter((s) => s.length > 0);
-			}
-			break;
-		}
-	}
-
-	// Merge splits into chunks respecting chunkSize
-	const chunks: string[] = [];
-	let current = "";
-
-	for (const split of splits) {
-		if (current.length + split.length > chunkSize && current.length > 0) {
-			chunks.push(current.trim());
-			// Overlap: keep the end of current chunk
-			if (chunkOverlap > 0 && current.length > chunkOverlap) {
-				current = current.slice(-chunkOverlap) + split;
-			} else {
-				current = split;
-			}
-		} else {
-			current += split;
-		}
-	}
-
-	if (current.trim()) {
-		chunks.push(current.trim());
-	}
-
-	return chunks;
-}
 
 // ─── LangChain Loader ─────────────────────────────────────────────────────
 
@@ -86,13 +22,12 @@ interface LangChainSplitterLike {
 	): Promise<{ pageContent: string; metadata: Record<string, unknown> }[]>;
 }
 
-function tryLoadLangChainSplitter(
+async function tryLoadLangChainSplitter(
 	config: Required<SplitterConfig>,
-): LangChainSplitterLike | null {
+): Promise<LangChainSplitterLike | null> {
 	try {
 		const moduleName = "@langchain/textsplitters";
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const { RecursiveCharacterTextSplitter } = require(moduleName);
+		const { RecursiveCharacterTextSplitter } = await import(moduleName);
 		return new RecursiveCharacterTextSplitter({
 			chunkSize: config.chunkSize,
 			chunkOverlap: config.chunkOverlap,
@@ -104,14 +39,13 @@ function tryLoadLangChainSplitter(
 	}
 }
 
-function tryLoadLangChainLanguageSplitter(
+async function tryLoadLangChainLanguageSplitter(
 	language: string,
 	config: { chunkSize: number; chunkOverlap: number },
-): LangChainSplitterLike | null {
+): Promise<LangChainSplitterLike | null> {
 	try {
 		const moduleName = "@langchain/textsplitters";
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const { RecursiveCharacterTextSplitter } = require(moduleName);
+		const { RecursiveCharacterTextSplitter } = await import(moduleName);
 		return RecursiveCharacterTextSplitter.fromLanguage(language, {
 			chunkSize: config.chunkSize,
 			chunkOverlap: config.chunkOverlap,
@@ -158,13 +92,6 @@ export function createSplitter(config?: SplitterConfig): Splitter {
 		});
 	}
 
-	const langChainSplitter = tryLoadLangChainSplitter({
-		chunkSize,
-		chunkOverlap,
-		separators,
-		keepSeparator,
-	});
-
 	return {
 		async split(text: string): Promise<string[]> {
 			if (typeof text !== "string") {
@@ -176,6 +103,13 @@ export function createSplitter(config?: SplitterConfig): Splitter {
 			if (!text.trim()) {
 				return [];
 			}
+
+			const langChainSplitter = await tryLoadLangChainSplitter({
+				chunkSize,
+				chunkOverlap,
+				separators,
+				keepSeparator,
+			});
 
 			if (langChainSplitter) {
 				try {
@@ -206,6 +140,13 @@ export function createSplitter(config?: SplitterConfig): Splitter {
 					},
 				);
 			}
+
+			const langChainSplitter = await tryLoadLangChainSplitter({
+				chunkSize,
+				chunkOverlap,
+				separators,
+				keepSeparator,
+			});
 
 			if (langChainSplitter) {
 				try {
@@ -270,20 +211,16 @@ export function createLanguageSplitter(
 	const chunkSize = config?.chunkSize ?? 1000;
 	const chunkOverlap = config?.chunkOverlap ?? 200;
 
-	if (chunkOverlap >= chunkSize) {
-		throw new ToolkitError("chunkOverlap must be less than chunkSize", {
+	if (chunkSize <= 0) {
+		throw new ToolkitError("chunkSize must be a positive number", {
 			code: "CHAIN_INVALID_SPLITTER_CONFIG",
 		});
 	}
 
-	const langChainSplitter = tryLoadLangChainLanguageSplitter(language, {
-		chunkSize,
-		chunkOverlap,
-	});
-
-	// If LangChain unavailable, fall back to default splitter
-	if (!langChainSplitter) {
-		return createSplitter({ chunkSize, chunkOverlap });
+	if (chunkOverlap >= chunkSize) {
+		throw new ToolkitError("chunkOverlap must be less than chunkSize", {
+			code: "CHAIN_INVALID_SPLITTER_CONFIG",
+		});
 	}
 
 	return {
@@ -298,14 +235,29 @@ export function createLanguageSplitter(
 				return [];
 			}
 
-			try {
-				return await langChainSplitter.splitText(text);
-			} catch (error) {
-				throw new ToolkitError("Language-aware splitting failed", {
-					code: "CHAIN_SPLIT_FAILED",
-					cause: error instanceof Error ? error : undefined,
-				});
+			const langChainSplitter = await tryLoadLangChainLanguageSplitter(
+				language,
+				{ chunkSize, chunkOverlap },
+			);
+
+			if (langChainSplitter) {
+				try {
+					return await langChainSplitter.splitText(text);
+				} catch (error) {
+					throw new ToolkitError("Language-aware splitting failed", {
+						code: "CHAIN_SPLIT_FAILED",
+						cause: error instanceof Error ? error : undefined,
+					});
+				}
 			}
+
+			// LangChain unavailable — fall back to built-in splitter
+			return builtInSplit(
+				text,
+				["\n\n", "\n", " ", ""],
+				chunkSize,
+				chunkOverlap,
+			);
 		},
 
 		async splitDocuments(docs: ChainDocument[]): Promise<ChainDocument[]> {
@@ -318,22 +270,44 @@ export function createLanguageSplitter(
 				);
 			}
 
-			try {
-				const lcDocs = docs.map((d) => ({
-					pageContent: d.content,
-					metadata: d.metadata,
-				}));
-				const result = await langChainSplitter.splitDocuments(lcDocs);
-				return result.map((d) => ({
-					content: d.pageContent,
-					metadata: d.metadata,
-				}));
-			} catch (error) {
-				throw new ToolkitError("Language-aware document splitting failed", {
-					code: "CHAIN_SPLIT_FAILED",
-					cause: error instanceof Error ? error : undefined,
-				});
+			const langChainSplitter = await tryLoadLangChainLanguageSplitter(
+				language,
+				{ chunkSize, chunkOverlap },
+			);
+
+			if (langChainSplitter) {
+				try {
+					const lcDocs = docs.map((d) => ({
+						pageContent: d.content,
+						metadata: d.metadata,
+					}));
+					const result = await langChainSplitter.splitDocuments(lcDocs);
+					return result.map((d) => ({
+						content: d.pageContent,
+						metadata: d.metadata,
+					}));
+				} catch (error) {
+					throw new ToolkitError("Language-aware document splitting failed", {
+						code: "CHAIN_SPLIT_FAILED",
+						cause: error instanceof Error ? error : undefined,
+					});
+				}
 			}
+
+			// LangChain unavailable — fall back to built-in splitter
+			const result: ChainDocument[] = [];
+			for (const doc of docs) {
+				const chunks = builtInSplit(
+					doc.content,
+					["\n\n", "\n", " ", ""],
+					chunkSize,
+					chunkOverlap,
+				);
+				for (const chunk of chunks) {
+					result.push({ content: chunk, metadata: { ...doc.metadata } });
+				}
+			}
+			return result;
 		},
 	};
 }

@@ -1,6 +1,7 @@
 // ─── Document Parser ─────────────────────────────────────────────────────────
 // Wraps @llamaindex/liteparse for PDF parsing, with plain text fallback.
 
+import { extname } from "node:path";
 import { ToolkitError } from "../errors/index.js";
 import type { KnowledgeDocument } from "./types.js";
 
@@ -10,11 +11,10 @@ interface LiteParseLike {
 	parse(input: string | Buffer | Uint8Array): Promise<{ text: string }>;
 }
 
-function tryLoadLiteParse(): LiteParseLike | null {
+async function tryLoadLiteParse(): Promise<LiteParseLike | null> {
 	try {
 		const moduleName = "@llamaindex/liteparse";
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const { LiteParse } = require(moduleName);
+		const { LiteParse } = await import(moduleName);
 		return new LiteParse({ ocrEnabled: false }) as LiteParseLike;
 	} catch {
 		return null;
@@ -39,9 +39,20 @@ function isPdfPath(input: string): boolean {
 	return input.toLowerCase().endsWith(".pdf");
 }
 
+/**
+ * Heuristic to detect file paths vs plain text.
+ * Uses path.extname() and requires no whitespace (file paths don't contain spaces
+ * in this context, or are short enough to be plausible paths).
+ * Strings with spaces and length > 200 are almost certainly text, not paths.
+ */
 function isFilePath(input: string): boolean {
-	// Heuristic: if string ends with a known extension or contains path separators
-	return /\.(pdf|md|txt|docx|pptx|xlsx)$/i.test(input) || /[/\\]/.test(input);
+	// Long strings with spaces are text, not paths
+	if (input.length > 200 && input.includes(" ")) {
+		return false;
+	}
+	const ext = extname(input);
+	// Must have a real extension (2-11 chars including dot, alphanumeric only)
+	return ext.length > 1 && ext.length <= 11 && /^\.[a-zA-Z0-9]+$/.test(ext);
 }
 
 // ─── parseDocument() ─────────────────────────────────────────────────────────
@@ -132,7 +143,7 @@ async function parsePdfWithLiteParse(
 	input: string | Buffer | Uint8Array,
 	metadata: Record<string, unknown>,
 ): Promise<KnowledgeDocument> {
-	const parser = tryLoadLiteParse();
+	const parser = await tryLoadLiteParse();
 	if (!parser) {
 		throw new ToolkitError(
 			"PDF parsing requires @llamaindex/liteparse. Install it: yarn add @llamaindex/liteparse",

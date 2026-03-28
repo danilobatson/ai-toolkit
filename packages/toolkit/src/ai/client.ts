@@ -157,15 +157,8 @@ function createAnthropicClient(model: string, apiKey: string): LLMClient {
 		): Promise<LLMResponse> {
 			let Anthropic: unknown;
 			try {
-				// eslint-disable-next-line @typescript-eslint/no-require-imports
-				Anthropic = require("@anthropic-ai/sdk");
-				if (
-					typeof Anthropic === "object" &&
-					Anthropic !== null &&
-					"default" in Anthropic
-				) {
-					Anthropic = (Anthropic as Record<string, unknown>).default;
-				}
+				const mod: Record<string, unknown> = await import("@anthropic-ai/sdk");
+				Anthropic = mod.default ?? mod;
 			} catch {
 				throw new LLMError(
 					"Anthropic SDK not installed. Run: yarn add @anthropic-ai/sdk",
@@ -240,8 +233,7 @@ function createOpenAIClient(model: string, apiKey: string): LLMClient {
 		): Promise<LLMResponse> {
 			let OpenAI: unknown;
 			try {
-				// eslint-disable-next-line @typescript-eslint/no-require-imports
-				const mod: Record<string, unknown> = require("openai");
+				const mod: Record<string, unknown> = await import("openai");
 				OpenAI = mod.default ?? mod;
 			} catch {
 				throw new LLMError("OpenAI SDK not installed. Run: yarn add openai", {

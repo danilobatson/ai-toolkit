@@ -47,6 +47,26 @@ export interface RateLimiter {
 	reset(identifier: string): Promise<void>;
 }
 
+/**
+ * Create a rate limiter backed by a CacheClient.
+ *
+ * Uses a sliding-window counter pattern. Fails open if the cache is unavailable.
+ *
+ * @param cache - A CacheClient (Redis or in-memory) for tracking request counts.
+ * @param config - Optional rate limit configuration.
+ * @returns A RateLimiter with check() and reset() methods.
+ *
+ * @example
+ * ```ts
+ * import { createRateLimiter } from '@jamaalbuilds/ai-toolkit/security';
+ * import { createCache } from '@jamaalbuilds/ai-toolkit';
+ *
+ * const cache = createCache();
+ * const limiter = createRateLimiter(cache, { max: 100, windowSeconds: 60 });
+ * const result = await limiter.check(`user:${userId}`);
+ * if (!result.allowed) throw new ToolkitError('Rate limited');
+ * ```
+ */
 export function createRateLimiter(
 	cache: CacheClient,
 	config?: RateLimitConfig,
@@ -118,6 +138,23 @@ export interface AuditLogger {
 	logAccess(params: { orgId: string; userId: string; resource: string }): void;
 }
 
+/**
+ * Create an audit logger that emits structured JSON events to stdout.
+ *
+ * Compatible with CloudWatch, Datadog, and other log aggregators.
+ *
+ * @param serviceName - The service name included in every log entry.
+ * @returns An AuditLogger with log() and logAccess() methods.
+ *
+ * @example
+ * ```ts
+ * import { createAuditLogger } from '@jamaalbuilds/ai-toolkit/security';
+ *
+ * const audit = createAuditLogger('rag-assistant');
+ * audit.log('query_executed', { userId: 'u_123', resource: 'rag-search' });
+ * audit.logAccess({ orgId: 'org_1', userId: 'u_123', resource: 'documents' });
+ * ```
+ */
 export function createAuditLogger(serviceName: string): AuditLogger {
 	if (!serviceName) {
 		throw new ValidationError("serviceName is required for createAuditLogger");

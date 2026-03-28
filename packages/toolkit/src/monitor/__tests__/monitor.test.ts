@@ -56,22 +56,22 @@ describe("monitor", () => {
 	// ── Level 1: CRASH ─────────────────────────────────────────────────────
 
 	describe("Level 1: CRASH", () => {
-		it("createMonitor does not throw with no config", () => {
-			expect(() => createMonitor()).not.toThrow();
+		it("createMonitor does not throw with no config", async () => {
+			await expect(createMonitor()).resolves.toBeDefined();
 		});
 
-		it("createMonitor does not throw with explicit config", () => {
-			expect(() =>
+		it("createMonitor does not throw with explicit config", async () => {
+			await expect(
 				createMonitor({
 					publicKey: "pk-lf-test",
 					secretKey: "sk-lf-test",
 					baseUrl: "https://cloud.langfuse.com",
 				}),
-			).not.toThrow();
+			).resolves.toBeDefined();
 		});
 
-		it("createMonitor does not throw with enabled: false", () => {
-			expect(() => createMonitor({ enabled: false })).not.toThrow();
+		it("createMonitor does not throw with enabled: false", async () => {
+			await expect(createMonitor({ enabled: false })).resolves.toBeDefined();
 		});
 
 		it("createLogger does not throw with valid service name", () => {
@@ -356,15 +356,15 @@ describe("monitor", () => {
 	// ── Level 4: ENVIRONMENT ───────────────────────────────────────────────
 
 	describe("Level 4: ENVIRONMENT", () => {
-		it("createMonitor returns noop monitor when keys missing", () => {
-			const monitor = createMonitor();
+		it("createMonitor returns noop monitor when keys missing", async () => {
+			const monitor = await createMonitor();
 
 			expect(monitor.enabled).toBe(false);
 			expect(monitor.langfuse).toBeNull();
 		});
 
-		it("createMonitor returns noop when enabled: false even with keys", () => {
-			const monitor = createMonitor({
+		it("createMonitor returns noop when enabled: false even with keys", async () => {
+			const monitor = await createMonitor({
 				publicKey: "pk-lf-test",
 				secretKey: "sk-lf-test",
 				enabled: false,
@@ -374,7 +374,7 @@ describe("monitor", () => {
 		});
 
 		it("trace works with noop monitor (no Langfuse)", async () => {
-			const monitor = createMonitor(); // noop
+			const monitor = await createMonitor(); // noop
 
 			const { result, traceId } = await trace(monitor, "test", async (span) => {
 				span.update({ input: "test" });
@@ -386,7 +386,7 @@ describe("monitor", () => {
 		});
 
 		it("trace records costs locally even with noop monitor", async () => {
-			const monitor = createMonitor(); // noop
+			const monitor = await createMonitor(); // noop
 
 			await trace(monitor, "test", async (span) => {
 				span.update({
@@ -400,7 +400,7 @@ describe("monitor", () => {
 		});
 
 		it("evaluate is silently skipped with noop monitor", async () => {
-			const monitor = createMonitor(); // noop
+			const monitor = await createMonitor(); // noop
 
 			// Should not throw
 			await evaluate(monitor, {
@@ -410,8 +410,8 @@ describe("monitor", () => {
 			});
 		});
 
-		it("getCostReport returns empty report with no costs", () => {
-			const monitor = createMonitor();
+		it("getCostReport returns empty report with no costs", async () => {
+			const monitor = await createMonitor();
 			const report = getCostReport(monitor);
 
 			expect(report.totalOperations).toBe(0);
@@ -423,7 +423,7 @@ describe("monitor", () => {
 		});
 
 		it("trace throws on empty name", async () => {
-			const monitor = createMonitor();
+			const monitor = await createMonitor();
 
 			await expect(trace(monitor, "", async () => "test")).rejects.toThrow(
 				/non-empty name/,
@@ -493,8 +493,8 @@ describe("monitor", () => {
 	// ── Level 6: CONTRACT ──────────────────────────────────────────────────
 
 	describe("Level 6: CONTRACT", () => {
-		it("MonitorClient interface is honored by createMonitor", () => {
-			const monitor = createMonitor();
+		it("MonitorClient interface is honored by createMonitor", async () => {
+			const monitor = await createMonitor();
 
 			expect(typeof monitor.enabled).toBe("boolean");
 			expect(typeof monitor.recordCost).toBe("function");
@@ -504,7 +504,7 @@ describe("monitor", () => {
 		});
 
 		it("TraceResult interface is honored by trace", async () => {
-			const monitor = createMonitor();
+			const monitor = await createMonitor();
 
 			const result = await trace(monitor, "test", async () => "hello");
 
@@ -514,8 +514,8 @@ describe("monitor", () => {
 			expect(typeof result.traceId).toBe("string");
 		});
 
-		it("CostReport interface is honored by getCostReport", () => {
-			const monitor = createMonitor();
+		it("CostReport interface is honored by getCostReport", async () => {
+			const monitor = await createMonitor();
 
 			monitor.recordCost({
 				model: "gpt-4o",
@@ -538,9 +538,9 @@ describe("monitor", () => {
 	// ── Level 7: PROVIDER FALLBACK ─────────────────────────────────────────
 
 	describe("Level 7: PROVIDER FALLBACK", () => {
-		it("graceful degradation when Langfuse unavailable", () => {
+		it("graceful degradation when Langfuse unavailable", async () => {
 			// createMonitor without keys → noop monitor
-			const monitor = createMonitor();
+			const monitor = await createMonitor();
 
 			expect(monitor.enabled).toBe(false);
 			expect(monitor.langfuse).toBeNull();
@@ -613,7 +613,7 @@ describe("monitor", () => {
 		});
 
 		it("noop monitor flush and shutdown resolve without error", async () => {
-			const monitor = createMonitor(); // noop
+			const monitor = await createMonitor(); // noop
 
 			await expect(monitor.flush()).resolves.toBeUndefined();
 			await expect(monitor.shutdown()).resolves.toBeUndefined();
