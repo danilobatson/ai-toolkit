@@ -399,6 +399,7 @@ export async function aiStep(
 				cost: result.usage
 					? estimateStepCost(
 							result.usage as { inputTokens?: number; outputTokens?: number },
+							parsed.data.pricing,
 						)
 					: undefined,
 			};
@@ -512,13 +513,14 @@ async function tryLoadAI(): Promise<AIModuleInterface | null> {
 	}
 }
 
-function estimateStepCost(usage: {
-	inputTokens?: number;
-	outputTokens?: number;
-}): number | undefined {
+function estimateStepCost(
+	usage: { inputTokens?: number; outputTokens?: number },
+	pricing?: { inputCostPerMillionTokens: number; outputCostPerMillionTokens: number },
+): number | undefined {
 	const input = usage.inputTokens ?? 0;
 	const output = usage.outputTokens ?? 0;
 	if (input === 0 && output === 0) return undefined;
-	// Rough estimate based on typical model pricing ($3/1M input, $15/1M output)
-	return (input * 3 + output * 15) / 1_000_000;
+	const inputRate = pricing?.inputCostPerMillionTokens ?? 3;
+	const outputRate = pricing?.outputCostPerMillionTokens ?? 15;
+	return (input * inputRate + output * outputRate) / 1_000_000;
 }

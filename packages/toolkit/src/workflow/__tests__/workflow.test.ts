@@ -220,6 +220,39 @@ describe("workflow", () => {
 		});
 	});
 
+	// ─── Level 2B: BEHAVIOR — Configurable Pricing ─────────────────────────
+
+	describe("BEHAVIOR — configurable pricing", () => {
+		it("aiStep accepts pricing config in options schema", async () => {
+			const step = createMockStep();
+			step.run.mockImplementation(async (_id, fn) => fn());
+
+			// Should not throw with pricing config
+			const result = await aiStep(step, {
+				stepId: "priced",
+				prompt: "Hello",
+				fallback: "fallback",
+				pricing: {
+					inputCostPerMillionTokens: 1,
+					outputCostPerMillionTokens: 2,
+				},
+			});
+			expect(result.text).toBe("fallback");
+		});
+
+		it("aiStep uses default pricing when not provided", async () => {
+			const step = createMockStep();
+			step.run.mockImplementation(async (_id, fn) => fn());
+
+			const result = await aiStep(step, {
+				stepId: "default-price",
+				prompt: "Hello",
+				fallback: "fallback",
+			});
+			expect(result.usedFallback).toBe(true);
+		});
+	});
+
 	// ─── Level 3: DATA QUALITY ──────────────────────────────────────────────
 
 	describe("DATA QUALITY", () => {

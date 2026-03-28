@@ -48,6 +48,14 @@ export const HITLOptionsSchema = z.object({
 	match: z.string().optional(),
 });
 
+/** Schema for cost pricing configuration. */
+export const PricingConfigSchema = z.object({
+	/** Cost per million input tokens in USD. Default: 3. */
+	inputCostPerMillionTokens: z.number().min(0),
+	/** Cost per million output tokens in USD. Default: 15. */
+	outputCostPerMillionTokens: z.number().min(0),
+});
+
 /** Schema for aiStep options. */
 export const AIStepOptionsSchema = z.object({
 	/** Step ID for logging and memoization. */
@@ -58,6 +66,8 @@ export const AIStepOptionsSchema = z.object({
 	model: z.string().optional(),
 	/** Optional fallback response if AI call fails. */
 	fallback: z.string().optional(),
+	/** Optional pricing config for cost estimation. */
+	pricing: PricingConfigSchema.optional(),
 });
 
 // ─── Types ──────────────────────────────────────────────────────────────────
