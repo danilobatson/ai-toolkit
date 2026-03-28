@@ -5,6 +5,42 @@ All notable changes to `@jamaalbuilds/ai-toolkit` will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-03-28
+
+### Added
+- monitor: `getTraces()`, `getTrace()`, `onTrace()`, `exportMetrics()` — self-contained observability without Langfuse
+- In-memory trace store with configurable max (default 1000, FIFO eviction)
+- 7 cross-module integration tests (AI+Security, Knowledge+DB, RAG, Workflow, Agents, Monitor, MCP)
+- 34 security penetration tests (PII bypass, SQL injection, guardrail bypass, rate limiter abuse)
+- JSDoc `@example` on all 92+ exported types across 9 modules
+- SELF_HOSTED.md — Ollama, Langfuse, Postgres, Redis self-hosted deployment guide
+- README expanded with per-module sections for all 17 modules
+- CONTRIBUTING.md, SECURITY.md, LICENSE
+- biome.json with explicit lint rules
+- CodeQL security scanning in CI
+- Coverage thresholds (60% lines/functions)
+- Bundle size tracking in CI
+- License audit in CI
+- Renovate dependency management
+- PR template with quality checklist
+
+### Fixed
+- SQL injection prevention in `vectorSearchRaw` (`validateIdentifier`)
+- Agent message reducer accumulates instead of overwrites
+- Stream rate limit checked before model loading
+- Trace IDs use `crypto.randomUUID` (no cold start collisions)
+- All `require()` converted to `import()` for ESM consistency
+- `mockLLM` throws `LLMError` instead of raw `Error`
+- Rate limiter validates cache parameter
+- All error messages include `yarn add` not `npm install`
+
+### Changed
+- `createAI` factory refactored (140 lines to 25 lines)
+- `tokensToday` renamed to `tokensInWindow` (accurate naming)
+- `defaultDriver` uses provider param (`neon` to `neon-http`)
+- `aiStep` accepts configurable pricing
+- Extracted `builtInSplit` to shared `internal/` utility
+
 ## [0.1.0] - 2026-03-28
 
 ### Added
