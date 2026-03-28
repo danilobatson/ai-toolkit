@@ -235,6 +235,133 @@ test('AI pipeline', async () => {
 All v5 mocks: `mockAI`, `mockChain`, `mockAgents`, `mockKnowledge`, `mockMonitor`, `mockWorkflow`.
 Legacy mocks: `mockCache`, `mockLLM`, `mockDb`, `mockDatabase`.
 
+## Config — Environment Validation
+
+No peer deps required.
+
+```typescript
+import { initToolkit, parseConfig } from '@jamaalbuilds/ai-toolkit/config';
+
+// Validate all env vars at startup — throws on missing/invalid
+const config = initToolkit();
+console.log(config.nodeEnv, config.logLevel);
+
+// Or parse manually with a custom schema
+const custom = parseConfig(); // uses built-in toolkitConfigSchema
+```
+
+## Errors — Typed Error Hierarchy
+
+No peer deps required.
+
+```typescript
+import { ToolkitError, LLMError, ValidationError, RateLimitError } from '@jamaalbuilds/ai-toolkit/errors';
+
+try {
+  await ai.generate('test');
+} catch (err) {
+  if (err instanceof RateLimitError) {
+    console.log(`Retry after ${err.retryAfter}s`);
+  } else if (err instanceof LLMError) {
+    console.log(`Provider ${err.provider} failed: ${err.message}`);
+  }
+}
+```
+
+Error types: `ToolkitError`, `LLMError`, `ValidationError`, `RateLimitError`, `AuthError`, `StorageError`, `CacheError`, `ApiClientError`.
+
+## Auth — API Key Validation & RBAC
+
+No peer deps required.
+
+```typescript
+import { createApiKeyGuard, requireApiKey, getTenantContext } from '@jamaalbuilds/ai-toolkit/auth';
+
+// Express/Next.js middleware — validates X-API-Key header
+const guard = createApiKeyGuard({ apiKey: process.env.API_KEY });
+
+// Or one-shot validation
+requireApiKey(request); // throws AuthError if invalid
+
+// Multi-tenant context from headers
+const tenant = getTenantContext(request); // { orgId, userId }
+```
+
+## Cache — Redis or In-Memory
+
+Peer deps: `yarn add ioredis` (optional — falls back to in-memory)
+
+```typescript
+import { createCache } from '@jamaalbuilds/ai-toolkit/cache';
+
+const cache = createCache(); // auto-detects REDIS_URL or uses in-memory
+
+await cache.set('user:123', { name: 'Alice' }, { ttl: 3600 });
+const user = await cache.get('user:123');
+await cache.invalidate('user:123');
+await cache.invalidatePrefix('user:'); // clear all user:* keys
+```
+
+## Storage — File Upload with Validation
+
+Peer deps: `yarn add @vercel/blob`
+
+```typescript
+import { validateFile, uploadDocument, deleteDocument, listDocuments } from '@jamaalbuilds/ai-toolkit/storage';
+
+// Validate before upload
+validateFile(file, { maxSizeBytes: 10_000_000, allowedTypes: ['application/pdf'] });
+
+// Upload to Vercel Blob
+const result = await uploadDocument(file, { folder: 'reports' });
+console.log(result.url);
+
+// List and delete
+const docs = await listDocuments({ prefix: 'reports/' });
+await deleteDocument(result.url);
+```
+
+## Health — Self-Diagnostics
+
+No peer deps required.
+
+```typescript
+import { createHealthCheck } from '@jamaalbuilds/ai-toolkit/health';
+
+const check = createHealthCheck({
+  checks: {
+    database: async () => { await db.query('SELECT 1'); },
+    redis: async () => { await cache.get('__health'); },
+  },
+});
+
+const report = await check(); // { status: 'healthy', checks: { database: 'ok', redis: 'ok' } }
+```
+
+## Data — Shared API Types
+
+No peer deps required. Types only — no runtime code.
+
+```typescript
+import type { PaginatedResponse, ErrorResponse, ApiResult } from '@jamaalbuilds/ai-toolkit/data';
+
+function listUsers(): PaginatedResponse<User> {
+  return { data: users, total: 100, page: 1, pageSize: 20 };
+}
+```
+
+## API — HTTP Client with Retry
+
+No peer deps required.
+
+```typescript
+import { createApiClient } from '@jamaalbuilds/ai-toolkit/api';
+
+const api = createApiClient({ baseUrl: 'https://api.example.com', retries: 3 });
+const users = await api.get('/users');
+const created = await api.post('/users', { name: 'Alice' });
+```
+
 ## MCP — Model Context Protocol Servers
 
 ```typescript

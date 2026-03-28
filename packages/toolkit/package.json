@@ -93,7 +93,8 @@
     "dist",
     "README.md",
     "LLMS.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "SELF_HOSTED.md"
   ],
   "scripts": {
     "build": "tsc",
