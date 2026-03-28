@@ -107,6 +107,46 @@ async function loadDistanceFunctions(): Promise<DistanceFunctions> {
 	}
 }
 
+// ─── Drizzle Helpers ──────────────────────────────────────────────────────
+
+interface DrizzleHelpers {
+	sql: (strings: TemplateStringsArray, ...values: unknown[]) => unknown;
+	desc: (column: unknown) => unknown;
+	gt: (column: unknown, value: unknown) => unknown;
+}
+
+async function loadDrizzleHelpers(): Promise<DrizzleHelpers> {
+	try {
+		const mod = await import(DRIZZLE_ORM_PATH);
+		return {
+			sql: mod.sql as DrizzleHelpers["sql"],
+			desc: mod.desc as DrizzleHelpers["desc"],
+			gt: mod.gt as DrizzleHelpers["gt"],
+		};
+	} catch {
+		throw new ToolkitError(
+			"drizzle-orm not found. Install: yarn add drizzle-orm",
+			{ code: "DATABASE_MISSING_DEPENDENCY", statusCode: 500 },
+		);
+	}
+}
+
+function getDistanceExpression(
+	distanceFns: DistanceFunctions,
+	metric: DistanceMetric,
+	column: unknown,
+	queryVector: number[],
+): unknown {
+	switch (metric) {
+		case "l2":
+			return distanceFns.l2Distance(column, queryVector);
+		case "innerProduct":
+			return distanceFns.innerProduct(column, queryVector);
+		default:
+			return distanceFns.cosineDistance(column, queryVector);
+	}
+}
+
 // ─── Vector Search Options ─────────────────────────────────────────────────
 
 /** Full options for vectorSearch including table/column references. */
@@ -177,48 +217,14 @@ export async function vectorSearch<T = Record<string, unknown>>(
 	const limit = options.limit ?? 10;
 
 	const distanceFns = await loadDistanceFunctions();
+	const drizzleHelpers = await loadDrizzleHelpers();
 
-	let drizzleHelpers: {
-		sql: (strings: TemplateStringsArray, ...values: unknown[]) => unknown;
-		desc: (column: unknown) => unknown;
-		gt: (column: unknown, value: unknown) => unknown;
-	};
-	try {
-		const mod = await import(DRIZZLE_ORM_PATH);
-		drizzleHelpers = {
-			sql: mod.sql as typeof drizzleHelpers.sql,
-			desc: mod.desc as typeof drizzleHelpers.desc,
-			gt: mod.gt as typeof drizzleHelpers.gt,
-		};
-	} catch {
-		throw new ToolkitError(
-			"drizzle-orm not found. Install: yarn add drizzle-orm",
-			{ code: "DATABASE_MISSING_DEPENDENCY", statusCode: 500 },
-		);
-	}
-
-	// Select the distance function based on metric
-	let distanceExpr: unknown;
-	switch (metric) {
-		case "l2":
-			distanceExpr = distanceFns.l2Distance(
-				options.column,
-				options.queryVector,
-			);
-			break;
-		case "innerProduct":
-			distanceExpr = distanceFns.innerProduct(
-				options.column,
-				options.queryVector,
-			);
-			break;
-		default:
-			distanceExpr = distanceFns.cosineDistance(
-				options.column,
-				options.queryVector,
-			);
-			break;
-	}
+	const distanceExpr = getDistanceExpression(
+		distanceFns,
+		metric,
+		options.column,
+		options.queryVector,
+	);
 
 	// For cosine distance: similarity = 1 - distance
 	// For L2/innerProduct: negate for ordering (lower distance = more similar)
