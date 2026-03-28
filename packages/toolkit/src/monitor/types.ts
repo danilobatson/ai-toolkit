@@ -4,10 +4,25 @@
 
 // ─── Logger Types (absorbed from observability/) ───────────────────────────
 
-/** Log severity levels. */
+/**
+ * Log severity levels.
+ *
+ * @example
+ * ```ts
+ * const level: LogLevel = 'info';
+ * ```
+ */
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
-/** Structured logger interface. */
+/**
+ * Structured logger interface.
+ *
+ * @example
+ * ```ts
+ * const logger: Logger = createLogger('my-service');
+ * logger.info('Request processed', { durationMs: 42 });
+ * ```
+ */
 export interface Logger {
 	debug(message: string, meta?: Record<string, unknown>): void;
 	info(message: string, meta?: Record<string, unknown>): void;
@@ -17,7 +32,19 @@ export interface Logger {
 
 // ─── Monitor Config ────────────────────────────────────────────────────────
 
-/** Configuration for creating a monitor client. */
+/**
+ * Configuration for creating a monitor client.
+ *
+ * @example
+ * ```ts
+ * const config: MonitorConfig = {
+ *   publicKey: 'pk-lf-xxx',
+ *   secretKey: 'sk-lf-xxx',
+ *   enabled: true,
+ * };
+ * const monitor = await createMonitor(config);
+ * ```
+ */
 export interface MonitorConfig {
 	/** Langfuse public key. Falls back to LANGFUSE_PUBLIC_KEY env var. */
 	publicKey?: string;
@@ -31,13 +58,33 @@ export interface MonitorConfig {
 
 // ─── Trace Types ───────────────────────────────────────────────────────────
 
-/** A traced span that can be updated with metadata. */
+/**
+ * A traced span that can be updated with metadata.
+ *
+ * @example
+ * ```ts
+ * const span: TraceSpan = trace.createSpan('process');
+ * span.update({ input: query, output: result, model: 'gpt-4o' });
+ * ```
+ */
 export interface TraceSpan {
 	/** Update the span with input/output or arbitrary metadata. */
 	update(attrs: TraceAttributes): void;
 }
 
-/** Attributes that can be set on a trace span. */
+/**
+ * Attributes that can be set on a trace span.
+ *
+ * @example
+ * ```ts
+ * const attrs: TraceAttributes = {
+ *   input: 'What is AI?',
+ *   output: 'AI is...',
+ *   model: 'gpt-4o',
+ *   usage: { promptTokens: 10, completionTokens: 50 },
+ * };
+ * ```
+ */
 export interface TraceAttributes {
 	/** Input to the operation. */
 	input?: unknown;
@@ -51,7 +98,14 @@ export interface TraceAttributes {
 	metadata?: Record<string, unknown>;
 }
 
-/** Token usage for cost tracking. */
+/**
+ * Token usage for cost tracking.
+ *
+ * @example
+ * ```ts
+ * const usage: TokenUsage = { promptTokens: 100, completionTokens: 250, totalTokens: 350 };
+ * ```
+ */
 export interface TokenUsage {
 	/** Input/prompt tokens consumed. */
 	promptTokens?: number;
@@ -61,7 +115,15 @@ export interface TokenUsage {
 	totalTokens?: number;
 }
 
-/** Result of a trace() call, including the traced function's return value. */
+/**
+ * Result of a trace() call, including the traced function's return value.
+ *
+ * @example
+ * ```ts
+ * const { result, traceId }: TraceResult<string> = await trace(monitor, 'generate', fn);
+ * console.log(`Trace ${traceId}: ${result}`);
+ * ```
+ */
 export interface TraceResult<T> {
 	/** The return value of the traced function. */
 	result: T;
@@ -71,10 +133,30 @@ export interface TraceResult<T> {
 
 // ─── Evaluate Types ────────────────────────────────────────────────────────
 
-/** Score data types supported by Langfuse. */
+/**
+ * Score data types supported by Langfuse.
+ *
+ * @example
+ * ```ts
+ * const dataType: ScoreDataType = 'NUMERIC';
+ * ```
+ */
 export type ScoreDataType = "NUMERIC" | "CATEGORICAL" | "BOOLEAN";
 
-/** Options for evaluating (scoring) a trace. */
+/**
+ * Options for evaluating (scoring) a trace.
+ *
+ * @example
+ * ```ts
+ * const options: EvaluateOptions = {
+ *   traceId: 'trace-abc',
+ *   name: 'relevance',
+ *   value: 0.9,
+ *   dataType: 'NUMERIC',
+ * };
+ * await evaluate(monitor, options);
+ * ```
+ */
 export interface EvaluateOptions {
 	/** The trace ID to score. */
 	traceId: string;
@@ -92,7 +174,20 @@ export interface EvaluateOptions {
 
 // ─── Cost Report Types ─────────────────────────────────────────────────────
 
-/** A single cost entry tracked locally. */
+/**
+ * A single cost entry tracked locally.
+ *
+ * @example
+ * ```ts
+ * monitor.recordCost({
+ *   model: 'gpt-4o',
+ *   module: 'ai',
+ *   usage: { promptTokens: 100, completionTokens: 50 },
+ *   estimatedCostUsd: 0.003,
+ *   traceId: 'trace-abc',
+ * });
+ * ```
+ */
 export interface CostEntry {
 	/** Timestamp of the operation. */
 	timestamp: Date;
@@ -108,7 +203,15 @@ export interface CostEntry {
 	traceId: string;
 }
 
-/** Aggregated cost report. */
+/**
+ * Aggregated cost report.
+ *
+ * @example
+ * ```ts
+ * const report: CostReport = getCostReport(monitor);
+ * console.log(`Total: $${report.totalEstimatedCostUsd} across ${report.totalOperations} ops`);
+ * ```
+ */
 export interface CostReport {
 	/** Total operations tracked. */
 	totalOperations: number;
@@ -124,7 +227,15 @@ export interface CostReport {
 	timeRange: { from: Date; to: Date } | null;
 }
 
-/** Summary of costs for a single model or module. */
+/**
+ * Summary of costs for a single model or module.
+ *
+ * @example
+ * ```ts
+ * const summary: ModelCostSummary = report.byModel['gpt-4o'];
+ * console.log(`${summary.operations} ops, ${summary.totalTokens} tokens, $${summary.estimatedCostUsd}`);
+ * ```
+ */
 export interface ModelCostSummary {
 	/** Number of operations. */
 	operations: number;
@@ -136,7 +247,16 @@ export interface ModelCostSummary {
 
 // ─── Monitor Client ────────────────────────────────────────────────────────
 
-/** The monitor client returned by createMonitor(). */
+/**
+ * The monitor client returned by createMonitor().
+ *
+ * @example
+ * ```ts
+ * const monitor: MonitorClient = await createMonitor({ enabled: true });
+ * monitor.recordCost({ model: 'gpt-4o', module: 'ai', usage: { totalTokens: 100 }, traceId: 't1' });
+ * await monitor.shutdown();
+ * ```
+ */
 export interface MonitorClient {
 	/** Whether this monitor is connected to Langfuse (vs noop). */
 	readonly enabled: boolean;

@@ -72,17 +72,79 @@ export const AIStepOptionsSchema = z.object({
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
+/**
+ * Configuration for creating a workflow client (inferred from WorkflowConfigSchema).
+ *
+ * @example
+ * ```ts
+ * const config: WorkflowConfig = { id: 'my-app', isDev: true };
+ * const client = createWorkflow(config);
+ * ```
+ */
 export type WorkflowConfig = z.infer<typeof WorkflowConfigSchema>;
 
+/**
+ * Trigger for a workflow job: event name or cron schedule.
+ *
+ * @example
+ * ```ts
+ * const eventTrigger: Trigger = { event: 'app/user.created' };
+ * const cronTrigger: Trigger = { cron: '0 * * * *' };
+ * ```
+ */
 export type Trigger = z.infer<typeof TriggerSchema>;
 
+/**
+ * Configuration for a workflow job (inferred from JobConfigSchema).
+ *
+ * @example
+ * ```ts
+ * const config: JobConfig = {
+ *   id: 'process-upload',
+ *   trigger: { event: 'app/file.uploaded' },
+ *   retries: 3,
+ * };
+ * ```
+ */
 export type JobConfig = z.infer<typeof JobConfigSchema>;
 
+/**
+ * Options for human-in-the-loop wait steps (inferred from HITLOptionsSchema).
+ *
+ * @example
+ * ```ts
+ * const options: HITLOptions = {
+ *   stepId: 'wait-approval',
+ *   event: 'app/review.completed',
+ *   timeout: '7d',
+ * };
+ * ```
+ */
 export type HITLOptions = z.infer<typeof HITLOptionsSchema>;
 
+/**
+ * Options for AI-powered workflow steps (inferred from AIStepOptionsSchema).
+ *
+ * @example
+ * ```ts
+ * const options: AIStepOptions = {
+ *   stepId: 'summarize',
+ *   prompt: 'Summarize this document',
+ *   fallback: 'Unable to summarize',
+ * };
+ * ```
+ */
 export type AIStepOptions = z.infer<typeof AIStepOptionsSchema>;
 
-/** Result of an AI step execution. */
+/**
+ * Result of an AI step execution.
+ *
+ * @example
+ * ```ts
+ * const result: AIStepResult = await aiStep(step, options);
+ * console.log(result.text, result.usedFallback ? '(fallback)' : '');
+ * ```
+ */
 export interface AIStepResult {
 	/** The generated text response. */
 	text: string;
@@ -92,7 +154,17 @@ export interface AIStepResult {
 	cost?: number;
 }
 
-/** A toolkit step helper that wraps Inngest's step object. */
+/**
+ * A toolkit step helper that wraps Inngest's step object.
+ *
+ * @example
+ * ```ts
+ * async function handler({ step }: JobContext) {
+ *   const data = await step.run('fetch', () => fetchData());
+ *   await step.sleep('pause', '5s');
+ * }
+ * ```
+ */
 export interface WorkflowStep {
 	/** Execute a durable step with automatic retry. */
 	run: <T>(id: string, handler: () => T | Promise<T>) => Promise<T>;
@@ -110,7 +182,17 @@ export interface WorkflowStep {
 	) => Promise<void>;
 }
 
-/** Context passed to a job handler. */
+/**
+ * Context passed to a job handler.
+ *
+ * @example
+ * ```ts
+ * const job = defineJob(client, config, async ({ event, step }: JobContext) => {
+ *   const data = event.data;
+ *   await step.run('process', () => processData(data));
+ * });
+ * ```
+ */
 export interface JobContext {
 	/** The triggering event. */
 	event: { name: string; data: Record<string, unknown> };
@@ -118,7 +200,15 @@ export interface JobContext {
 	step: WorkflowStep;
 }
 
-/** A defined workflow job (Inngest function wrapper). */
+/**
+ * A defined workflow job (Inngest function wrapper).
+ *
+ * @example
+ * ```ts
+ * const job: WorkflowJob = defineJob(client, config, handler);
+ * serve({ client, functions: [job] });
+ * ```
+ */
 export interface WorkflowJob {
 	/** The job configuration. */
 	config: JobConfig;
@@ -126,7 +216,15 @@ export interface WorkflowJob {
 	inngestFn: unknown;
 }
 
-/** The workflow client (Inngest client wrapper). */
+/**
+ * The workflow client (Inngest client wrapper).
+ *
+ * @example
+ * ```ts
+ * const client: WorkflowClient = createWorkflow({ id: 'my-app' });
+ * console.log(client.id);
+ * ```
+ */
 export interface WorkflowClient {
 	/** The client id. */
 	id: string;
@@ -134,7 +232,15 @@ export interface WorkflowClient {
 	inngestClient: unknown;
 }
 
-/** Options for the serve function. */
+/**
+ * Options for the serve function.
+ *
+ * @example
+ * ```ts
+ * const options: ServeOptions = { client, functions: [job1, job2] };
+ * const handler = serve(options);
+ * ```
+ */
 export interface ServeOptions {
 	/** The workflow client. */
 	client: WorkflowClient;

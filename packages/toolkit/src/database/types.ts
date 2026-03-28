@@ -4,13 +4,39 @@
 
 // ─── Provider Config ────────────────────────────────────────────────────────
 
-/** Supported database provider identifiers. */
+/**
+ * Supported database provider identifiers.
+ *
+ * @example
+ * ```ts
+ * const provider: DatabaseProvider = 'neon';
+ * ```
+ */
 export type DatabaseProvider = "neon" | "supabase" | "aws-rds" | "local";
 
-/** Drizzle driver to use for the connection. */
+/**
+ * Drizzle driver to use for the connection.
+ *
+ * @example
+ * ```ts
+ * const driver: DatabaseDriver = 'postgres-js';
+ * ```
+ */
 export type DatabaseDriver = "postgres-js" | "neon-http" | "neon-serverless";
 
-/** Configuration for the database client. */
+/**
+ * Configuration for the database client.
+ *
+ * @example
+ * ```ts
+ * const config: DatabaseConfig = {
+ *   connectionString: 'postgresql://user:pass@localhost:5432/mydb',
+ *   provider: 'local',
+ *   ssl: false,
+ * };
+ * const db = await createDatabase(config);
+ * ```
+ */
 export interface DatabaseConfig {
 	/** Postgres connection string. Default: process.env.DATABASE_URL */
 	connectionString?: string;
@@ -33,10 +59,29 @@ export interface DatabaseConfig {
 
 // ─── Vector Search ──────────────────────────────────────────────────────────
 
-/** Distance metric for vector similarity search. */
+/**
+ * Distance metric for vector similarity search.
+ *
+ * @example
+ * ```ts
+ * const metric: DistanceMetric = 'cosine';
+ * ```
+ */
 export type DistanceMetric = "cosine" | "l2" | "innerProduct";
 
-/** Options for vector similarity search. */
+/**
+ * Options for vector similarity search.
+ *
+ * @example
+ * ```ts
+ * const options: VectorSearchOptions = {
+ *   queryVector: [0.1, 0.2, 0.3],
+ *   threshold: 0.7,
+ *   limit: 10,
+ *   metric: 'cosine',
+ * };
+ * ```
+ */
 export interface VectorSearchOptions {
 	/** The embedding vector to search against. */
 	queryVector: number[];
@@ -48,7 +93,17 @@ export interface VectorSearchOptions {
 	metric?: DistanceMetric;
 }
 
-/** A single vector search result. */
+/**
+ * A single vector search result.
+ *
+ * @example
+ * ```ts
+ * const results: VectorSearchResult<{ id: number; content: string }>[] = await vectorSearch(db, options);
+ * for (const { data, similarity } of results) {
+ *   console.log(`${data.content} (score: ${similarity})`);
+ * }
+ * ```
+ */
 export interface VectorSearchResult<T = Record<string, unknown>> {
 	/** The matched row data. */
 	data: T;
@@ -58,7 +113,18 @@ export interface VectorSearchResult<T = Record<string, unknown>> {
 
 // ─── Migration ──────────────────────────────────────────────────────────────
 
-/** Options for programmatic migration. */
+/**
+ * Options for programmatic migration.
+ *
+ * @example
+ * ```ts
+ * const options: MigrateOptions = {
+ *   migrationsFolder: './drizzle',
+ *   connectionString: process.env.DATABASE_URL,
+ * };
+ * const result = await migrate(options);
+ * ```
+ */
 export interface MigrateOptions {
 	/** Path to the migrations folder. Default: "./drizzle". */
 	migrationsFolder?: string;
@@ -66,7 +132,15 @@ export interface MigrateOptions {
 	connectionString?: string;
 }
 
-/** Result of a migration run. */
+/**
+ * Result of a migration run.
+ *
+ * @example
+ * ```ts
+ * const result: MigrateResult = await migrate();
+ * console.log(`Applied ${result.appliedCount} migrations`);
+ * ```
+ */
 export interface MigrateResult {
 	/** Whether migrations were applied successfully. */
 	success: boolean;
@@ -76,7 +150,16 @@ export interface MigrateResult {
 
 // ─── Database Client ────────────────────────────────────────────────────────
 
-/** The database client interface returned by createDatabase(). */
+/**
+ * The database client interface returned by createDatabase().
+ *
+ * @example
+ * ```ts
+ * const db: DatabaseClient = await createDatabase();
+ * const users = await db.query<User>('SELECT * FROM users');
+ * await db.end();
+ * ```
+ */
 export interface DatabaseClient {
 	/** The underlying Drizzle ORM instance for typed queries. */
 	readonly db: unknown;

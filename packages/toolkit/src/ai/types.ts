@@ -6,10 +6,30 @@ import type { z } from "zod";
 
 // ─── Provider Config ────────────────────────────────────────────────────────
 
-/** Supported AI provider identifiers. */
+/**
+ * Supported AI provider identifiers.
+ *
+ * @example
+ * ```ts
+ * const provider: AIProvider = 'groq';
+ * ```
+ */
 export type AIProvider = "groq" | "openrouter" | "anthropic" | "openai";
 
-/** Configuration for the AI client. */
+/**
+ * Configuration for the AI client.
+ *
+ * @example
+ * ```ts
+ * const config: AIConfig = {
+ *   provider: 'groq',
+ *   model: 'llama-3.3-70b-versatile',
+ *   fallbackProvider: 'openrouter',
+ *   maxRequestsPerMinute: 60,
+ * };
+ * const ai = createAI(config);
+ * ```
+ */
 export interface AIConfig {
 	/** Primary provider. Default: auto-detected from env vars (Groq → OpenRouter → Anthropic → OpenAI). */
 	provider?: AIProvider;
@@ -31,7 +51,19 @@ export interface AIConfig {
 
 // ─── Generation Options ─────────────────────────────────────────────────────
 
-/** Options for text generation. */
+/**
+ * Options for text generation.
+ *
+ * @example
+ * ```ts
+ * const options: GenerateOptions = {
+ *   system: 'You are a helpful assistant.',
+ *   temperature: 0.7,
+ *   maxTokens: 1000,
+ * };
+ * const result = await ai.generate('Hello', options);
+ * ```
+ */
 export interface GenerateOptions {
 	/** System prompt. */
 	system?: string;
@@ -45,13 +77,35 @@ export interface GenerateOptions {
 	abortSignal?: AbortSignal;
 }
 
-/** Options for streaming text generation. */
+/**
+ * Options for streaming text generation.
+ *
+ * @example
+ * ```ts
+ * const options: StreamOptions = {
+ *   system: 'You are a helpful assistant.',
+ *   onChunk: (chunk) => process.stdout.write(chunk),
+ * };
+ * const stream = await ai.stream('Tell me a story', options);
+ * ```
+ */
 export interface StreamOptions extends GenerateOptions {
 	/** Callback fired on each text chunk. */
 	onChunk?: (chunk: string) => void;
 }
 
-/** Options for structured output generation. */
+/**
+ * Options for structured output generation.
+ *
+ * @example
+ * ```ts
+ * const options: StructuredOptions<typeof schema> = {
+ *   schema: z.object({ name: z.string(), age: z.number() }),
+ *   schemaName: 'Person',
+ * };
+ * const result = await ai.structured('Extract person info', options);
+ * ```
+ */
 export interface StructuredOptions<T extends z.ZodType>
 	extends GenerateOptions {
 	/** Zod schema for the expected output shape. */
@@ -64,14 +118,30 @@ export interface StructuredOptions<T extends z.ZodType>
 
 // ─── Responses ──────────────────────────────────────────────────────────────
 
-/** Token usage information. */
+/**
+ * Token usage information.
+ *
+ * @example
+ * ```ts
+ * const usage: TokenUsage = result.usage;
+ * console.log(`Used ${usage.totalTokens} tokens (${usage.inputTokens} in, ${usage.outputTokens} out)`);
+ * ```
+ */
 export interface TokenUsage {
 	inputTokens: number;
 	outputTokens: number;
 	totalTokens: number;
 }
 
-/** Cost estimate for a request. */
+/**
+ * Cost estimate for a request.
+ *
+ * @example
+ * ```ts
+ * const cost: CostEstimate = result.cost;
+ * console.log(`Cost: $${cost.totalCost.toFixed(4)} ${cost.currency}`);
+ * ```
+ */
 export interface CostEstimate {
 	inputCost: number;
 	outputCost: number;
@@ -79,7 +149,16 @@ export interface CostEstimate {
 	currency: "USD";
 }
 
-/** Response from a text generation request. */
+/**
+ * Response from a text generation request.
+ *
+ * @example
+ * ```ts
+ * const result: GenerateResult = await ai.generate('Hello');
+ * console.log(result.text);
+ * console.log(`${result.model} via ${result.provider} in ${result.latencyMs}ms`);
+ * ```
+ */
 export interface GenerateResult {
 	/** Generated text. */
 	text: string;
@@ -99,7 +178,18 @@ export interface GenerateResult {
 	finishReason: string;
 }
 
-/** Response from a streaming text generation request. */
+/**
+ * Response from a streaming text generation request.
+ *
+ * @example
+ * ```ts
+ * const stream: StreamResult = await ai.stream('Tell me a story');
+ * for await (const chunk of stream.textStream) {
+ *   process.stdout.write(chunk);
+ * }
+ * const fullText = await stream.text;
+ * ```
+ */
 export interface StreamResult {
 	/** Async iterable of text chunks. */
 	textStream: AsyncIterable<string>;
@@ -113,7 +203,15 @@ export interface StreamResult {
 	usedFallback: boolean;
 }
 
-/** Response from a structured output request. */
+/**
+ * Response from a structured output request.
+ *
+ * @example
+ * ```ts
+ * const result: StructuredResult<{ name: string }> = await ai.structured('Extract name', { schema });
+ * console.log(result.object.name);
+ * ```
+ */
 export interface StructuredResult<T> {
 	/** Parsed and validated output matching the schema. */
 	object: T;
@@ -133,7 +231,16 @@ export interface StructuredResult<T> {
 
 // ─── AI Client ──────────────────────────────────────────────────────────────
 
-/** The AI client interface returned by createAI(). */
+/**
+ * The AI client interface returned by createAI().
+ *
+ * @example
+ * ```ts
+ * const ai: AIClient = createAI({ provider: 'groq' });
+ * const result = await ai.generate('Hello');
+ * console.log(`${ai.provider}/${ai.model}: ${result.text}`);
+ * ```
+ */
 export interface AIClient {
 	/** Generate text from a prompt. */
 	generate(prompt: string, options?: GenerateOptions): Promise<GenerateResult>;

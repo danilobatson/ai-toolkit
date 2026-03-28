@@ -49,9 +49,28 @@ export const GraphConfigSchema = z.object({
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
+/**
+ * Configuration for creating an agent node (inferred from AgentConfigSchema).
+ *
+ * @example
+ * ```ts
+ * const config: AgentConfig = {
+ *   name: 'researcher',
+ *   systemPrompt: 'You are a research assistant.',
+ *   model: 'gpt-4o',
+ * };
+ * ```
+ */
 export type AgentConfig = z.infer<typeof AgentConfigSchema>;
 
-/** A message in the agent graph state. */
+/**
+ * A message in the agent graph state.
+ *
+ * @example
+ * ```ts
+ * const msg: GraphMessage = { role: 'user', content: 'Hello' };
+ * ```
+ */
 export interface GraphMessage {
 	/** Message role. */
 	role: "system" | "user" | "assistant" | "tool";
@@ -61,7 +80,17 @@ export interface GraphMessage {
 	toolCalls?: Record<string, unknown>[];
 }
 
-/** The shared state object passed between agents in a graph. */
+/**
+ * The shared state object passed between agents in a graph.
+ *
+ * @example
+ * ```ts
+ * const state: GraphState = {
+ *   messages: [{ role: 'user', content: 'Hello' }],
+ *   currentAgent: 'router',
+ * };
+ * ```
+ */
 export interface GraphState {
 	/** Conversation messages. */
 	messages: GraphMessage[];
@@ -71,7 +100,18 @@ export interface GraphState {
 	metadata?: Record<string, unknown>;
 }
 
-/** A defined agent node for use in a graph. */
+/**
+ * A defined agent node for use in a graph.
+ *
+ * @example
+ * ```ts
+ * const node: AgentNode = createAgent({
+ *   name: 'writer',
+ *   systemPrompt: 'You write content.',
+ *   handler: async (state) => ({ messages: [...state.messages, { role: 'assistant', content: 'Done' }] }),
+ * });
+ * ```
+ */
 export interface AgentNode {
 	/** The agent name (graph node key). */
 	name: string;
@@ -85,7 +125,14 @@ export interface AgentNode {
 	handler: (state: GraphState) => Promise<Partial<GraphState>>;
 }
 
-/** A static or conditional edge in the graph. */
+/**
+ * A static or conditional edge in the graph.
+ *
+ * @example
+ * ```ts
+ * const edge: GraphEdge = { from: '__start__', to: 'router' };
+ * ```
+ */
 export interface GraphEdge {
 	/** Source node name (or '__start__'). */
 	from: string;
@@ -93,7 +140,20 @@ export interface GraphEdge {
 	to: string | RouteResult;
 }
 
-/** Configuration for building a graph from agents and edges. */
+/**
+ * Configuration for building a graph from agents and edges.
+ *
+ * @example
+ * ```ts
+ * const config: GraphConfig = {
+ *   agents: [routerAgent, writerAgent],
+ *   edges: [
+ *     { from: '__start__', to: 'router' },
+ *     { from: 'router', to: route((s) => s.currentAgent ?? '__end__', ['writer', '__end__']) },
+ *   ],
+ * };
+ * ```
+ */
 export interface GraphConfig {
 	/** Agent nodes to include in the graph. */
 	agents: AgentNode[];
@@ -101,7 +161,17 @@ export interface GraphConfig {
 	edges: GraphEdge[];
 }
 
-/** The result of a route() call — a conditional routing descriptor. */
+/**
+ * The result of a route() call — a conditional routing descriptor.
+ *
+ * @example
+ * ```ts
+ * const routeResult: RouteResult = route(
+ *   (state) => state.currentAgent ?? '__end__',
+ *   ['writer', 'reviewer', '__end__'],
+ * );
+ * ```
+ */
 export interface RouteResult {
 	/** Marker to identify this as a route result. */
 	__isRoute: true;
@@ -111,10 +181,25 @@ export interface RouteResult {
 	destinations: string[];
 }
 
-/** A function that evaluates state and returns the next node name. */
+/**
+ * A function that evaluates state and returns the next node name.
+ *
+ * @example
+ * ```ts
+ * const condition: RouteCondition = (state) => state.currentAgent ?? '__end__';
+ * ```
+ */
 export type RouteCondition = (state: GraphState) => string | Promise<string>;
 
-/** A compiled, invokable graph instance. */
+/**
+ * A compiled, invokable graph instance.
+ *
+ * @example
+ * ```ts
+ * const graph: GraphInstance = await createGraph(config);
+ * const result = await graph.invoke({ messages: [{ role: 'user', content: 'Hello' }] });
+ * ```
+ */
 export interface GraphInstance {
 	/** Invoke the graph with initial state and get the final state. */
 	invoke: (input: Partial<GraphState>) => Promise<GraphState>;

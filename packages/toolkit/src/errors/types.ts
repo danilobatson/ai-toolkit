@@ -1,6 +1,13 @@
 import { ToolkitError } from "./base.js";
 
-/** LLM provider returned an error (rate limit, invalid request, server error) */
+/**
+ * LLM provider returned an error (rate limit, invalid request, server error).
+ *
+ * @example
+ * ```ts
+ * throw new LLMError('Model not found', { provider: 'groq', model: 'unknown', statusCode: 404 });
+ * ```
+ */
 export class LLMError extends ToolkitError {
 	/** Which provider failed (anthropic, openai) */
 	readonly provider: string;
@@ -31,7 +38,14 @@ export class LLMError extends ToolkitError {
 	}
 }
 
-/** Rate limit exceeded (LLM provider or application-level) */
+/**
+ * Rate limit exceeded (LLM provider or application-level).
+ *
+ * @example
+ * ```ts
+ * throw new RateLimitError('Too many requests', { retryAfter: 30 });
+ * ```
+ */
 export class RateLimitError extends ToolkitError {
 	/** Seconds until the rate limit resets */
 	readonly retryAfter?: number;
@@ -55,7 +69,14 @@ export class RateLimitError extends ToolkitError {
 	}
 }
 
-/** Authentication or authorization failure */
+/**
+ * Authentication or authorization failure.
+ *
+ * @example
+ * ```ts
+ * throw new AuthError('Invalid API key', { statusCode: 401 });
+ * ```
+ */
 export class AuthError extends ToolkitError {
 	constructor(
 		message: string,
@@ -75,7 +96,14 @@ export class AuthError extends ToolkitError {
 	}
 }
 
-/** Input validation failed (Zod parse, schema mismatch) */
+/**
+ * Input validation failed (Zod parse, schema mismatch).
+ *
+ * @example
+ * ```ts
+ * throw new ValidationError('Email is required', { fields: { email: 'must be a valid email' } });
+ * ```
+ */
 export class ValidationError extends ToolkitError {
 	/** Which fields failed validation */
 	readonly fields?: Record<string, string>;
@@ -99,7 +127,14 @@ export class ValidationError extends ToolkitError {
 	}
 }
 
-/** Storage operation failed (Vercel Blob, file system) */
+/**
+ * Storage operation failed (Vercel Blob, file system).
+ *
+ * @example
+ * ```ts
+ * throw new StorageError('Upload failed', { retryable: true, statusCode: 502 });
+ * ```
+ */
 export class StorageError extends ToolkitError {
 	constructor(
 		message: string,
@@ -120,7 +155,14 @@ export class StorageError extends ToolkitError {
 	}
 }
 
-/** Cache operation failed (Redis connection, serialization) */
+/**
+ * Cache operation failed (Redis connection, serialization).
+ *
+ * @example
+ * ```ts
+ * throw new CacheError('Redis connection lost', { cause: originalError });
+ * ```
+ */
 export class CacheError extends ToolkitError {
 	constructor(
 		message: string,
@@ -139,7 +181,14 @@ export class CacheError extends ToolkitError {
 	}
 }
 
-/** External API call failed (BFF → backend, third-party APIs) */
+/**
+ * External API call failed (BFF -> backend, third-party APIs).
+ *
+ * @example
+ * ```ts
+ * throw new ApiClientError('Timeout', { url: '/api/users', method: 'GET', statusCode: 504, retryable: true });
+ * ```
+ */
 export class ApiClientError extends ToolkitError {
 	/** The URL that was called */
 	readonly url: string;

@@ -6,7 +6,14 @@ import type { z } from "zod";
 
 // ─── Document ─────────────────────────────────────────────────────────────
 
-/** A document with content and metadata, used across chain operations. */
+/**
+ * A document with content and metadata, used across chain operations.
+ *
+ * @example
+ * ```ts
+ * const doc: ChainDocument = { content: 'Hello world', metadata: { source: 'test.txt' } };
+ * ```
+ */
 export interface ChainDocument {
 	/** The text content of the document. */
 	content: string;
@@ -16,7 +23,14 @@ export interface ChainDocument {
 
 // ─── Prompt Types ─────────────────────────────────────────────────────────
 
-/** A chat message with role and content. */
+/**
+ * A chat message with role and content.
+ *
+ * @example
+ * ```ts
+ * const msg: ChatMessage = { role: 'human', content: 'What is AI?' };
+ * ```
+ */
 export interface ChatMessage {
 	/** The role of the message sender. */
 	role: "system" | "human" | "ai";
@@ -24,7 +38,18 @@ export interface ChatMessage {
 	content: string;
 }
 
-/** Configuration for creating a prompt template. */
+/**
+ * Configuration for creating a prompt template.
+ *
+ * @example
+ * ```ts
+ * const config: PromptConfig = {
+ *   template: 'Summarize: {text}',
+ *   inputVariables: ['text'],
+ * };
+ * const tmpl = prompt(config);
+ * ```
+ */
 export interface PromptConfig {
 	/** Template string with {variable} placeholders, or array of [role, template] tuples. */
 	template: string | [role: ChatMessage["role"], template: string][];
@@ -32,7 +57,15 @@ export interface PromptConfig {
 	inputVariables?: string[];
 }
 
-/** A prompt template that formats input variables into messages. */
+/**
+ * A prompt template that formats input variables into messages.
+ *
+ * @example
+ * ```ts
+ * const tmpl: PromptTemplate = prompt({ template: 'Hello {name}' });
+ * const text = await tmpl.format({ name: 'World' });
+ * ```
+ */
 export interface PromptTemplate {
 	/** Format the template with the given values into a single string. */
 	format(values: Record<string, string>): Promise<string>;
@@ -44,7 +77,18 @@ export interface PromptTemplate {
 
 // ─── Parse Types ──────────────────────────────────────────────────────────
 
-/** Configuration for creating a structured output parser. */
+/**
+ * Configuration for creating a structured output parser.
+ *
+ * @example
+ * ```ts
+ * const config: ParseConfig<{ name: string }> = {
+ *   schema: z.object({ name: z.string() }),
+ *   name: 'PersonParser',
+ * };
+ * const parser = parse(config);
+ * ```
+ */
 export interface ParseConfig<T = unknown> {
 	/** Zod schema defining the expected output structure. */
 	schema: z.ZodType<T>;
@@ -52,7 +96,15 @@ export interface ParseConfig<T = unknown> {
 	name?: string;
 }
 
-/** A structured output parser that extracts typed data from LLM text. */
+/**
+ * A structured output parser that extracts typed data from LLM text.
+ *
+ * @example
+ * ```ts
+ * const parser: Parser<{ name: string }> = parse({ schema });
+ * const data = await parser.parse('{"name": "Alice"}');
+ * ```
+ */
 export interface Parser<T = unknown> {
 	/** Parse raw LLM output text into a typed result. */
 	parse(text: string): Promise<T>;
@@ -62,7 +114,15 @@ export interface Parser<T = unknown> {
 
 // ─── Splitter Types ───────────────────────────────────────────────────────
 
-/** Configuration for creating a text splitter. */
+/**
+ * Configuration for creating a text splitter.
+ *
+ * @example
+ * ```ts
+ * const config: SplitterConfig = { chunkSize: 500, chunkOverlap: 100 };
+ * const splitter = createSplitter(config);
+ * ```
+ */
 export interface SplitterConfig {
 	/** Maximum size of each chunk in characters. Defaults to 1000. */
 	chunkSize?: number;
@@ -74,7 +134,15 @@ export interface SplitterConfig {
 	keepSeparator?: boolean;
 }
 
-/** Supported programming languages for language-aware splitting. */
+/**
+ * Supported programming languages for language-aware splitting.
+ *
+ * @example
+ * ```ts
+ * const lang: SplitterLanguage = 'python';
+ * const splitter = createLanguageSplitter(lang, { chunkSize: 500 });
+ * ```
+ */
 export type SplitterLanguage =
 	| "cpp"
 	| "go"
@@ -90,7 +158,15 @@ export type SplitterLanguage =
 	| "latex"
 	| "html";
 
-/** A text splitter that breaks content into chunks. */
+/**
+ * A text splitter that breaks content into chunks.
+ *
+ * @example
+ * ```ts
+ * const splitter: Splitter = createSplitter({ chunkSize: 500 });
+ * const chunks = await splitter.split(longText);
+ * ```
+ */
 export interface Splitter {
 	/** Split a text string into chunks. */
 	split(text: string): Promise<string[]>;
@@ -100,7 +176,15 @@ export interface Splitter {
 
 // ─── Retriever Types ──────────────────────────────────────────────────────
 
-/** A retriever that fetches relevant documents for a query. */
+/**
+ * A retriever that fetches relevant documents for a query.
+ *
+ * @example
+ * ```ts
+ * const retriever: Retriever = { retrieve: async (q) => knowledge.search(q) };
+ * const docs = await retriever.retrieve('What is RAG?');
+ * ```
+ */
 export interface Retriever {
 	/** Retrieve documents relevant to the query. */
 	retrieve(query: string): Promise<ChainDocument[]>;
@@ -112,12 +196,28 @@ export interface Retriever {
  * A single step in a chain pipeline.
  *
  * Can be a function, a PromptTemplate, a Parser, or a named step with a transform.
+ *
+ * @example
+ * ```ts
+ * const step: ChainStep<string, string> = { name: 'uppercase', transform: (s) => s.toUpperCase() };
+ * ```
  */
 export type ChainStep<TIn = unknown, TOut = unknown> =
 	| ((input: TIn) => TOut | Promise<TOut>)
 	| { name: string; transform: (input: TIn) => TOut | Promise<TOut> };
 
-/** Configuration for creating a chain. */
+/**
+ * Configuration for creating a chain.
+ *
+ * @example
+ * ```ts
+ * const config: ChainConfig = {
+ *   name: 'summarize',
+ *   steps: [formatInput, callLLM, parseOutput],
+ * };
+ * const chain = createChain(config);
+ * ```
+ */
 export interface ChainConfig {
 	/** Ordered array of processing steps. */
 	steps: ChainStep[];
@@ -125,7 +225,15 @@ export interface ChainConfig {
 	name?: string;
 }
 
-/** A composable chain that processes input through sequential steps. */
+/**
+ * A composable chain that processes input through sequential steps.
+ *
+ * @example
+ * ```ts
+ * const chain: Chain<{ text: string }, string> = createChain({ steps, name: 'my-chain' });
+ * const result = await chain.invoke({ text: 'Hello' });
+ * ```
+ */
 export interface Chain<TInput = Record<string, unknown>, TOutput = unknown> {
 	/** Run the full chain with the given input. */
 	invoke(input: TInput): Promise<TOutput>;
@@ -137,7 +245,19 @@ export interface Chain<TInput = Record<string, unknown>, TOutput = unknown> {
 
 // ─── RAG Types ────────────────────────────────────────────────────────────
 
-/** Configuration for creating a RAG chain. */
+/**
+ * Configuration for creating a RAG chain.
+ *
+ * @example
+ * ```ts
+ * const config: RAGConfig = {
+ *   retriever,
+ *   promptTemplate: 'Context: {context}\n\nQuestion: {question}',
+ *   model: async (prompt) => ai.generate(prompt).then(r => r.text),
+ * };
+ * const ragChain = rag(config);
+ * ```
+ */
 export interface RAGConfig {
 	/** Retriever to fetch relevant documents. */
 	retriever: Retriever;
@@ -149,7 +269,15 @@ export interface RAGConfig {
 	formatDocs?: (docs: ChainDocument[]) => string;
 }
 
-/** Result of a RAG chain invocation. */
+/**
+ * Result of a RAG chain invocation.
+ *
+ * @example
+ * ```ts
+ * const result: RAGResult = await ragChain.invoke({ question: 'What is RAG?' });
+ * console.log(result.answer, `(${result.sources.length} sources)`);
+ * ```
+ */
 export interface RAGResult {
 	/** The generated answer. */
 	answer: string;
