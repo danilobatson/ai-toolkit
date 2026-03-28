@@ -149,7 +149,20 @@ function getDistanceExpression(
 
 // ─── Vector Search Options ─────────────────────────────────────────────────
 
-/** Full options for vectorSearch including table/column references. */
+/**
+ * Full options for vectorSearch including table/column references.
+ *
+ * @example
+ * ```ts
+ * const opts: VectorSearchTableOptions = {
+ *   table: documents,
+ *   column: documents.embedding,
+ *   queryVector: [0.1, 0.2, 0.3],
+ *   threshold: 0.7,
+ *   limit: 5,
+ * };
+ * ```
+ */
 export interface VectorSearchTableOptions {
 	/** The Drizzle table reference. */
 	table: unknown;

@@ -39,7 +39,14 @@ import { ValidationError } from "../errors/types.js";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-/** Content block returned by MCP tools. */
+/**
+ * Content block returned by MCP tools.
+ *
+ * @example
+ * ```ts
+ * const content: McpContent = { type: 'text', text: 'Search returned 3 results.' };
+ * ```
+ */
 export interface McpContent {
 	type: "text" | "image" | "resource";
 	text?: string;
@@ -47,13 +54,35 @@ export interface McpContent {
 	mimeType?: string;
 }
 
-/** Standard MCP tool response. */
+/**
+ * Standard MCP tool response.
+ *
+ * @example
+ * ```ts
+ * const response: McpToolResponse = {
+ *   content: [{ type: 'text', text: 'Done.' }],
+ *   isError: false,
+ * };
+ * ```
+ */
 export interface McpToolResponse {
 	content: McpContent[];
 	isError?: boolean;
 }
 
-/** Configuration for defining a tool. */
+/**
+ * Configuration for defining a tool.
+ *
+ * @example
+ * ```ts
+ * const tool: ToolDefinition = {
+ *   name: 'search_docs',
+ *   description: 'Search documents',
+ *   schema: { query: z.string() },
+ *   handler: async ({ query }) => searchDocs(query),
+ * };
+ * ```
+ */
 export interface ToolDefinition {
 	/** Tool name (snake_case, unique per server). */
 	name: string;
@@ -72,7 +101,18 @@ export interface ToolDefinition {
 	};
 }
 
-/** Configuration for defining a resource. */
+/**
+ * Configuration for defining a resource.
+ *
+ * @example
+ * ```ts
+ * const resource: ResourceDefinition = {
+ *   uri: 'config://settings',
+ *   name: 'App Settings',
+ *   handler: async () => ({ theme: 'dark', lang: 'en' }),
+ * };
+ * ```
+ */
 export interface ResourceDefinition {
 	/** Resource URI (e.g., 'config://settings', 'data://patients'). */
 	uri: string;
@@ -86,7 +126,14 @@ export interface ResourceDefinition {
 	mimeType?: string;
 }
 
-/** Server configuration. */
+/**
+ * Server configuration.
+ *
+ * @example
+ * ```ts
+ * const config: McpServerConfig = { name: 'rag-assistant', version: '1.0.0' };
+ * ```
+ */
 export interface McpServerConfig {
 	/** Server name (shown to MCP clients). */
 	name: string;
@@ -122,6 +169,16 @@ export class McpServerBuilder {
 	 * The handler's return value is automatically JSON-serialized into an MCP
 	 * text content block. If the handler throws, the error is caught and
 	 * returned as an MCP error response (no server crash).
+	 *
+	 * @example
+	 * ```ts
+	 * builder.defineTool({
+	 *   name: 'lookup_patient',
+	 *   description: 'Look up a patient by ID',
+	 *   schema: { patientId: z.string() },
+	 *   handler: async ({ patientId }) => db.query('SELECT * FROM patients WHERE id = $1', [patientId]),
+	 * });
+	 * ```
 	 */
 	defineTool(definition: ToolDefinition): this {
 		if (this._tools.has(definition.name)) {
@@ -166,6 +223,15 @@ export class McpServerBuilder {
 	 *
 	 * Resources expose data that MCP clients can surface to users or models.
 	 * The handler's return value is JSON-serialized.
+	 *
+	 * @example
+	 * ```ts
+	 * builder.defineResource({
+	 *   uri: 'data://patients',
+	 *   name: 'Patient List',
+	 *   handler: async () => db.query('SELECT id, name FROM patients LIMIT 100'),
+	 * });
+	 * ```
 	 */
 	defineResource(definition: ResourceDefinition): this {
 		if (this._resources.has(definition.uri)) {
@@ -182,6 +248,13 @@ export class McpServerBuilder {
 	 *
 	 * Uses stdio transport by default (standard for CLI-based MCP servers).
 	 * Dynamically imports the SDK — it's a peer dependency, not bundled.
+	 *
+	 * @example
+	 * ```ts
+	 * const builder = new McpServerBuilder({ name: 'my-server', version: '1.0.0' });
+	 * builder.defineTool({ name: 'ping', description: 'Ping', schema: {}, handler: async () => 'pong' });
+	 * await builder.start(); // connects via stdio transport
+	 * ```
 	 */
 	async start(): Promise<void> {
 		// Dynamic import — SDK is a peer dependency
@@ -275,12 +348,26 @@ export class McpServerBuilder {
 		return new McpTestHarness(this._tools, this._resources);
 	}
 
-	/** Get the list of registered tool names. */
+	/**
+	 * Get the list of registered tool names.
+	 *
+	 * @example
+	 * ```ts
+	 * const names = builder.toolNames; // ['search_docs', 'lookup_patient']
+	 * ```
+	 */
 	get toolNames(): string[] {
 		return [...this._tools.keys()];
 	}
 
-	/** Get the list of registered resource URIs. */
+	/**
+	 * Get the list of registered resource URIs.
+	 *
+	 * @example
+	 * ```ts
+	 * const uris = builder.resourceUris; // ['config://settings', 'data://patients']
+	 * ```
+	 */
 	get resourceUris(): string[] {
 		return [...this._resources.keys()];
 	}
@@ -314,6 +401,13 @@ export class McpTestHarness {
 
 	/**
 	 * Read a registered resource directly. Returns the raw handler output.
+	 *
+	 * @example
+	 * ```ts
+	 * const harness = builder.createTestHarness();
+	 * const settings = await harness.readResource('config://settings');
+	 * expect(settings).toEqual({ theme: 'dark' });
+	 * ```
 	 */
 	async readResource(uri: string): Promise<unknown> {
 		const resource = this._resources.get(uri);

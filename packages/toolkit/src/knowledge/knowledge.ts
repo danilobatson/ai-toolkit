@@ -39,20 +39,22 @@ import type {
  */
 export function createKnowledge(config: KnowledgeConfig): KnowledgeClient {
 	if (!config) {
-		throw new ToolkitError("createKnowledge() requires a config object", {
-			code: "KNOWLEDGE_INVALID_CONFIG",
-		});
+		throw new ToolkitError(
+			"createKnowledge() requires a config object. Pass { embedder, store } with an embedding function and a vector store implementation.",
+			{ code: "KNOWLEDGE_INVALID_CONFIG" },
+		);
 	}
 
 	if (typeof config.embedder !== "function") {
-		throw new ToolkitError("createKnowledge() requires an embedder function", {
-			code: "KNOWLEDGE_INVALID_CONFIG",
-		});
+		throw new ToolkitError(
+			"createKnowledge() requires an embedder function. Provide config.embedder as an async function: async (texts: string[]) => number[][]",
+			{ code: "KNOWLEDGE_INVALID_CONFIG" },
+		);
 	}
 
 	if (!config.store || typeof config.store.upsert !== "function") {
 		throw new ToolkitError(
-			"createKnowledge() requires a valid vector store with upsert() and search()",
+			"createKnowledge() requires a valid vector store with upsert() and search() methods. Use createDatabase() with pgvector or provide a custom store.",
 			{ code: "KNOWLEDGE_INVALID_CONFIG" },
 		);
 	}

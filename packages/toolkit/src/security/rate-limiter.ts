@@ -72,7 +72,9 @@ export function createRateLimiter(
 	config?: RateLimitConfig,
 ): RateLimiter {
 	if (!cache) {
-		throw new ValidationError("cache is required for createRateLimiter");
+		throw new ValidationError(
+			"cache is required for createRateLimiter. Create one with createCache() from '@jamaalbuilds/ai-toolkit/cache'.",
+		);
 	}
 
 	const max = config?.max ?? 100;
@@ -158,7 +160,9 @@ export interface AuditLogger {
  */
 export function createAuditLogger(serviceName: string): AuditLogger {
 	if (!serviceName) {
-		throw new ValidationError("serviceName is required for createAuditLogger");
+		throw new ValidationError(
+			"serviceName is required for createAuditLogger. Pass your app name, e.g. createAuditLogger('my-api').",
+		);
 	}
 
 	return {

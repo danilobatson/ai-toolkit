@@ -1,5 +1,14 @@
 import { parseConfig, type ToolkitConfig } from "./schema.js";
 
+/**
+ * Instances returned by initToolkit().
+ *
+ * @example
+ * ```ts
+ * const toolkit: ToolkitInstances = initToolkit();
+ * if (toolkit.has('redis')) { /* redis available *\/ }
+ * ```
+ */
 export interface ToolkitInstances {
 	/** Validated configuration */
 	config: ToolkitConfig;

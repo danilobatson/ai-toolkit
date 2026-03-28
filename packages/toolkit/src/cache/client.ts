@@ -1,10 +1,28 @@
 import { CacheError } from "../errors/types.js";
 
+/**
+ * Options for cache operations.
+ *
+ * @example
+ * ```ts
+ * await cache.set('key', value, { ttl: 600 }); // 10 minutes
+ * ```
+ */
 export interface CacheOptions {
 	/** Time-to-live in seconds. Default: 300 (5 minutes) */
 	ttl?: number;
 }
 
+/**
+ * Cache client interface for get/set/invalidate operations.
+ *
+ * @example
+ * ```ts
+ * const cache: CacheClient = createCache();
+ * await cache.set('user:1', { name: 'Alice' }, { ttl: 300 });
+ * const user = await cache.get<{ name: string }>('user:1');
+ * ```
+ */
 export interface CacheClient {
 	get<T = unknown>(key: string): Promise<T | null>;
 	set<T = unknown>(
@@ -20,6 +38,12 @@ export interface CacheClient {
 /**
  * In-memory cache adapter for development and testing.
  * Uses a Map with TTL tracking. No external dependencies.
+ *
+ * @example
+ * ```ts
+ * const cache = new MemoryCacheAdapter({ defaultTtl: 60 });
+ * await cache.set('key', 'value');
+ * ```
  */
 export class MemoryCacheAdapter implements CacheClient {
 	private store = new Map<string, { value: string; expiresAt: number }>();
@@ -93,8 +117,10 @@ export class RedisCacheAdapter implements CacheClient {
 		this.defaultTtl = options?.defaultTtl ?? 300;
 		try {
 			// ioredis is a peer dependency — fail clearly if missing
+			// Variable indirection prevents TS from resolving the peer dep
+			const ioredisPath = "ioredis";
 			// eslint-disable-next-line @typescript-eslint/no-require-imports
-			const Redis = require("ioredis");
+			const Redis = require(ioredisPath);
 			this.redis = new Redis(redisUrl, {
 				maxRetriesPerRequest: 3,
 				lazyConnect: true,

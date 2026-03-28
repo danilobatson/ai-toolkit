@@ -46,6 +46,15 @@ function getErrorStatus(error: unknown): number | undefined {
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
+/**
+ * Response from an LLM completion call.
+ *
+ * @example
+ * ```ts
+ * const response: LLMResponse = await llm.complete('Hello');
+ * console.log(response.content, response.cost);
+ * ```
+ */
 export interface LLMResponse {
 	content: string;
 	model: string;
@@ -56,6 +65,14 @@ export interface LLMResponse {
 	latencyMs: number;
 }
 
+/**
+ * Configuration for creating an LLM client.
+ *
+ * @example
+ * ```ts
+ * const config: LLMConfig = { provider: 'anthropic', model: 'claude-sonnet-4-20250514' };
+ * ```
+ */
 export interface LLMConfig {
 	/** Provider: 'anthropic' | 'openai'. Auto-detected from env vars if omitted. */
 	provider?: "anthropic" | "openai";
@@ -65,12 +82,29 @@ export interface LLMConfig {
 	apiKey?: string;
 }
 
+/**
+ * Options for a completion call.
+ *
+ * @example
+ * ```ts
+ * const opts: CompletionOptions = { system: 'You are a helpful assistant.', temperature: 0.7 };
+ * ```
+ */
 export interface CompletionOptions {
 	system?: string;
 	temperature?: number;
 	maxTokens?: number;
 }
 
+/**
+ * LLM client interface with a complete() method.
+ *
+ * @example
+ * ```ts
+ * const llm: LLMClient = createLLM();
+ * const { content } = await llm.complete('Summarize this.');
+ * ```
+ */
 export interface LLMClient {
 	complete(prompt: string, options?: CompletionOptions): Promise<LLMResponse>;
 	readonly provider: string;

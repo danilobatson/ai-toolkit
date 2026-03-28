@@ -99,6 +99,14 @@ export function mockCache(initial?: Record<string, unknown>): CacheClient & {
 
 // ─── Mock LLM ───────────────────────────────────────────────────────────────
 
+/**
+ * Options for configuring the legacy mockLLM().
+ *
+ * @example
+ * ```ts
+ * const opts: MockLLMOptions = { responses: ['Hello', 'World'], latencyMs: 50 };
+ * ```
+ */
 export interface MockLLMOptions {
 	/** Fixed response to return for every call */
 	response?: string;
@@ -127,6 +135,18 @@ export interface MockLLMResult {
 	_callCount: number;
 }
 
+/**
+ * Create a mock LLM client for testing (legacy interface).
+ * Use mockAI() for the v5 AIClient interface.
+ *
+ * @example
+ * ```ts
+ * const llm = mockLLM({ response: 'Hello!' });
+ * const result = await llm.complete('test');
+ * expect(result.content).toBe('Hello!');
+ * expect(llm._callCount).toBe(1);
+ * ```
+ */
 export function mockLLM(options?: MockLLMOptions): MockLLMResult {
 	const responses = options?.responses ?? [
 		options?.response ?? "Mock LLM response.",
@@ -268,7 +288,17 @@ export function mockDatabase(
 
 // ─── Call Tracker ──────────────────────────────────────────────────────────
 
-/** Call tracking data attached to every mock. */
+/**
+ * Call tracking data attached to every mock.
+ *
+ * @example
+ * ```ts
+ * const ai = mockAI();
+ * await ai.generate('test');
+ * expect(ai._tracker.callCount).toBe(1);
+ * expect(ai._tracker.lastArgs).toEqual(['test', undefined]);
+ * ```
+ */
 export interface CallTracker {
 	/** Total number of calls. */
 	callCount: number;

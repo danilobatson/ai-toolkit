@@ -4,6 +4,8 @@
  * Creates a health check handler that reports the status of
  * all connected services (database, cache, external APIs).
  *
+ * Requires no external dependencies — works with any async check function.
+ *
  * @example
  * ```ts
  * // Next.js API route
@@ -22,6 +24,8 @@
  * }
  * ```
  */
+
+import { ToolkitError } from "../errors/base.js";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -83,7 +87,7 @@ export function createHealthCheck(
 				await Promise.race([
 					checkFn(),
 					new Promise((_, reject) =>
-						setTimeout(() => reject(new Error("Timeout")), timeoutMs),
+						setTimeout(() => reject(new ToolkitError("Health check timeout", { code: "HEALTH_CHECK_TIMEOUT" })), timeoutMs),
 					),
 				]);
 				checks[name] = {

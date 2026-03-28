@@ -5,6 +5,15 @@
  * @internal — not part of the public API.
  */
 
+/**
+ * Split text recursively by separators into chunks.
+ *
+ * @example
+ * ```ts
+ * const chunks = builtInSplit('Hello world. Goodbye world.', ['. ', ' '], 20, 5);
+ * // ['Hello world.', 'Goodbye world.']
+ * ```
+ */
 export function builtInSplit(
 	text: string,
 	separators: string[],
@@ -12,6 +21,10 @@ export function builtInSplit(
 	chunkOverlap: number,
 	keepSeparator = true,
 ): string[] {
+	if (typeof text !== "string") {
+		return [];
+	}
+
 	if (text.length <= chunkSize) {
 		return text.trim() ? [text] : [];
 	}

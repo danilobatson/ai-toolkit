@@ -174,7 +174,8 @@ async function parseTextFile(
 	metadata: Record<string, unknown>,
 ): Promise<KnowledgeDocument> {
 	try {
-		const fs = await import("node:fs/promises");
+		const fsPath = "node:fs/promises";
+		const fs = await import(fsPath);
 		const content = await fs.readFile(filePath, "utf-8");
 		const ext = filePath.split(".").pop()?.toLowerCase() ?? "txt";
 		return {

@@ -23,6 +23,9 @@
 
 import { StorageError } from "../errors/types.js";
 
+// Variable indirection prevents TS from resolving the peer dep
+const VERCEL_BLOB_PATH = "@vercel/blob";
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface FileValidationOptions {
@@ -130,7 +133,7 @@ export async function uploadDocument(
 
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const blob = require("@vercel/blob");
+		const blob = require(VERCEL_BLOB_PATH);
 		put = blob.put;
 	} catch {
 		throw new StorageError(
@@ -183,7 +186,7 @@ export async function uploadDocument(
 export async function deleteDocument(url: string): Promise<void> {
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const blob = require("@vercel/blob");
+		const blob = require(VERCEL_BLOB_PATH);
 		await blob.del(url);
 	} catch (error) {
 		if (
@@ -222,7 +225,7 @@ export async function listDocuments(options?: {
 }> {
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const blob = require("@vercel/blob");
+		const blob = require(VERCEL_BLOB_PATH);
 		const result = await blob.list({
 			prefix: options?.prefix,
 			limit: options?.limit ?? 100,

@@ -76,6 +76,12 @@ const PRICING: Record<string, { input: number; output: number }> = {
 
 /**
  * Estimate the cost of a request in USD.
+ *
+ * @example
+ * ```ts
+ * const { totalCost } = estimateCost('gpt-4o', 1000, 500);
+ * console.log(`Cost: $${totalCost.toFixed(4)}`);
+ * ```
  */
 export function estimateCost(
 	model: string,
@@ -91,6 +97,11 @@ export function estimateCost(
 
 /**
  * Auto-detect the best available provider from environment variables.
+ *
+ * @example
+ * ```ts
+ * const provider = detectProvider(); // 'groq' | 'openrouter' | 'anthropic' | 'openai'
+ * ```
  */
 export function detectProvider(): AIProvider {
 	for (const provider of DETECTION_ORDER) {
@@ -106,6 +117,11 @@ export function detectProvider(): AIProvider {
 
 /**
  * Get the default model for a provider.
+ *
+ * @example
+ * ```ts
+ * const model = getDefaultModel('groq'); // 'llama-3.3-70b-versatile'
+ * ```
  */
 export function getDefaultModel(provider: AIProvider): string {
 	return PROVIDERS[provider].defaultModel;
@@ -113,6 +129,11 @@ export function getDefaultModel(provider: AIProvider): string {
 
 /**
  * Get the default fallback provider.
+ *
+ * @example
+ * ```ts
+ * const fallback = getDefaultFallback('groq'); // 'openrouter'
+ * ```
  */
 export function getDefaultFallback(
 	primary: AIProvider,
@@ -122,6 +143,11 @@ export function getDefaultFallback(
 
 /**
  * Get the environment variable key for a provider.
+ *
+ * @example
+ * ```ts
+ * const envKey = getProviderEnvKey('anthropic'); // 'ANTHROPIC_API_KEY'
+ * ```
  */
 export function getProviderEnvKey(provider: AIProvider): string {
 	return PROVIDERS[provider].envKey;
@@ -131,6 +157,11 @@ export function getProviderEnvKey(provider: AIProvider): string {
  * Dynamically load a Vercel AI SDK provider and create a model instance.
  *
  * Returns a LanguageModel compatible with generateText/streamText/generateObject.
+ *
+ * @example
+ * ```ts
+ * const model = await loadModel('groq', 'llama-3.3-70b-versatile');
+ * ```
  */
 export async function loadModel(
 	provider: AIProvider,

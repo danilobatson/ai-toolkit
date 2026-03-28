@@ -1,4 +1,4 @@
-import { ApiClientError, RateLimitError } from "../errors/types.js";
+import { ApiClientError, RateLimitError, ValidationError } from "../errors/types.js";
 
 export interface ApiClientConfig {
 	/** Base URL of the backend (e.g., http://localhost:8000) */
@@ -43,6 +43,12 @@ export class ApiClient {
 	private defaultHeaders: Record<string, string>;
 
 	constructor(config: ApiClientConfig) {
+		if (!config.baseUrl || typeof config.baseUrl !== "string") {
+			throw new ValidationError(
+				"baseUrl is required and must be a non-empty string",
+				{ code: "API_CLIENT_INVALID_CONFIG", fields: { baseUrl: "required, non-empty string" } },
+			);
+		}
 		// Strip trailing slash
 		this.baseUrl = config.baseUrl.replace(/\/$/, "");
 		this.apiKey = config.apiKey;

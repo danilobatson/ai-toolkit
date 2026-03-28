@@ -44,6 +44,11 @@ function getHeader(
 
 /**
  * Extract org_id from X-Org-Id header. Throws AuthError if missing.
+ *
+ * @example
+ * ```ts
+ * const orgId = getOrgId(request); // 'org_abc123'
+ * ```
  */
 export function getOrgId(
 	request: Request | { headers: Record<string, string | undefined> },
@@ -60,6 +65,11 @@ export function getOrgId(
 
 /**
  * Extract user_id from X-User-Id header. Returns undefined if missing.
+ *
+ * @example
+ * ```ts
+ * const userId = getUserId(request); // 'usr_xyz' | undefined
+ * ```
  */
 export function getUserId(
 	request: Request | { headers: Record<string, string | undefined> },
@@ -70,6 +80,11 @@ export function getUserId(
 /**
  * Validate API key from Authorization header or X-API-Key header.
  * Throws AuthError if invalid.
+ *
+ * @example
+ * ```ts
+ * const key = requireApiKey(request); // validated API key string
+ * ```
  */
 export function requireApiKey(
 	request: Request | { headers: Record<string, string | undefined> },
@@ -145,6 +160,14 @@ export interface TenantContext {
 	userId?: string;
 }
 
+/**
+ * Extract tenant context (org + user) from request headers.
+ *
+ * @example
+ * ```ts
+ * const { orgId, userId } = getTenantContext(request);
+ * ```
+ */
 export function getTenantContext(
 	request: Request | { headers: Record<string, string | undefined> },
 ): TenantContext {
