@@ -19,12 +19,13 @@
  *   systemPrompt: 'You write clear, concise content.',
  * });
  *
- * const graph = createGraph({
+ * const graph = await createGraph({
  *   agents: [researcher, writer],
  *   edges: [
  *     { from: '__start__', to: 'researcher' },
- *     { from: 'researcher', to: route((state) =>
- *       state.needsMoreResearch ? 'researcher' : 'writer'
+ *     { from: 'researcher', to: route(
+ *       (state) => state.metadata?.needsMoreResearch ? 'researcher' : 'writer',
+ *       ['researcher', 'writer'],
  *     ) },
  *     { from: 'writer', to: '__end__' },
  *   ],
@@ -43,6 +44,7 @@ export type {
 	GraphConfig,
 	GraphEdge,
 	GraphInstance,
+	GraphMessage,
 	GraphState,
 	RouteCondition,
 	RouteResult,

@@ -30,27 +30,6 @@ export const GraphConfigSchema = z.object({
 
 export type AgentConfig = z.infer<typeof AgentConfigSchema>;
 
-export type GraphConfig = {
-	/** Array of agent nodes to include in the graph. */
-	agents: AgentNode[];
-	/** Edges connecting agents (static or conditional). */
-	edges: GraphEdge[];
-};
-
-/** A defined agent node for use in a graph. */
-export interface AgentNode {
-	/** The agent name (graph node key). */
-	name: string;
-	/** The system prompt. */
-	systemPrompt: string;
-	/** Optional model override. */
-	model?: string;
-	/** Optional tools. */
-	tools?: Record<string, unknown>[];
-	/** The node handler (internal). */
-	handler: (state: GraphState) => Promise<Partial<GraphState>>;
-}
-
 /** A message in the agent graph state. */
 export interface GraphMessage {
 	/** Message role. */
@@ -71,15 +50,37 @@ export interface GraphState {
 	metadata?: Record<string, unknown>;
 }
 
+/** A defined agent node for use in a graph. */
+export interface AgentNode {
+	/** The agent name (graph node key). */
+	name: string;
+	/** The system prompt. */
+	systemPrompt: string;
+	/** Optional model override. */
+	model?: string;
+	/** Optional tools. */
+	tools?: Record<string, unknown>[];
+	/** The node handler function. */
+	handler: (state: GraphState) => Promise<Partial<GraphState>>;
+}
+
 /** A static or conditional edge in the graph. */
-export type GraphEdge = {
+export interface GraphEdge {
 	/** Source node name (or '__start__'). */
 	from: string;
 	/** Target node name, '__end__', or a route result. */
 	to: string | RouteResult;
-};
+}
 
-/** The result of a route() call — a conditional routing function. */
+/** Configuration for building a graph from agents and edges. */
+export interface GraphConfig {
+	/** Agent nodes to include in the graph. */
+	agents: AgentNode[];
+	/** Edges connecting agents (static or conditional). */
+	edges: GraphEdge[];
+}
+
+/** The result of a route() call — a conditional routing descriptor. */
 export interface RouteResult {
 	/** Marker to identify this as a route result. */
 	__isRoute: true;
@@ -94,7 +95,7 @@ export type RouteCondition = (state: GraphState) => string | Promise<string>;
 
 /** A compiled, invokable graph instance. */
 export interface GraphInstance {
-	/** Invoke the graph with initial state. */
+	/** Invoke the graph with initial state and get the final state. */
 	invoke: (input: Partial<GraphState>) => Promise<GraphState>;
 	/** The underlying LangGraph compiled graph (for advanced usage). */
 	compiledGraph: unknown;
