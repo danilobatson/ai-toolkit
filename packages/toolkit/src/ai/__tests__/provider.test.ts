@@ -62,6 +62,28 @@ describe("estimateCost", () => {
 		const cost = estimateCost("google/gemini-2.0-flash-exp:free", 1000, 500);
 		expect(cost.totalCost).toBe(0);
 	});
+
+	it("returns zero cost when token counts are zero", () => {
+		const cost = estimateCost("gpt-4o", 0, 0);
+		expect(cost.inputCost).toBe(0);
+		expect(cost.outputCost).toBe(0);
+		expect(cost.totalCost).toBe(0);
+	});
+
+	it("handles very large token counts without overflow", () => {
+		const cost = estimateCost("gpt-4o", 10_000_000, 5_000_000);
+		expect(cost.inputCost).toBeCloseTo(25);
+		expect(cost.outputCost).toBeCloseTo(50);
+		expect(cost.totalCost).toBeCloseTo(75);
+		expect(Number.isFinite(cost.totalCost)).toBe(true);
+	});
+
+	it("returns zero for all fields on unknown model", () => {
+		const cost = estimateCost("totally-fake-model", 999, 999);
+		expect(cost.inputCost).toBe(0);
+		expect(cost.outputCost).toBe(0);
+		expect(cost.totalCost).toBe(0);
+	});
 });
 
 describe("getDefaultModel", () => {

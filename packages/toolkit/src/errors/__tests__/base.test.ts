@@ -60,6 +60,19 @@ describe("LLMError", () => {
 		const err = new LLMError("fail", { provider: "openai" });
 		expect(err.provider).toBe("openai");
 	});
+
+	it("preserves model when provided", () => {
+		const err = new LLMError("fail", {
+			provider: "openai",
+			model: "gpt-4o-mini",
+		});
+		expect(err.model).toBe("gpt-4o-mini");
+	});
+
+	it("model is undefined when not provided", () => {
+		const err = new LLMError("fail", { provider: "openai" });
+		expect(err.model).toBeUndefined();
+	});
 });
 
 describe("RateLimitError", () => {
@@ -71,6 +84,16 @@ describe("RateLimitError", () => {
 	it("sets statusCode to 429", () => {
 		const err = new RateLimitError("too fast");
 		expect(err.statusCode).toBe(429);
+	});
+
+	it("preserves retryAfter when provided", () => {
+		const err = new RateLimitError("too fast", { retryAfter: 30 });
+		expect(err.retryAfter).toBe(30);
+	});
+
+	it("retryAfter is undefined when not provided", () => {
+		const err = new RateLimitError("too fast");
+		expect(err.retryAfter).toBeUndefined();
 	});
 });
 
@@ -97,6 +120,16 @@ describe("StorageError", () => {
 	it("sets statusCode to 502 by default", () => {
 		const err = new StorageError("upload failed");
 		expect(err.statusCode).toBe(502);
+	});
+
+	it("defaults retryable to true", () => {
+		const err = new StorageError("upload failed");
+		expect(err.retryable).toBe(true);
+	});
+
+	it("respects explicit retryable=false", () => {
+		const err = new StorageError("permanent failure", { retryable: false });
+		expect(err.retryable).toBe(false);
 	});
 });
 

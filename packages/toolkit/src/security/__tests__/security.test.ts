@@ -46,6 +46,61 @@ describe("createRateLimiter", () => {
 		expect(result.allowed).toBe(false);
 		expect(result.remaining).toBe(0);
 	});
+
+	it("handles rapid sequential requests up to the limit", async () => {
+		const cache = new MemoryCacheAdapter();
+		const limiter = createRateLimiter(cache, { max: 3 });
+		const results: Awaited<ReturnType<typeof limiter.check>>[] = [];
+		for (let i = 0; i < 5; i++) {
+			results.push(await limiter.check("burst:1"));
+		}
+		const allowed = results.filter((r) => r.allowed).length;
+		const blocked = results.filter((r) => !r.allowed).length;
+		expect(allowed).toBe(3);
+		expect(blocked).toBe(2);
+	});
+
+	it("allows exactly 1 request when max=1", async () => {
+		const cache = new MemoryCacheAdapter();
+		const limiter = createRateLimiter(cache, { max: 1 });
+		const first = await limiter.check("edge:1");
+		const second = await limiter.check("edge:1");
+		expect(first.allowed).toBe(true);
+		expect(first.remaining).toBe(0);
+		expect(second.allowed).toBe(false);
+	});
+
+	it("reset clears the counter so requests are allowed again", async () => {
+		const cache = new MemoryCacheAdapter();
+		const limiter = createRateLimiter(cache, { max: 1 });
+		await limiter.check("reset:1");
+		const blocked = await limiter.check("reset:1");
+		expect(blocked.allowed).toBe(false);
+
+		await limiter.reset("reset:1");
+		const afterReset = await limiter.check("reset:1");
+		expect(afterReset.allowed).toBe(true);
+	});
+
+	it("tracks separate counters per identifier", async () => {
+		const cache = new MemoryCacheAdapter();
+		const limiter = createRateLimiter(cache, { max: 1 });
+		const a = await limiter.check("user:a");
+		const b = await limiter.check("user:b");
+		expect(a.allowed).toBe(true);
+		expect(b.allowed).toBe(true);
+	});
+
+	it("returns resetAt in the future", async () => {
+		const cache = new MemoryCacheAdapter();
+		const limiter = createRateLimiter(cache, {
+			max: 5,
+			windowSeconds: 60,
+		});
+		const now = Date.now();
+		const result = await limiter.check("time:1");
+		expect(result.resetAt).toBeGreaterThan(now);
+	});
 });
 
 describe("createAuditLogger", () => {

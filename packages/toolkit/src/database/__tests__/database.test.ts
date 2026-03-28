@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { ToolkitError } from "../../errors/base.js";
 import { ValidationError } from "../../errors/types.js";
 import { createDatabase, detectProvider } from "../database.js";
+import { getVectorColumn } from "../vector.js";
 
 describe("detectProvider", () => {
 	it("detects Neon from neon.tech URL", () => {
@@ -232,5 +233,25 @@ describe("createDatabase", () => {
 	it("exports detectProvider as a pure function", () => {
 		expect(typeof detectProvider).toBe("function");
 		expect(detectProvider.length).toBe(1);
+	});
+});
+
+describe("getVectorColumn", () => {
+	it("throws ToolkitError when drizzle-orm is not installed", async () => {
+		// drizzle-orm is not installed in dev, so this should throw
+		await expect(getVectorColumn()).rejects.toThrow(/drizzle-orm not found/i);
+
+		try {
+			await getVectorColumn();
+		} catch (err) {
+			expect(err).toBeInstanceOf(ToolkitError);
+			expect((err as ToolkitError).code).toBe("DATABASE_MISSING_DEPENDENCY");
+		}
+	});
+
+	it("is async (returns a Promise)", () => {
+		const result = getVectorColumn();
+		expect(result).toBeInstanceOf(Promise);
+		result.catch(() => {});
 	});
 });
