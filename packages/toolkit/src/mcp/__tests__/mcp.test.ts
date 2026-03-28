@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
+import { ValidationError } from "../../errors/types.js";
 import { McpServerBuilder } from "../server-builder.js";
 
 describe("McpServerBuilder", () => {
@@ -25,7 +26,7 @@ describe("McpServerBuilder", () => {
 		expect(builder.toolNames).toContain("greet");
 	});
 
-	it("rejects duplicate tool names", () => {
+	it("rejects duplicate tool names with ValidationError", () => {
 		const builder = new McpServerBuilder({
 			name: "test-server",
 			version: "1.0.0",
@@ -38,6 +39,11 @@ describe("McpServerBuilder", () => {
 		};
 		builder.defineTool(def);
 		expect(() => builder.defineTool(def)).toThrow(/already defined/i);
+		try {
+			builder.defineTool(def);
+		} catch (err) {
+			expect(err).toBeInstanceOf(ValidationError);
+		}
 	});
 
 	it("test harness calls tool handler with parsed input", async () => {

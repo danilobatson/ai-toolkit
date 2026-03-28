@@ -34,6 +34,8 @@
  */
 
 import type { z } from "zod";
+import { ToolkitError } from "../errors/base.js";
+import { ValidationError } from "../errors/types.js";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -123,7 +125,7 @@ export class McpServerBuilder {
 	 */
 	defineTool(definition: ToolDefinition): this {
 		if (this._tools.has(definition.name)) {
-			throw new Error(`Tool "${definition.name}" is already defined`);
+			throw new ValidationError(`Tool "${definition.name}" is already defined`);
 		}
 
 		const wrappedHandler = async (
@@ -167,7 +169,9 @@ export class McpServerBuilder {
 	 */
 	defineResource(definition: ResourceDefinition): this {
 		if (this._resources.has(definition.uri)) {
-			throw new Error(`Resource "${definition.uri}" is already defined`);
+			throw new ValidationError(
+				`Resource "${definition.uri}" is already defined`,
+			);
 		}
 		this._resources.set(definition.uri, { definition });
 		return this;
@@ -194,8 +198,9 @@ export class McpServerBuilder {
 			const transportMod = await import(mcpTransportPath);
 			StdioServerTransport = transportMod.StdioServerTransport;
 		} catch {
-			throw new Error(
+			throw new ToolkitError(
 				"@modelcontextprotocol/sdk is required. Run: yarn add @modelcontextprotocol/sdk",
+				{ code: "MCP_MISSING_DEPENDENCY" },
 			);
 		}
 
@@ -300,7 +305,7 @@ export class McpTestHarness {
 	): Promise<McpToolResponse> {
 		const tool = this._tools.get(name);
 		if (!tool) {
-			throw new Error(
+			throw new ValidationError(
 				`Tool "${name}" not found. Available: ${[...this._tools.keys()].join(", ")}`,
 			);
 		}
@@ -313,7 +318,7 @@ export class McpTestHarness {
 	async readResource(uri: string): Promise<unknown> {
 		const resource = this._resources.get(uri);
 		if (!resource) {
-			throw new Error(
+			throw new ValidationError(
 				`Resource "${uri}" not found. Available: ${[...this._resources.keys()].join(", ")}`,
 			);
 		}
