@@ -18,12 +18,33 @@ export const AgentConfigSchema = z.object({
 	tools: z.array(z.record(z.unknown())).optional(),
 });
 
+/** Schema for an agent node passed to createGraph. */
+export const GraphAgentNodeSchema = z.object({
+	/** Agent name (graph node key). */
+	name: z.string().min(1),
+	/** System prompt defining the agent's behavior. */
+	systemPrompt: z.string().min(1),
+	/** Node handler function. */
+	handler: z.function(),
+}).passthrough();
+
+/** Schema for a graph edge. */
+export const GraphEdgeSchema = z.object({
+	/** Source node name (or '__start__'). */
+	from: z.string().min(1),
+	/** Target node name, '__end__', or a route result. */
+	to: z.union([
+		z.string().min(1),
+		z.object({ __isRoute: z.literal(true) }).passthrough(),
+	]),
+});
+
 /** Configuration for creating a graph. */
 export const GraphConfigSchema = z.object({
 	/** Array of agents to include in the graph. */
-	agents: z.array(z.record(z.unknown())).min(1),
+	agents: z.array(GraphAgentNodeSchema).min(1),
 	/** Edges connecting agents (static or conditional). */
-	edges: z.array(z.record(z.unknown())).min(1),
+	edges: z.array(GraphEdgeSchema).min(1),
 });
 
 // ─── Types ──────────────────────────────────────────────────────────────────

@@ -232,19 +232,7 @@ export async function createGraph(config: GraphConfig): Promise<GraphInstance> {
 		);
 	}
 
-	if (!config.agents?.length) {
-		throw new ToolkitError("createGraph() requires at least one agent", {
-			code: "AGENTS_INVALID_CONFIG",
-		});
-	}
-
-	if (!config.edges?.length) {
-		throw new ToolkitError("createGraph() requires at least one edge", {
-			code: "AGENTS_INVALID_CONFIG",
-		});
-	}
-
-	// Validate agent names are unique
+	// Validate agent names are unique (not covered by Zod)
 	const names = new Set<string>();
 	for (const agent of config.agents) {
 		if (names.has(agent.name)) {
