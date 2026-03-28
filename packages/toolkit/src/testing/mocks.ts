@@ -484,11 +484,25 @@ export function mockMonitor(options?: MockMonitorOptions) {
 	}> = [];
 	const tracker = createTracker();
 
+	const traces: Array<{
+		traceId: string;
+		name: string;
+		startedAt: Date;
+		durationMs: number;
+		attributes: Record<string, unknown>;
+		error: boolean;
+		errorMessage?: string;
+	}> = [];
+	const onTraceCallbacks: Array<(trace: unknown) => void> = [];
+
 	return {
 		_tracker: tracker,
 		enabled,
 		langfuse: null,
 		costs,
+		traces,
+		onTraceCallbacks,
+		maxTraces: 1000,
 
 		recordCost(entry: {
 			model: string;

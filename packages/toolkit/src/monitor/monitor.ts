@@ -23,9 +23,12 @@ import type {
 	CostEntry,
 	CostReport,
 	EvaluateOptions,
+	MetricsExport,
 	ModelCostSummary,
 	MonitorClient,
 	MonitorConfig,
+	OnTraceCallback,
+	StoredTrace,
 	TraceAttributes,
 	TraceResult,
 	TraceSpan,
@@ -65,12 +68,19 @@ async function tryLoadLangfuse(config: {
 
 // ─── Noop Monitor ──────────────────────────────────────────────────────────
 
-function createNoopMonitor(): MonitorClient {
+const DEFAULT_MAX_TRACES = 1000;
+
+function createNoopMonitor(maxTraces = DEFAULT_MAX_TRACES): MonitorClient {
 	const costs: CostEntry[] = [];
+	const traces: StoredTrace[] = [];
+	const onTraceCallbacks: OnTraceCallback[] = [];
 	return {
 		enabled: false,
 		langfuse: null,
 		costs,
+		traces,
+		onTraceCallbacks,
+		maxTraces,
 		recordCost(entry) {
 			costs.push({ ...entry, timestamp: new Date() });
 		},
@@ -100,8 +110,10 @@ function createNoopMonitor(): MonitorClient {
 export async function createMonitor(
 	config?: MonitorConfig,
 ): Promise<MonitorClient> {
+	const maxTraces = config?.traceStore?.maxTraces ?? DEFAULT_MAX_TRACES;
+
 	if (config?.enabled === false) {
-		return createNoopMonitor();
+		return createNoopMonitor(maxTraces);
 	}
 
 	const publicKey = config?.publicKey ?? process.env.LANGFUSE_PUBLIC_KEY;
@@ -110,21 +122,26 @@ export async function createMonitor(
 		config?.baseUrl ?? process.env.LANGFUSE_BASE_URL ?? LANGFUSE_DEFAULT_URL;
 
 	if (!publicKey || !secretKey) {
-		return createNoopMonitor();
+		return createNoopMonitor(maxTraces);
 	}
 
 	const langfuse = await tryLoadLangfuse({ publicKey, secretKey, baseUrl });
 
 	if (!langfuse) {
-		return createNoopMonitor();
+		return createNoopMonitor(maxTraces);
 	}
 
 	const costs: CostEntry[] = [];
+	const traces: StoredTrace[] = [];
+	const onTraceCallbacks: OnTraceCallback[] = [];
 
 	return {
 		enabled: true,
 		langfuse,
 		costs,
+		traces,
+		onTraceCallbacks,
+		maxTraces,
 		recordCost(entry) {
 			costs.push({ ...entry, timestamp: new Date() });
 		},
@@ -135,6 +152,22 @@ export async function createMonitor(
 			await langfuse.shutdown();
 		},
 	};
+}
+
+// ─── Trace Store Helpers ──────────────────────────────────────────────────
+
+function storeTrace(monitor: MonitorClient, stored: StoredTrace): void {
+	if (monitor.traces.length >= monitor.maxTraces) {
+		monitor.traces.shift();
+	}
+	monitor.traces.push(stored);
+	for (const cb of monitor.onTraceCallbacks) {
+		try {
+			cb(stored);
+		} catch {
+			// Callbacks should never block tracing
+		}
+	}
 }
 
 // ─── Trace Helpers ────────────────────────────────────────────────────────
@@ -219,18 +252,47 @@ export async function trace<T>(
 		},
 	};
 
+	const startTime = Date.now();
+
 	if (!monitor.enabled) {
-		const result = await fn(span);
+		let traceError = false;
+		let errorMessage: string | undefined;
+		let result: T;
+		try {
+			result = await fn(span);
+		} catch (error) {
+			traceError = true;
+			errorMessage = error instanceof Error ? error.message : String(error);
+			storeTrace(monitor, {
+				traceId,
+				name,
+				startedAt: new Date(startTime),
+				durationMs: Date.now() - startTime,
+				attributes: { ...attrs },
+				error: true,
+				errorMessage,
+			});
+			throw error;
+		}
 		recordTraceCost(monitor, name, attrs, traceId);
+		storeTrace(monitor, {
+			traceId,
+			name,
+			startedAt: new Date(startTime),
+			durationMs: Date.now() - startTime,
+			attributes: { ...attrs },
+			error: false,
+		});
 		return { result, traceId };
 	}
 
-	const startTime = Date.now();
 	let result: T;
 
 	try {
 		result = await fn(span);
 	} catch (error) {
+		const durationMs = Date.now() - startTime;
+		const errorMessage = error instanceof Error ? error.message : String(error);
 		if (monitor.langfuse) {
 			scoreLangfuse(
 				monitor.langfuse as LangfuseClientLike,
@@ -238,12 +300,22 @@ export async function trace<T>(
 				"error",
 				1,
 				"BOOLEAN",
-				error instanceof Error ? error.message : String(error),
+				errorMessage,
 			);
 		}
+		storeTrace(monitor, {
+			traceId,
+			name,
+			startedAt: new Date(startTime),
+			durationMs,
+			attributes: { ...attrs },
+			error: true,
+			errorMessage,
+		});
 		throw error;
 	}
 
+	const durationMs = Date.now() - startTime;
 	recordTraceCost(monitor, name, attrs, traceId);
 
 	if (monitor.langfuse) {
@@ -251,10 +323,19 @@ export async function trace<T>(
 			monitor.langfuse as LangfuseClientLike,
 			traceId,
 			"duration_ms",
-			Date.now() - startTime,
+			durationMs,
 			"NUMERIC",
 		);
 	}
+
+	storeTrace(monitor, {
+		traceId,
+		name,
+		startedAt: new Date(startTime),
+		durationMs,
+		attributes: { ...attrs },
+		error: false,
+	});
 
 	return { result, traceId };
 }
@@ -390,6 +471,156 @@ export function getCostReport(monitor: MonitorClient): CostReport {
 		totalEstimatedCostUsd: totalCost,
 		byModel,
 		byModule,
+		timeRange: {
+			from: new Date(Math.min(...timestamps)),
+			to: new Date(Math.max(...timestamps)),
+		},
+	};
+}
+
+// ─── Trace Store Access ──────────────────────────────────────────────────
+
+/**
+ * Get all stored traces.
+ *
+ * Returns traces from the in-memory store, ordered oldest-first.
+ * Works without Langfuse — traces are always stored locally.
+ *
+ * @param monitor - The monitor client.
+ * @returns Array of stored traces.
+ *
+ * @example
+ * ```ts
+ * const traces = getTraces(monitor);
+ * for (const t of traces) {
+ *   console.log(`${t.name}: ${t.durationMs}ms`);
+ * }
+ * ```
+ */
+export function getTraces(monitor: MonitorClient): StoredTrace[] {
+	return [...monitor.traces];
+}
+
+/**
+ * Get a single trace by ID.
+ *
+ * @param monitor - The monitor client.
+ * @param traceId - The trace ID to look up.
+ * @returns The stored trace, or undefined if not found.
+ *
+ * @example
+ * ```ts
+ * const t = getTrace(monitor, traceId);
+ * if (t) console.log(`${t.name} took ${t.durationMs}ms`);
+ * ```
+ */
+export function getTrace(
+	monitor: MonitorClient,
+	traceId: string,
+): StoredTrace | undefined {
+	return monitor.traces.find((t) => t.traceId === traceId);
+}
+
+/**
+ * Register a callback invoked after every trace completes.
+ *
+ * Returns an unsubscribe function.
+ *
+ * @param monitor - The monitor client.
+ * @param callback - Function called with each completed trace.
+ * @returns Unsubscribe function to remove the callback.
+ *
+ * @example
+ * ```ts
+ * const unsub = onTrace(monitor, (t) => {
+ *   console.log(`Trace ${t.traceId} done in ${t.durationMs}ms`);
+ * });
+ * // later: unsub();
+ * ```
+ */
+export function onTrace(
+	monitor: MonitorClient,
+	callback: OnTraceCallback,
+): () => void {
+	monitor.onTraceCallbacks.push(callback);
+	return () => {
+		const idx = monitor.onTraceCallbacks.indexOf(callback);
+		if (idx >= 0) {
+			monitor.onTraceCallbacks.splice(idx, 1);
+		}
+	};
+}
+
+// ─── Metrics Export ──────────────────────────────────────────────────────
+
+function percentile(sorted: number[], p: number): number {
+	if (sorted.length === 0) return 0;
+	const idx = Math.ceil((p / 100) * sorted.length) - 1;
+	return sorted[Math.max(0, idx)];
+}
+
+/**
+ * Export an OpenTelemetry-compatible metrics summary.
+ *
+ * Aggregates trace durations, error rates, and cost data into
+ * a single metrics object. Works without Langfuse.
+ *
+ * @param monitor - The monitor client.
+ * @returns MetricsExport with aggregated stats.
+ *
+ * @example
+ * ```ts
+ * const metrics = exportMetrics(monitor);
+ * console.log(`${metrics.totalTraces} traces, p95=${metrics.p95DurationMs}ms, errors=${metrics.errorRate}`);
+ * ```
+ */
+export function exportMetrics(monitor: MonitorClient): MetricsExport {
+	const traces = monitor.traces;
+	const costReport = getCostReport(monitor);
+
+	if (traces.length === 0) {
+		return {
+			totalTraces: 0,
+			totalErrors: 0,
+			errorRate: 0,
+			avgDurationMs: 0,
+			p50DurationMs: 0,
+			p95DurationMs: 0,
+			p99DurationMs: 0,
+			byName: {},
+			totalCostUsd: costReport.totalEstimatedCostUsd,
+			totalTokens: costReport.totalTokens,
+			timeRange: null,
+		};
+	}
+
+	const durations = traces.map((t) => t.durationMs).sort((a, b) => a - b);
+	const totalErrors = traces.filter((t) => t.error).length;
+
+	const byName: Record<string, { count: number; avgDurationMs: number; errorCount: number }> = {};
+	for (const t of traces) {
+		if (!byName[t.name]) {
+			byName[t.name] = { count: 0, avgDurationMs: 0, errorCount: 0 };
+		}
+		const bucket = byName[t.name];
+		bucket.avgDurationMs = (bucket.avgDurationMs * bucket.count + t.durationMs) / (bucket.count + 1);
+		bucket.count += 1;
+		if (t.error) bucket.errorCount += 1;
+	}
+
+	const timestamps = traces.map((t) => t.startedAt.getTime());
+
+	return {
+		totalTraces: traces.length,
+		totalErrors,
+		errorRate: totalErrors / traces.length,
+		avgDurationMs: durations.reduce((a, b) => a + b, 0) / durations.length,
+		p50DurationMs: percentile(durations, 50),
+		p95DurationMs: percentile(durations, 95),
+		p99DurationMs: percentile(durations, 99),
+		byName,
+		totalCostUsd: costReport.totalEstimatedCostUsd,
+		totalTokens: costReport.totalTokens,
 		timeRange: {
 			from: new Date(Math.min(...timestamps)),
 			to: new Date(Math.max(...timestamps)),

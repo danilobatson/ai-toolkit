@@ -22,19 +22,32 @@
  */
 
 export { createLogger } from "./logger.js";
-export { createMonitor, evaluate, getCostReport, trace } from "./monitor.js";
+export {
+	createMonitor,
+	evaluate,
+	exportMetrics,
+	getCostReport,
+	getTrace,
+	getTraces,
+	onTrace,
+	trace,
+} from "./monitor.js";
 export type {
 	CostEntry,
 	CostReport,
 	EvaluateOptions,
 	Logger,
 	LogLevel,
+	MetricsExport,
 	ModelCostSummary,
 	MonitorClient,
 	MonitorConfig,
+	OnTraceCallback,
 	ScoreDataType,
+	StoredTrace,
 	TokenUsage,
 	TraceAttributes,
 	TraceResult,
 	TraceSpan,
+	TraceStoreConfig,
 } from "./types.js";

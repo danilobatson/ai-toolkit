@@ -54,6 +54,8 @@ export interface MonitorConfig {
 	baseUrl?: string;
 	/** Whether to enable monitoring. Defaults to true if keys are available. */
 	enabled?: boolean;
+	/** Configuration for the in-memory trace store. */
+	traceStore?: TraceStoreConfig;
 }
 
 // ─── Trace Types ───────────────────────────────────────────────────────────
@@ -245,6 +247,97 @@ export interface ModelCostSummary {
 	estimatedCostUsd: number;
 }
 
+// ─── Trace Store Types ────────────────────────────────────────────────────
+
+/**
+ * A completed trace stored in the local trace store.
+ *
+ * @example
+ * ```ts
+ * const traces: StoredTrace[] = getTraces(monitor);
+ * for (const t of traces) {
+ *   console.log(`${t.name} took ${t.durationMs}ms (trace: ${t.traceId})`);
+ * }
+ * ```
+ */
+export interface StoredTrace {
+	/** Unique trace ID. */
+	traceId: string;
+	/** Name of the trace (e.g. "rag-query", "chat-completion"). */
+	name: string;
+	/** When the trace started. */
+	startedAt: Date;
+	/** Duration in milliseconds. */
+	durationMs: number;
+	/** Attributes collected via span.update(). */
+	attributes: TraceAttributes;
+	/** Whether the traced function threw an error. */
+	error: boolean;
+	/** Error message if the traced function threw. */
+	errorMessage?: string;
+}
+
+/**
+ * Configuration for the in-memory trace store.
+ *
+ * @example
+ * ```ts
+ * const config: TraceStoreConfig = { maxTraces: 500 };
+ * const monitor = await createMonitor({ traceStore: config });
+ * ```
+ */
+export interface TraceStoreConfig {
+	/** Maximum number of traces to keep in memory. Oldest are evicted first (FIFO). Default: 1000. */
+	maxTraces?: number;
+}
+
+/**
+ * Callback invoked after a trace completes.
+ *
+ * @example
+ * ```ts
+ * const unsub = onTrace(monitor, (trace) => {
+ *   console.log(`Trace ${trace.traceId} completed in ${trace.durationMs}ms`);
+ * });
+ * // later: unsub() to stop listening
+ * ```
+ */
+export type OnTraceCallback = (trace: StoredTrace) => void;
+
+/**
+ * OpenTelemetry-compatible metrics summary.
+ *
+ * @example
+ * ```ts
+ * const metrics = exportMetrics(monitor);
+ * console.log(`${metrics.totalTraces} traces, avg ${metrics.avgDurationMs}ms`);
+ * ```
+ */
+export interface MetricsExport {
+	/** Total number of traces recorded. */
+	totalTraces: number;
+	/** Total errors across all traces. */
+	totalErrors: number;
+	/** Error rate (0–1). */
+	errorRate: number;
+	/** Average trace duration in milliseconds. */
+	avgDurationMs: number;
+	/** p50 trace duration in milliseconds. */
+	p50DurationMs: number;
+	/** p95 trace duration in milliseconds. */
+	p95DurationMs: number;
+	/** p99 trace duration in milliseconds. */
+	p99DurationMs: number;
+	/** Traces broken down by name. */
+	byName: Record<string, { count: number; avgDurationMs: number; errorCount: number }>;
+	/** Total cost from the cost report. */
+	totalCostUsd: number;
+	/** Total tokens from the cost report. */
+	totalTokens: number;
+	/** Time range covered. */
+	timeRange: { from: Date; to: Date } | null;
+}
+
 // ─── Monitor Client ────────────────────────────────────────────────────────
 
 /**
@@ -264,6 +357,12 @@ export interface MonitorClient {
 	readonly langfuse: unknown | null;
 	/** Local cost entries tracked by this monitor. */
 	readonly costs: CostEntry[];
+	/** Local trace store for completed traces. */
+	readonly traces: StoredTrace[];
+	/** Registered trace callbacks. */
+	readonly onTraceCallbacks: OnTraceCallback[];
+	/** Maximum traces to store in memory (FIFO eviction). */
+	readonly maxTraces: number;
 	/** Record a cost entry for local tracking. */
 	recordCost(entry: Omit<CostEntry, "timestamp">): void;
 	/** Flush pending data to Langfuse. */

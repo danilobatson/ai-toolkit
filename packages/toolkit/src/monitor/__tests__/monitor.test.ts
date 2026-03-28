@@ -3,10 +3,14 @@ import {
 	createLogger,
 	createMonitor,
 	evaluate,
+	exportMetrics,
 	getCostReport,
+	getTrace,
+	getTraces,
+	onTrace,
 	trace,
 } from "../index.js";
-import type { MonitorClient } from "../types.js";
+import type { MonitorClient, OnTraceCallback, StoredTrace } from "../types.js";
 
 // ─── Mock Langfuse ─────────────────────────────────────────────────────────
 
@@ -34,10 +38,15 @@ function createEnabledMonitor(
 		traceId: string;
 		estimatedCostUsd?: number;
 	}[] = [];
+	const traces: StoredTrace[] = [];
+	const onTraceCallbacks: OnTraceCallback[] = [];
 	return {
 		enabled: true,
 		langfuse: mockLangfuse,
 		costs,
+		traces,
+		onTraceCallbacks,
+		maxTraces: 1000,
 		recordCost(entry) {
 			costs.push({ ...entry, timestamp: new Date() });
 		},
@@ -485,6 +494,10 @@ describe("monitor", () => {
 			expect(mod.trace).toBeDefined();
 			expect(mod.evaluate).toBeDefined();
 			expect(mod.getCostReport).toBeDefined();
+			expect(mod.getTraces).toBeDefined();
+			expect(mod.getTrace).toBeDefined();
+			expect(mod.onTrace).toBeDefined();
+			expect(mod.exportMetrics).toBeDefined();
 			expect(mod.createLogger).toBeDefined();
 			expect((mod as Record<string, unknown>).default).toBeUndefined();
 		});
@@ -617,6 +630,296 @@ describe("monitor", () => {
 
 			await expect(monitor.flush()).resolves.toBeUndefined();
 			await expect(monitor.shutdown()).resolves.toBeUndefined();
+		});
+	});
+
+	// ── Trace Store ────────────────────────────────────────────────────────
+
+	describe("Trace Store", () => {
+		// ── getTraces ─────────────────────────────────────────────────────
+
+		it("getTraces returns empty array initially", async () => {
+			const monitor = await createMonitor();
+			expect(getTraces(monitor)).toEqual([]);
+		});
+
+		it("getTraces returns stored traces after trace()", async () => {
+			const monitor = await createMonitor();
+
+			await trace(monitor, "test-op", async (span) => {
+				span.update({ input: "hello" });
+				return "world";
+			});
+
+			const traces = getTraces(monitor);
+			expect(traces).toHaveLength(1);
+			expect(traces[0].name).toBe("test-op");
+			expect(traces[0].traceId).toMatch(/^[0-9a-f-]+$/);
+			expect(traces[0].durationMs).toBeGreaterThanOrEqual(0);
+			expect(traces[0].error).toBe(false);
+			expect(traces[0].startedAt).toBeInstanceOf(Date);
+		});
+
+		it("getTraces returns a copy (not the internal array)", async () => {
+			const monitor = await createMonitor();
+			await trace(monitor, "a", async () => 1);
+
+			const t1 = getTraces(monitor);
+			const t2 = getTraces(monitor);
+			expect(t1).not.toBe(t2);
+			expect(t1).toEqual(t2);
+		});
+
+		it("trace stores attributes collected via span.update", async () => {
+			const monitor = await createMonitor();
+
+			await trace(monitor, "with-attrs", async (span) => {
+				span.update({ input: "query", model: "gpt-4o" });
+				span.update({ output: "answer", usage: { promptTokens: 10, completionTokens: 5 } });
+				return "done";
+			});
+
+			const t = getTraces(monitor)[0];
+			expect(t.attributes.input).toBe("query");
+			expect(t.attributes.output).toBe("answer");
+			expect(t.attributes.model).toBe("gpt-4o");
+		});
+
+		it("trace stores error traces when function throws", async () => {
+			const monitor = await createMonitor();
+
+			await expect(
+				trace(monitor, "fail-op", async () => {
+					throw new Error("boom");
+				}),
+			).rejects.toThrow(/boom/);
+
+			const traces = getTraces(monitor);
+			expect(traces).toHaveLength(1);
+			expect(traces[0].error).toBe(true);
+			expect(traces[0].errorMessage).toBe("boom");
+		});
+
+		it("trace stores error traces for enabled monitor too", async () => {
+			const monitor = createEnabledMonitor();
+
+			await expect(
+				trace(monitor, "fail-enabled", async () => {
+					throw new Error("enabled-boom");
+				}),
+			).rejects.toThrow(/enabled-boom/);
+
+			const traces = getTraces(monitor);
+			expect(traces).toHaveLength(1);
+			expect(traces[0].error).toBe(true);
+			expect(traces[0].errorMessage).toBe("enabled-boom");
+		});
+
+		it("enabled monitor stores traces in both local store and Langfuse", async () => {
+			const mockLangfuse = createMockLangfuse();
+			const monitor = createEnabledMonitor(mockLangfuse);
+
+			await trace(monitor, "dual-store", async (span) => {
+				span.update({ model: "gpt-4o", usage: { promptTokens: 10, completionTokens: 5 } });
+				return "result";
+			});
+
+			// Local store
+			expect(getTraces(monitor)).toHaveLength(1);
+			// Langfuse
+			expect(mockLangfuse.score.create).toHaveBeenCalled();
+		});
+
+		// ── getTrace ──────────────────────────────────────────────────────
+
+		it("getTrace returns a single trace by ID", async () => {
+			const monitor = await createMonitor();
+
+			const { traceId } = await trace(monitor, "lookup", async () => "found");
+
+			const t = getTrace(monitor, traceId);
+			expect(t).toBeDefined();
+			expect(t?.name).toBe("lookup");
+			expect(t?.traceId).toBe(traceId);
+		});
+
+		it("getTrace returns undefined for unknown ID", async () => {
+			const monitor = await createMonitor();
+			expect(getTrace(monitor, "nonexistent")).toBeUndefined();
+		});
+
+		// ── FIFO eviction ────────────────────────────────────────────────
+
+		it("FIFO eviction removes oldest traces when maxTraces exceeded", async () => {
+			const monitor = await createMonitor({ traceStore: { maxTraces: 3 } });
+
+			await trace(monitor, "trace-1", async () => 1);
+			await trace(monitor, "trace-2", async () => 2);
+			await trace(monitor, "trace-3", async () => 3);
+			await trace(monitor, "trace-4", async () => 4);
+
+			const traces = getTraces(monitor);
+			expect(traces).toHaveLength(3);
+			expect(traces[0].name).toBe("trace-2");
+			expect(traces[1].name).toBe("trace-3");
+			expect(traces[2].name).toBe("trace-4");
+		});
+
+		it("default maxTraces is 1000", async () => {
+			const monitor = await createMonitor();
+			expect(monitor.maxTraces).toBe(1000);
+		});
+
+		// ── onTrace ──────────────────────────────────────────────────────
+
+		it("onTrace callback is invoked after each trace", async () => {
+			const monitor = await createMonitor();
+			const received: StoredTrace[] = [];
+
+			onTrace(monitor, (t) => received.push(t));
+
+			await trace(monitor, "cb-test", async () => "val");
+
+			expect(received).toHaveLength(1);
+			expect(received[0].name).toBe("cb-test");
+		});
+
+		it("onTrace returns unsubscribe function", async () => {
+			const monitor = await createMonitor();
+			const received: StoredTrace[] = [];
+
+			const unsub = onTrace(monitor, (t) => received.push(t));
+
+			await trace(monitor, "before-unsub", async () => 1);
+			unsub();
+			await trace(monitor, "after-unsub", async () => 2);
+
+			expect(received).toHaveLength(1);
+			expect(received[0].name).toBe("before-unsub");
+		});
+
+		it("onTrace supports multiple callbacks", async () => {
+			const monitor = await createMonitor();
+			let count1 = 0;
+			let count2 = 0;
+
+			onTrace(monitor, () => { count1++; });
+			onTrace(monitor, () => { count2++; });
+
+			await trace(monitor, "multi-cb", async () => "x");
+
+			expect(count1).toBe(1);
+			expect(count2).toBe(1);
+		});
+
+		it("onTrace callback errors do not block tracing", async () => {
+			const monitor = await createMonitor();
+
+			onTrace(monitor, () => {
+				throw new Error("callback exploded");
+			});
+
+			const { result } = await trace(monitor, "resilient", async () => "ok");
+			expect(result).toBe("ok");
+			expect(getTraces(monitor)).toHaveLength(1);
+		});
+
+		it("onTrace fires for error traces too", async () => {
+			const monitor = await createMonitor();
+			const received: StoredTrace[] = [];
+
+			onTrace(monitor, (t) => received.push(t));
+
+			await expect(
+				trace(monitor, "error-cb", async () => {
+					throw new Error("fail");
+				}),
+			).rejects.toThrow(/fail/);
+
+			expect(received).toHaveLength(1);
+			expect(received[0].error).toBe(true);
+		});
+
+		// ── exportMetrics ─────────────────────────────────────────────────
+
+		it("exportMetrics returns zeros when no traces", async () => {
+			const monitor = await createMonitor();
+			const metrics = exportMetrics(monitor);
+
+			expect(metrics.totalTraces).toBe(0);
+			expect(metrics.totalErrors).toBe(0);
+			expect(metrics.errorRate).toBe(0);
+			expect(metrics.avgDurationMs).toBe(0);
+			expect(metrics.timeRange).toBeNull();
+			expect(metrics.byName).toEqual({});
+		});
+
+		it("exportMetrics aggregates trace data", async () => {
+			const monitor = await createMonitor();
+
+			await trace(monitor, "fast-op", async () => "a");
+			await trace(monitor, "fast-op", async () => "b");
+			await trace(monitor, "slow-op", async () => "c");
+
+			const metrics = exportMetrics(monitor);
+
+			expect(metrics.totalTraces).toBe(3);
+			expect(metrics.totalErrors).toBe(0);
+			expect(metrics.errorRate).toBe(0);
+			expect(metrics.byName["fast-op"].count).toBe(2);
+			expect(metrics.byName["slow-op"].count).toBe(1);
+			expect(metrics.timeRange).not.toBeNull();
+		});
+
+		it("exportMetrics calculates error rate", async () => {
+			const monitor = await createMonitor();
+
+			await trace(monitor, "ok", async () => "pass");
+			await expect(
+				trace(monitor, "fail", async () => {
+					throw new Error("err");
+				}),
+			).rejects.toThrow();
+
+			const metrics = exportMetrics(monitor);
+
+			expect(metrics.totalTraces).toBe(2);
+			expect(metrics.totalErrors).toBe(1);
+			expect(metrics.errorRate).toBe(0.5);
+			expect(metrics.byName["fail"].errorCount).toBe(1);
+		});
+
+		it("exportMetrics includes cost data from cost report", async () => {
+			const monitor = await createMonitor();
+
+			monitor.recordCost({
+				model: "gpt-4o",
+				module: "ai",
+				usage: { promptTokens: 100, completionTokens: 50 },
+				traceId: "t1",
+				estimatedCostUsd: 0.005,
+			});
+
+			// Also trace so we have at least one trace in metrics
+			await trace(monitor, "with-cost", async () => "result");
+
+			const metrics = exportMetrics(monitor);
+			expect(metrics.totalCostUsd).toBe(0.005);
+			expect(metrics.totalTokens).toBe(150);
+		});
+
+		it("exportMetrics returns percentile durations", async () => {
+			const monitor = await createMonitor();
+
+			// Create several traces
+			for (let i = 0; i < 10; i++) {
+				await trace(monitor, "perf", async () => i);
+			}
+
+			const metrics = exportMetrics(monitor);
+			expect(metrics.p50DurationMs).toBeGreaterThanOrEqual(0);
+			expect(metrics.p95DurationMs).toBeGreaterThanOrEqual(metrics.p50DurationMs);
+			expect(metrics.p99DurationMs).toBeGreaterThanOrEqual(metrics.p95DurationMs);
 		});
 	});
 });
