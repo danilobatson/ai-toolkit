@@ -135,7 +135,7 @@ async function parsePdfWithLiteParse(
 	const parser = tryLoadLiteParse();
 	if (!parser) {
 		throw new ToolkitError(
-			"PDF parsing requires @llamaindex/liteparse. Install it: npm install @llamaindex/liteparse",
+			"PDF parsing requires @llamaindex/liteparse. Install it: yarn add @llamaindex/liteparse",
 			{ code: "KNOWLEDGE_MISSING_DEPENDENCY" },
 		);
 	}

@@ -629,18 +629,22 @@ describe("createKnowledge", () => {
 	});
 
 	// ── Level 8: CLEANUP ────────────────────────────────────────────────────
-	it("no resources leak after ingest", async () => {
+	it("no resources leak after ingest — store accumulates only what was ingested", async () => {
 		const embedder = createMockEmbedder();
 		const store = createMockStore();
 		const client = createKnowledge({ embedder, store });
 
-		// Run multiple ingests — if there's a leak, this would accumulate
-		await client.ingest(SHORT_TEXT);
-		await client.ingest(SHORT_TEXT);
-		await client.ingest(SHORT_TEXT);
+		const r1 = await client.ingest(SHORT_TEXT);
+		const countAfterFirst = store._chunks.length;
+		expect(countAfterFirst).toBe(r1.chunks);
 
-		// No assertions on internal state — just verify no throw/hang
-		expect(true).toBe(true);
+		const r2 = await client.ingest(SHORT_TEXT);
+		const countAfterSecond = store._chunks.length;
+		expect(countAfterSecond).toBe(countAfterFirst + r2.chunks);
+
+		// Embedder and store called exactly as many times as ingests
+		expect(embedder).toHaveBeenCalledTimes(2);
+		expect(store.upsert).toHaveBeenCalledTimes(2);
 	});
 });
 
