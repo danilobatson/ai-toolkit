@@ -88,19 +88,25 @@
     "vitest": "3.2.4"
   },
   "peerDependencies": {
+    "@ai-sdk/groq": "3.0.31",
     "@anthropic-ai/sdk": ">=0.30.0",
     "@modelcontextprotocol/sdk": ">=1.0.0",
-    "@vercel/blob": ">=0.20.0",
     "@neondatabase/serverless": ">=0.9.0",
+    "@openrouter/ai-sdk-provider": "2.3.3",
+    "@vercel/blob": ">=0.20.0",
+    "ai": "6.0.141",
     "ioredis": ">=5.0.0",
     "langfuse": ">=3.0.0",
     "openai": ">=4.0.0"
   },
   "peerDependenciesMeta": {
+    "@ai-sdk/groq": { "optional": true },
     "@anthropic-ai/sdk": { "optional": true },
     "@modelcontextprotocol/sdk": { "optional": true },
-    "@vercel/blob": { "optional": true },
     "@neondatabase/serverless": { "optional": true },
+    "@openrouter/ai-sdk-provider": { "optional": true },
+    "@vercel/blob": { "optional": true },
+    "ai": { "optional": true },
     "ioredis": { "optional": true },
     "langfuse": { "optional": true },
     "openai": { "optional": true }
