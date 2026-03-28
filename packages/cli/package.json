@@ -9,7 +9,10 @@
     "aitk": "./dist/index.js"
   },
   "main": "./dist/index.js",
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -19,18 +22,28 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "commander": "13.1.0",
     "chalk": "5.6.2",
+    "commander": "13.1.0",
     "ora": "8.2.0"
   },
   "devDependencies": {
     "@types/node": "22.19.11",
+    "@vitest/coverage-v8": "3.2.4",
     "typescript": "5.9.3",
     "vitest": "3.2.4"
   },
   "keywords": [
-    "cli", "ai", "toolkit", "scaffolding", "fullstack", "mcp",
-    "rag", "agents", "fastapi", "nextjs", "typescript"
+    "cli",
+    "ai",
+    "toolkit",
+    "scaffolding",
+    "fullstack",
+    "mcp",
+    "rag",
+    "agents",
+    "fastapi",
+    "nextjs",
+    "typescript"
   ],
   "repository": {
     "type": "git",

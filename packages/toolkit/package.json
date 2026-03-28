@@ -89,7 +89,10 @@
       "import": "./dist/workflow/index.js"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -104,50 +107,93 @@
   },
   "devDependencies": {
     "@types/node": "22.19.11",
+    "@vitest/coverage-v8": "3.2.4",
     "typescript": "5.9.3",
     "vitest": "3.2.4"
   },
   "peerDependencies": {
     "@ai-sdk/groq": "3.0.31",
     "@anthropic-ai/sdk": ">=0.30.0",
-    "@modelcontextprotocol/sdk": ">=1.0.0",
-    "drizzle-orm": "0.45.2",
-    "@neondatabase/serverless": ">=0.9.0",
-    "postgres": ">=3.4.0",
-    "@openrouter/ai-sdk-provider": "2.3.3",
-    "@vercel/blob": ">=0.20.0",
-    "ai": "6.0.141",
-    "ioredis": ">=5.0.0",
     "@langchain/core": "1.1.36",
     "@langchain/langgraph": "1.2.6",
     "@langchain/textsplitters": "1.0.1",
     "@llamaindex/liteparse": "1.4.0",
+    "@modelcontextprotocol/sdk": ">=1.0.0",
+    "@neondatabase/serverless": ">=0.9.0",
+    "@openrouter/ai-sdk-provider": "2.3.3",
+    "@vercel/blob": ">=0.20.0",
+    "ai": "6.0.141",
+    "drizzle-orm": "0.45.2",
     "inngest": "4.1.0",
+    "ioredis": ">=5.0.0",
     "langfuse": "3.38.6",
-    "openai": ">=4.0.0"
+    "openai": ">=4.0.0",
+    "postgres": ">=3.4.0"
   },
   "peerDependenciesMeta": {
-    "@ai-sdk/groq": { "optional": true },
-    "@anthropic-ai/sdk": { "optional": true },
-    "@modelcontextprotocol/sdk": { "optional": true },
-    "drizzle-orm": { "optional": true },
-    "@neondatabase/serverless": { "optional": true },
-    "postgres": { "optional": true },
-    "@openrouter/ai-sdk-provider": { "optional": true },
-    "@vercel/blob": { "optional": true },
-    "ai": { "optional": true },
-    "ioredis": { "optional": true },
-    "@langchain/core": { "optional": true },
-    "@langchain/langgraph": { "optional": true },
-    "@langchain/textsplitters": { "optional": true },
-    "@llamaindex/liteparse": { "optional": true },
-    "inngest": { "optional": true },
-    "langfuse": { "optional": true },
-    "openai": { "optional": true }
+    "@ai-sdk/groq": {
+      "optional": true
+    },
+    "@anthropic-ai/sdk": {
+      "optional": true
+    },
+    "@modelcontextprotocol/sdk": {
+      "optional": true
+    },
+    "drizzle-orm": {
+      "optional": true
+    },
+    "@neondatabase/serverless": {
+      "optional": true
+    },
+    "postgres": {
+      "optional": true
+    },
+    "@openrouter/ai-sdk-provider": {
+      "optional": true
+    },
+    "@vercel/blob": {
+      "optional": true
+    },
+    "ai": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    },
+    "@langchain/core": {
+      "optional": true
+    },
+    "@langchain/langgraph": {
+      "optional": true
+    },
+    "@langchain/textsplitters": {
+      "optional": true
+    },
+    "@llamaindex/liteparse": {
+      "optional": true
+    },
+    "inngest": {
+      "optional": true
+    },
+    "langfuse": {
+      "optional": true
+    },
+    "openai": {
+      "optional": true
+    }
   },
   "keywords": [
-    "ai", "toolkit", "llm", "mcp", "model-context-protocol",
-    "rag", "agents", "embeddings", "typescript", "sdk"
+    "ai",
+    "toolkit",
+    "llm",
+    "mcp",
+    "model-context-protocol",
+    "rag",
+    "agents",
+    "embeddings",
+    "typescript",
+    "sdk"
   ],
   "repository": {
     "type": "git",
