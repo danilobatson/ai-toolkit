@@ -72,6 +72,10 @@
       "types": "./dist/health/index.d.ts",
       "import": "./dist/health/index.js"
     },
+    "./knowledge": {
+      "types": "./dist/knowledge/index.d.ts",
+      "import": "./dist/knowledge/index.js"
+    },
     "./testing": {
       "types": "./dist/testing/index.d.ts",
       "import": "./dist/testing/index.js"
@@ -108,6 +112,7 @@
     "ioredis": ">=5.0.0",
     "@langchain/core": "1.1.36",
     "@langchain/textsplitters": "1.0.1",
+    "@llamaindex/liteparse": "1.4.0",
     "langfuse": "3.38.6",
     "openai": ">=4.0.0"
   },
@@ -124,6 +129,7 @@
     "ioredis": { "optional": true },
     "@langchain/core": { "optional": true },
     "@langchain/textsplitters": { "optional": true },
+    "@llamaindex/liteparse": { "optional": true },
     "langfuse": { "optional": true },
     "openai": { "optional": true }
   },
