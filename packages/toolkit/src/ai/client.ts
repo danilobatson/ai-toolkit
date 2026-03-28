@@ -109,6 +109,14 @@ const PROVIDER_DEFAULTS: Record<string, { model: string; envKey: string }> = {
  * Create an LLM client. Auto-detects provider from env vars.
  *
  * Priority: Anthropic (if ANTHROPIC_API_KEY set) → OpenAI.
+ *
+ * @example
+ * ```ts
+ * import { createLLM } from '@jamaalbuilds/ai-toolkit/llm';
+ *
+ * const llm = createLLM(); // auto-detects provider
+ * const { content } = await llm.complete('Summarize this document.');
+ * ```
  */
 export function createLLM(config?: LLMConfig): LLMClient {
 	// Detect provider

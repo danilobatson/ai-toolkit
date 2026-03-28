@@ -7,6 +7,14 @@ import { ValidationError } from "../errors/types.js";
  * Provider-agnostic — set whichever LLM API keys you have.
  * All fields optional — you only need what your project uses.
  * initToolkit() validates only the fields required by the modules you enable.
+ *
+ * @example
+ * ```ts
+ * import { toolkitConfigSchema } from '@jamaalbuilds/ai-toolkit/config';
+ *
+ * const result = toolkitConfigSchema.safeParse(process.env);
+ * if (!result.success) console.error(result.error.issues);
+ * ```
  */
 export const toolkitConfigSchema = z.object({
 	// LLM — set whichever keys you have, auto-detected
@@ -59,6 +67,14 @@ export type ToolkitConfig = z.infer<typeof toolkitConfigSchema>;
 /**
  * Parse and validate config from environment variables.
  * Throws a clear error listing ALL missing/invalid vars at once.
+ *
+ * @example
+ * ```ts
+ * import { parseConfig } from '@jamaalbuilds/ai-toolkit/config';
+ *
+ * const config = parseConfig(); // reads process.env
+ * console.log(config.NODE_ENV); // 'development' | 'production' | 'test'
+ * ```
  */
 export function parseConfig(
 	env: Record<string, string | undefined> = process.env,

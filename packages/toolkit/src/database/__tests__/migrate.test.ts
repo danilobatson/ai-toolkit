@@ -40,6 +40,7 @@ describe("migrate", () => {
 	// ─── LEVEL 2: BEHAVIOR ──────────────────────────────────────────────
 
 	it("accepts explicit connectionString override", async () => {
+		expect.assertions(1);
 		delete process.env.DATABASE_URL;
 		try {
 			await migrate({
@@ -52,6 +53,7 @@ describe("migrate", () => {
 	});
 
 	it("accepts custom migrationsFolder", async () => {
+		expect.assertions(1);
 		process.env.DATABASE_URL = "postgresql://postgres@localhost:5432/test";
 		try {
 			await migrate({ migrationsFolder: "./custom-migrations" });
@@ -63,6 +65,7 @@ describe("migrate", () => {
 	// ─── LEVEL 3: DATA QUALITY ──────────────────────────────────────────
 
 	it("ValidationError has correct structure", async () => {
+		expect.assertions(3);
 		delete process.env.DATABASE_URL;
 		try {
 			await migrate();
@@ -77,6 +80,7 @@ describe("migrate", () => {
 	// ─── LEVEL 5: PATTERN ───────────────────────────────────────────────
 
 	it("never throws raw Error — always ToolkitError or subclass", async () => {
+		expect.assertions(1);
 		delete process.env.DATABASE_URL;
 		try {
 			await migrate();

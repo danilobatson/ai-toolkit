@@ -121,6 +121,7 @@ describe("createDatabase", () => {
 	// ─── LEVEL 2: BEHAVIOR ──────────────────────────────────────────────
 
 	it("accepts explicit connectionString in config", async () => {
+		expect.assertions(1);
 		delete process.env.DATABASE_URL;
 		// Will fail on missing driver, but validates connectionString is accepted
 		try {
@@ -134,6 +135,7 @@ describe("createDatabase", () => {
 	});
 
 	it("reads DATABASE_URL from env when no config", async () => {
+		expect.assertions(1);
 		process.env.DATABASE_URL = "postgresql://postgres@localhost:5432/test";
 		try {
 			await createDatabase();
@@ -146,6 +148,7 @@ describe("createDatabase", () => {
 	// ─── LEVEL 3: DATA QUALITY ──────────────────────────────────────────
 
 	it("ValidationError has correct fields metadata", async () => {
+		expect.assertions(5);
 		delete process.env.DATABASE_URL;
 		try {
 			await createDatabase();
@@ -160,6 +163,7 @@ describe("createDatabase", () => {
 	});
 
 	it("ToolkitError has correct code for missing dependency", async () => {
+		expect.assertions(2);
 		process.env.DATABASE_URL = "postgresql://postgres@localhost:5432/test";
 		try {
 			await createDatabase();
@@ -172,6 +176,7 @@ describe("createDatabase", () => {
 	// ─── LEVEL 4: ENVIRONMENT ───────────────────────────────────────────
 
 	it("auto-detects provider from Neon connection string", async () => {
+		expect.assertions(1);
 		process.env.DATABASE_URL =
 			"postgresql://user@ep-test.us-east-2.aws.neon.tech/db";
 		try {
@@ -183,6 +188,7 @@ describe("createDatabase", () => {
 	});
 
 	it("respects explicit provider override", async () => {
+		expect.assertions(1);
 		process.env.DATABASE_URL = "postgresql://postgres@localhost:5432/test";
 		try {
 			await createDatabase({ provider: "neon" });
@@ -192,6 +198,7 @@ describe("createDatabase", () => {
 	});
 
 	it("respects explicit driver override", async () => {
+		expect.assertions(2);
 		process.env.DATABASE_URL = "postgresql://postgres@localhost:5432/test";
 		try {
 			await createDatabase({ driver: "neon-http" });
@@ -206,6 +213,7 @@ describe("createDatabase", () => {
 	// ─── LEVEL 5: PATTERN ───────────────────────────────────────────────
 
 	it("never throws raw Error — always ToolkitError or subclass", async () => {
+		expect.assertions(1);
 		delete process.env.DATABASE_URL;
 		try {
 			await createDatabase();

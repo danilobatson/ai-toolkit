@@ -42,6 +42,16 @@ type DbClient = {
 /**
  * In-memory mock cache for testing.
  * Tracks all calls for assertions.
+ *
+ * @example
+ * ```ts
+ * import { mockCache } from '@jamaalbuilds/ai-toolkit/testing';
+ *
+ * const cache = mockCache({ user: 'Alice' });
+ * const val = await cache.get('user');
+ * expect(val).toBe('Alice');
+ * expect(cache._calls).toHaveLength(1);
+ * ```
  */
 export function mockCache(initial?: Record<string, unknown>): CacheClient & {
 	_store: Map<string, unknown>;

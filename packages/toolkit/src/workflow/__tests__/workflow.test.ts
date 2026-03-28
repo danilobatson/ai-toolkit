@@ -57,6 +57,14 @@ vi.mock("inngest", () => ({
 	Inngest: MockInngest,
 }));
 
+vi.mock("inngest/next", () => ({
+	serve: vi.fn(({ client, functions }) => ({
+		GET: `GET:${client.id}:${functions.length}`,
+		POST: `POST:${client.id}:${functions.length}`,
+		PUT: `PUT:${client.id}:${functions.length}`,
+	})),
+}));
+
 // Now import the module under test (after mock is set up)
 const { createWorkflow, defineJob, humanInTheLoop, aiStep } = await import(
 	"../workflow.js"
@@ -534,6 +542,22 @@ describe("workflow", () => {
 			await expect(
 				serveFn({ client, functions: null as never }),
 			).rejects.toThrow(/requires a functions array/i);
+		});
+
+		it("serve returns { GET, POST, PUT } handlers on valid input", async () => {
+			const { serve: serveFn } = await import("../workflow.js");
+			const client = await createWorkflow({ id: "serve-happy" });
+			const job = defineJob(
+				client,
+				{ id: "job-1", trigger: { event: "app/test" } },
+				async () => "done",
+			);
+
+			const handlers = await serveFn({ client, functions: [job] });
+			expect(handlers).toBeDefined();
+			expect(handlers.GET).toBeDefined();
+			expect(handlers.POST).toBeDefined();
+			expect(handlers.PUT).toBeDefined();
 		});
 	});
 

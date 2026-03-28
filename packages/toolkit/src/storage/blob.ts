@@ -65,6 +65,13 @@ const DEFAULT_ALLOWED_TYPES = [
 
 /**
  * Validate a file before upload. Throws StorageError on failure.
+ *
+ * @example
+ * ```ts
+ * import { validateFile } from '@jamaalbuilds/ai-toolkit/storage';
+ *
+ * validateFile(file, { maxSizeMB: 5, allowedTypes: ['application/pdf'] });
+ * ```
  */
 export function validateFile(
 	file: { size: number; type: string; name?: string },
@@ -100,6 +107,16 @@ export function validateFile(
  * Upload a document to Vercel Blob.
  *
  * Requires @vercel/blob and BLOB_READ_WRITE_TOKEN env var.
+ *
+ * @example
+ * ```ts
+ * import { uploadDocument } from '@jamaalbuilds/ai-toolkit/storage';
+ *
+ * const { url, pathname } = await uploadDocument(file, {
+ *   folder: 'uploads/docs',
+ *   access: 'private',
+ * });
+ * ```
  */
 export async function uploadDocument(
 	file: Blob | Buffer | ReadableStream,
@@ -155,6 +172,13 @@ export async function uploadDocument(
 
 /**
  * Delete a document from Vercel Blob.
+ *
+ * @example
+ * ```ts
+ * import { deleteDocument } from '@jamaalbuilds/ai-toolkit/storage';
+ *
+ * await deleteDocument('https://blob.vercel-storage.com/uploads/doc.pdf');
+ * ```
  */
 export async function deleteDocument(url: string): Promise<void> {
 	try {
@@ -180,6 +204,13 @@ export async function deleteDocument(url: string): Promise<void> {
 
 /**
  * List documents in a Vercel Blob folder.
+ *
+ * @example
+ * ```ts
+ * import { listDocuments } from '@jamaalbuilds/ai-toolkit/storage';
+ *
+ * const { blobs, cursor } = await listDocuments({ prefix: 'uploads/', limit: 50 });
+ * ```
  */
 export async function listDocuments(options?: {
 	prefix?: string;

@@ -57,6 +57,17 @@ const startTime = Date.now();
  * Create a health check function.
  *
  * Returns an async function that runs all checks and returns a HealthReport.
+ *
+ * @example
+ * ```ts
+ * import { createHealthCheck } from '@jamaalbuilds/ai-toolkit/health';
+ *
+ * const check = createHealthCheck({
+ *   checks: { db: async () => { await db.query('SELECT 1'); } },
+ * });
+ * const report = await check();
+ * // report.status === 'healthy' | 'degraded' | 'unhealthy'
+ * ```
  */
 export function createHealthCheck(
 	config: HealthCheckConfig,

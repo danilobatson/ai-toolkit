@@ -3,6 +3,17 @@
  *
  * Every module wraps underlying errors (AxiosError, AnthropicError, etc.)
  * into this hierarchy. Callers handle one error type, not ten.
+ *
+ * @example
+ * ```ts
+ * import { ToolkitError } from '@jamaalbuilds/ai-toolkit/errors';
+ *
+ * throw new ToolkitError('Connection lost', {
+ *   code: 'DB_CONNECTION_LOST',
+ *   statusCode: 503,
+ *   retryable: true,
+ * });
+ * ```
  */
 export class ToolkitError extends Error {
 	/** Machine-readable error code (e.g., 'LLM_RATE_LIMITED', 'AUTH_INVALID_KEY') */
