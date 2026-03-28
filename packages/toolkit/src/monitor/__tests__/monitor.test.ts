@@ -886,7 +886,7 @@ describe("monitor", () => {
 			expect(metrics.totalTraces).toBe(2);
 			expect(metrics.totalErrors).toBe(1);
 			expect(metrics.errorRate).toBe(0.5);
-			expect(metrics.byName["fail"].errorCount).toBe(1);
+			expect(metrics.byName.fail.errorCount).toBe(1);
 		});
 
 		it("exportMetrics includes cost data from cost report", async () => {

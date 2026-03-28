@@ -255,14 +255,11 @@ export async function trace<T>(
 	const startTime = Date.now();
 
 	if (!monitor.enabled) {
-		let traceError = false;
-		let errorMessage: string | undefined;
 		let result: T;
 		try {
 			result = await fn(span);
 		} catch (error) {
-			traceError = true;
-			errorMessage = error instanceof Error ? error.message : String(error);
+			const errorMessage = error instanceof Error ? error.message : String(error);
 			storeTrace(monitor, {
 				traceId,
 				name,
