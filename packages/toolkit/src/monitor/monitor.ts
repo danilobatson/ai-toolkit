@@ -178,8 +178,6 @@ function scoreLangfuse(
 
 // ─── Trace ─────────────────────────────────────────────────────────────────
 
-let traceCounter = 0;
-
 /**
  * Trace an operation with Langfuse.
  *
@@ -212,7 +210,7 @@ export async function trace<T>(
 		});
 	}
 
-	const traceId = `trace-${Date.now()}-${++traceCounter}`;
+	const traceId = crypto.randomUUID();
 	const attrs: TraceAttributes = {};
 
 	const span: TraceSpan = {

@@ -104,7 +104,7 @@ describe("monitor", () => {
 			);
 
 			expect(result).toBe("world");
-			expect(traceId).toMatch(/^trace-/);
+			expect(traceId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 		});
 
 		it("trace records duration score to Langfuse", async () => {
@@ -382,7 +382,7 @@ describe("monitor", () => {
 			});
 
 			expect(result).toBe(42);
-			expect(traceId).toMatch(/^trace-/);
+			expect(traceId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 		});
 
 		it("trace records costs locally even with noop monitor", async () => {

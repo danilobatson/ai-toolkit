@@ -39,6 +39,7 @@ import {
 import type {
 	AIClient,
 	AIConfig,
+	AIProvider,
 	GenerateOptions,
 	GenerateResult,
 	StreamOptions,
@@ -50,19 +51,20 @@ import type {
 
 // ─── Rate Limiter (in-memory) ───────────────────────────────────────────────
 
+// Sliding 24h window, not calendar-day reset
 interface RateLimitState {
 	requestTimestamps: number[];
-	tokensToday: number;
-	dayStart: number;
+	tokensInWindow: number;
+	windowStart: number;
 }
 
 function checkRateLimit(state: RateLimitState, config: AIConfig): void {
 	const now = Date.now();
 
-	// Reset daily counter if new day
-	if (now - state.dayStart > 86_400_000) {
-		state.tokensToday = 0;
-		state.dayStart = now;
+	// Reset sliding window after 24h
+	if (now - state.windowStart > 86_400_000) {
+		state.tokensInWindow = 0;
+		state.windowStart = now;
 	}
 
 	// Check requests per minute
@@ -79,7 +81,7 @@ function checkRateLimit(state: RateLimitState, config: AIConfig): void {
 	}
 
 	// Check tokens per day
-	if (config.maxTokensPerDay && state.tokensToday >= config.maxTokensPerDay) {
+	if (config.maxTokensPerDay && state.tokensInWindow >= config.maxTokensPerDay) {
 		throw new LLMError(
 			`Rate limit: ${config.maxTokensPerDay} tokens/day exceeded`,
 			{ provider: "rate-limiter", code: "LLM_RATE_LIMITED", retryable: false },
@@ -89,7 +91,7 @@ function checkRateLimit(state: RateLimitState, config: AIConfig): void {
 
 function recordUsage(state: RateLimitState, tokens: number): void {
 	state.requestTimestamps.push(Date.now());
-	state.tokensToday += tokens;
+	state.tokensInWindow += tokens;
 }
 
 // ─── AI SDK Dynamic Imports ─────────────────────────────────────────────────
@@ -168,6 +170,203 @@ function extractUsage(usage: unknown): TokenUsage {
 	return { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
 }
 
+// ─── Shared Client Context ─────────────────────────────────────────────────
+
+interface AIClientContext {
+	primaryProvider: AIProvider;
+	fallbackProvider: AIProvider | undefined;
+	primaryModel: string;
+	fallbackModel: string | undefined;
+	config: AIConfig | undefined;
+	resolvedConfig: AIConfig;
+	rateLimitState: RateLimitState;
+}
+
+async function executeWithFallback<T>(
+	ctx: AIClientContext,
+	operation: (
+		model: unknown,
+		provider: string,
+		modelName: string,
+	) => Promise<T>,
+): Promise<T> {
+	checkRateLimit(ctx.rateLimitState, ctx.resolvedConfig);
+
+	try {
+		const model = await loadModel(
+			ctx.primaryProvider,
+			ctx.primaryModel,
+			ctx.config?.apiKey,
+		);
+		return await operation(model, ctx.primaryProvider, ctx.primaryModel);
+	} catch (error) {
+		if (
+			ctx.fallbackProvider &&
+			ctx.fallbackModel &&
+			error instanceof LLMError &&
+			error.code !== "LLM_NO_KEY" &&
+			error.code !== "LLM_MISSING_DEPENDENCY"
+		) {
+			const fbModel = await loadModel(
+				ctx.fallbackProvider,
+				ctx.fallbackModel,
+				ctx.config?.fallbackApiKey,
+			);
+			return await operation(fbModel, ctx.fallbackProvider, ctx.fallbackModel);
+		}
+		throw error;
+	}
+}
+
+// ─── Method Implementations ────────────────────────────────────────────────
+
+async function generateImpl(
+	ctx: AIClientContext,
+	prompt: string,
+	options?: GenerateOptions,
+): Promise<GenerateResult> {
+	if (!prompt) {
+		throw new ValidationError("prompt is required");
+	}
+
+	const sdk = await loadAISDK();
+	const start = Date.now();
+
+	return executeWithFallback(ctx, async (model, provider, modelName) => {
+		const result = await sdk.generateText({
+			model,
+			prompt,
+			system: options?.system,
+			temperature: options?.temperature,
+			maxTokens: options?.maxTokens,
+			stopSequences: options?.stopSequences,
+			abortSignal: options?.abortSignal,
+		});
+
+		const usage = extractUsage(result.usage);
+		recordUsage(ctx.rateLimitState, usage.totalTokens);
+		const cost = estimateCost(modelName, usage.inputTokens, usage.outputTokens);
+
+		return {
+			text: String(result.text ?? ""),
+			model: modelName,
+			provider,
+			usedFallback: provider !== ctx.primaryProvider,
+			usage,
+			cost: { ...cost, currency: "USD" },
+			latencyMs: Date.now() - start,
+			finishReason: String(result.finishReason ?? "unknown"),
+		};
+	});
+}
+
+// Cannot retry mid-stream — fallback only applies during model loading
+async function streamImpl(
+	ctx: AIClientContext,
+	prompt: string,
+	options?: StreamOptions,
+): Promise<StreamResult> {
+	if (!prompt) {
+		throw new ValidationError("prompt is required");
+	}
+
+	checkRateLimit(ctx.rateLimitState, ctx.resolvedConfig);
+
+	const sdk = await loadAISDK();
+	let usedFallback = false;
+	let resolvedProvider = ctx.primaryProvider;
+
+	let model: unknown;
+	try {
+		model = await loadModel(ctx.primaryProvider, ctx.primaryModel, ctx.config?.apiKey);
+	} catch (error) {
+		if (ctx.fallbackProvider && ctx.fallbackModel) {
+			model = await loadModel(
+				ctx.fallbackProvider,
+				ctx.fallbackModel,
+				ctx.config?.fallbackApiKey,
+			);
+			usedFallback = true;
+			resolvedProvider = ctx.fallbackProvider;
+		} else {
+			throw error;
+		}
+	}
+
+	const result = await sdk.streamText({
+		model,
+		prompt,
+		system: options?.system,
+		temperature: options?.temperature,
+		maxTokens: options?.maxTokens,
+		stopSequences: options?.stopSequences,
+		abortSignal: options?.abortSignal,
+	});
+
+	const typedResult = result as {
+		textStream: AsyncIterable<string>;
+		text: Promise<string>;
+		usage: Promise<unknown>;
+	};
+
+	const usagePromise = typedResult.usage.then((u: unknown) => {
+		const usage = extractUsage(u);
+		recordUsage(ctx.rateLimitState, usage.totalTokens);
+		return usage;
+	});
+
+	return {
+		textStream: wrapStreamWithCallback(typedResult.textStream, options?.onChunk),
+		text: typedResult.text,
+		usage: usagePromise,
+		provider: resolvedProvider,
+		usedFallback,
+	};
+}
+
+async function structuredImpl<T extends z.ZodType>(
+	ctx: AIClientContext,
+	prompt: string,
+	options: StructuredOptions<T>,
+): Promise<StructuredResult<z.infer<T>>> {
+	if (!prompt) {
+		throw new ValidationError("prompt is required");
+	}
+	if (!options?.schema) {
+		throw new ValidationError("schema is required for structured output");
+	}
+
+	const sdk = await loadAISDK();
+	const start = Date.now();
+
+	return executeWithFallback(ctx, async (model, provider, modelName) => {
+		const result = await sdk.generateObject({
+			model,
+			prompt,
+			schema: options.schema,
+			schemaName: options.schemaName,
+			schemaDescription: options.schemaDescription,
+			system: options.system,
+			temperature: options.temperature,
+			maxTokens: options.maxTokens,
+		});
+
+		const usage = extractUsage(result.usage);
+		recordUsage(ctx.rateLimitState, usage.totalTokens);
+		const cost = estimateCost(modelName, usage.inputTokens, usage.outputTokens);
+
+		return {
+			object: result.object as z.infer<T>,
+			model: modelName,
+			provider,
+			usedFallback: provider !== ctx.primaryProvider,
+			usage,
+			cost: { ...cost, currency: "USD" },
+			latencyMs: Date.now() - start,
+		};
+	});
+}
+
 // ─── Factory ────────────────────────────────────────────────────────────────
 
 /**
@@ -192,204 +391,25 @@ export function createAI(config?: AIConfig): AIClient {
 		config?.fallbackModel ??
 		(fallbackProvider ? getDefaultModel(fallbackProvider) : undefined);
 
-	const resolvedConfig: AIConfig = { ...config, provider: primaryProvider };
-
-	const rateLimitState: RateLimitState = {
-		requestTimestamps: [],
-		tokensToday: 0,
-		dayStart: Date.now(),
+	const ctx: AIClientContext = {
+		primaryProvider,
+		fallbackProvider,
+		primaryModel,
+		fallbackModel,
+		config,
+		resolvedConfig: { ...config, provider: primaryProvider },
+		rateLimitState: {
+			requestTimestamps: [],
+			tokensInWindow: 0,
+			windowStart: Date.now(),
+		},
 	};
-
-	async function executeWithFallback<T>(
-		operation: (
-			model: unknown,
-			provider: string,
-			modelName: string,
-		) => Promise<T>,
-	): Promise<T> {
-		checkRateLimit(rateLimitState, resolvedConfig);
-
-		try {
-			const model = await loadModel(
-				primaryProvider,
-				primaryModel,
-				config?.apiKey,
-			);
-			return await operation(model, primaryProvider, primaryModel);
-		} catch (error) {
-			// If fallback is configured and this is a retryable error, try fallback
-			if (
-				fallbackProvider &&
-				fallbackModel &&
-				error instanceof LLMError &&
-				error.code !== "LLM_NO_KEY" &&
-				error.code !== "LLM_MISSING_DEPENDENCY"
-			) {
-				const fbModel = await loadModel(
-					fallbackProvider,
-					fallbackModel,
-					config?.fallbackApiKey,
-				);
-				return await operation(fbModel, fallbackProvider, fallbackModel);
-			}
-			throw error;
-		}
-	}
 
 	return {
 		provider: primaryProvider,
 		model: primaryModel,
-
-		async generate(
-			prompt: string,
-			options?: GenerateOptions,
-		): Promise<GenerateResult> {
-			if (!prompt) {
-				throw new ValidationError("prompt is required");
-			}
-
-			const sdk = await loadAISDK();
-			const start = Date.now();
-
-			return executeWithFallback(async (model, provider, modelName) => {
-				const result = await sdk.generateText({
-					model,
-					prompt,
-					system: options?.system,
-					temperature: options?.temperature,
-					maxTokens: options?.maxTokens,
-					stopSequences: options?.stopSequences,
-					abortSignal: options?.abortSignal,
-				});
-
-				const usage = extractUsage(result.usage);
-				recordUsage(rateLimitState, usage.totalTokens);
-				const cost = estimateCost(
-					modelName,
-					usage.inputTokens,
-					usage.outputTokens,
-				);
-
-				return {
-					text: String(result.text ?? ""),
-					model: modelName,
-					provider,
-					usedFallback: provider !== primaryProvider,
-					usage,
-					cost: { ...cost, currency: "USD" },
-					latencyMs: Date.now() - start,
-					finishReason: String(result.finishReason ?? "unknown"),
-				};
-			});
-		},
-
-		async stream(
-			prompt: string,
-			options?: StreamOptions,
-		): Promise<StreamResult> {
-			if (!prompt) {
-				throw new ValidationError("prompt is required");
-			}
-
-			const sdk = await loadAISDK();
-			let usedFallback = false;
-			let resolvedProvider = primaryProvider;
-
-			let model: unknown;
-			try {
-				model = await loadModel(primaryProvider, primaryModel, config?.apiKey);
-			} catch (error) {
-				if (fallbackProvider && fallbackModel) {
-					model = await loadModel(
-						fallbackProvider,
-						fallbackModel,
-						config?.fallbackApiKey,
-					);
-					usedFallback = true;
-					resolvedProvider = fallbackProvider;
-				} else {
-					throw error;
-				}
-			}
-
-			checkRateLimit(rateLimitState, resolvedConfig);
-
-			const result = await sdk.streamText({
-				model,
-				prompt,
-				system: options?.system,
-				temperature: options?.temperature,
-				maxTokens: options?.maxTokens,
-				stopSequences: options?.stopSequences,
-				abortSignal: options?.abortSignal,
-			});
-
-			const typedResult = result as {
-				textStream: AsyncIterable<string>;
-				text: Promise<string>;
-				usage: Promise<unknown>;
-			};
-
-			// Wrap the usage promise to track rate limits
-			const usagePromise = typedResult.usage.then((u: unknown) => {
-				const usage = extractUsage(u);
-				recordUsage(rateLimitState, usage.totalTokens);
-				return usage;
-			});
-
-			return {
-				textStream: wrapStreamWithCallback(typedResult.textStream, options?.onChunk),
-				text: typedResult.text,
-				usage: usagePromise,
-				provider: resolvedProvider,
-				usedFallback,
-			};
-		},
-
-		async structured<T extends z.ZodType>(
-			prompt: string,
-			options: StructuredOptions<T>,
-		): Promise<StructuredResult<z.infer<T>>> {
-			if (!prompt) {
-				throw new ValidationError("prompt is required");
-			}
-			if (!options?.schema) {
-				throw new ValidationError("schema is required for structured output");
-			}
-
-			const sdk = await loadAISDK();
-			const start = Date.now();
-
-			return executeWithFallback(async (model, provider, modelName) => {
-				const result = await sdk.generateObject({
-					model,
-					prompt,
-					schema: options.schema,
-					schemaName: options.schemaName,
-					schemaDescription: options.schemaDescription,
-					system: options.system,
-					temperature: options.temperature,
-					maxTokens: options.maxTokens,
-				});
-
-				const usage = extractUsage(result.usage);
-				recordUsage(rateLimitState, usage.totalTokens);
-				const cost = estimateCost(
-					modelName,
-					usage.inputTokens,
-					usage.outputTokens,
-				);
-
-				return {
-					object: result.object as z.infer<T>,
-					model: modelName,
-					provider,
-					usedFallback: provider !== primaryProvider,
-					usage,
-					cost: { ...cost, currency: "USD" },
-					latencyMs: Date.now() - start,
-				};
-			});
-		},
+		generate: (prompt, options) => generateImpl(ctx, prompt, options),
+		stream: (prompt, options) => streamImpl(ctx, prompt, options),
+		structured: (prompt, options) => structuredImpl(ctx, prompt, options),
 	};
 }

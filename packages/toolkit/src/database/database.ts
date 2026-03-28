@@ -382,6 +382,13 @@ export async function createDatabase(
 			}
 		},
 
+		/**
+		 * Scope a query to a specific tenant by appending `WHERE org_id = $N`.
+		 *
+		 * **Limitation:** WHERE detection uses simple string matching.
+		 * Not reliable with CTEs, subqueries, or comments containing WHERE.
+		 * For complex queries, use Drizzle's `.where()` directly.
+		 */
 		async withTenant<T>(
 			orgId: string,
 			sql: string,

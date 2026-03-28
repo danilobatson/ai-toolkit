@@ -22,6 +22,7 @@
 
 import type { CacheClient, CacheOptions } from "../cache/client.js";
 import type { DatabaseClient } from "../database/types.js";
+import { LLMError } from "../errors/types.js";
 
 /** @deprecated Use DatabaseClient instead */
 type DbClient = {
@@ -135,7 +136,10 @@ export function mockLLM(options?: MockLLMOptions): MockLLMResult {
 
 			if (options?.failOnCall === callCount) {
 				callCount++;
-				throw new Error(`Mock LLM failure on call ${callCount - 1}`);
+				throw new LLMError(`Mock LLM failure on call ${callCount - 1}`, {
+					provider: "mock",
+					code: "LLM_MOCK_FAILURE",
+				});
 			}
 
 			if (latency > 0) {
@@ -163,6 +167,16 @@ export function mockLLM(options?: MockLLMOptions): MockLLMResult {
 /**
  * Mock database client for testing.
  * Returns provided rows for any query.
+ *
+ * @example
+ * ```ts
+ * import { mockDb } from '@jamaalbuilds/ai-toolkit/testing';
+ *
+ * const db = mockDb([{ id: 1, name: 'Alice' }]);
+ * const rows = await db.query('SELECT * FROM users');
+ * expect(rows).toEqual([{ id: 1, name: 'Alice' }]);
+ * expect(db._queries).toHaveLength(1);
+ * ```
  */
 export function mockDb(
 	rows?: Record<string, unknown>[],
@@ -282,6 +296,62 @@ export interface MockAIOptions {
 	model?: string;
 }
 
+/** Return type of mockAI() — AIClient with call tracking. */
+export interface MockAIClient {
+	_tracker: CallTracker;
+	provider: string;
+	model: string;
+	generate(
+		prompt: string,
+		opts?: Record<string, unknown>,
+	): Promise<{
+		text: string;
+		model: string;
+		provider: string;
+		usedFallback: boolean;
+		usage: { inputTokens: number; outputTokens: number; totalTokens: number };
+		cost: {
+			inputCost: number;
+			outputCost: number;
+			totalCost: number;
+			currency: "USD";
+		};
+		latencyMs: number;
+		finishReason: string;
+	}>;
+	stream(
+		prompt: string,
+		opts?: Record<string, unknown>,
+	): Promise<{
+		textStream: AsyncIterable<string>;
+		text: Promise<string>;
+		usage: Promise<{
+			inputTokens: number;
+			outputTokens: number;
+			totalTokens: number;
+		}>;
+		provider: string;
+		usedFallback: boolean;
+	}>;
+	structured(
+		prompt: string,
+		opts?: Record<string, unknown>,
+	): Promise<{
+		object: unknown;
+		model: string;
+		provider: string;
+		usedFallback: boolean;
+		usage: { inputTokens: number; outputTokens: number; totalTokens: number };
+		cost: {
+			inputCost: number;
+			outputCost: number;
+			totalCost: number;
+			currency: "USD";
+		};
+		latencyMs: number;
+	}>;
+}
+
 /**
  * Mock AI client for testing (matches AIClient interface).
  * Tracks all calls for assertions. Requires zero real dependencies.
@@ -296,7 +366,7 @@ export interface MockAIOptions {
  * expect(ai._tracker.callCount).toBe(1);
  * ```
  */
-export function mockAI(options?: MockAIOptions) {
+export function mockAI(options?: MockAIOptions): MockAIClient {
 	const texts = options?.texts ?? [options?.text ?? "Mock AI response."];
 	const streamChunks = options?.streamChunks ?? [
 		"Mock ",

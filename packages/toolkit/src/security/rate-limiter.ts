@@ -106,7 +106,8 @@ export function createRateLimiter(
 					resetAt: now + windowSeconds * 1000,
 				};
 			} catch {
-				// Fail open — allow the request if cache is down
+				// Intentionally fails open — rate limiter should never block
+				// requests due to internal errors (e.g. cache unavailable)
 				return {
 					allowed: true,
 					remaining: max,
