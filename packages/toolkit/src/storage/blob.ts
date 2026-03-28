@@ -105,7 +105,11 @@ export async function uploadDocument(
 	file: Blob | Buffer | ReadableStream,
 	options?: UploadOptions & { filename?: string; contentType?: string },
 ): Promise<UploadResult> {
-	let put: (pathname: string, body: any, options: any) => Promise<any>;
+	let put: (
+		pathname: string,
+		body: unknown,
+		options: Record<string, unknown>,
+	) => Promise<Record<string, unknown>>;
 
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -126,14 +130,16 @@ export async function uploadDocument(
 	try {
 		const result = await put(pathname, file, {
 			access,
-			contentType: (options as any)?.contentType,
+			contentType: options?.contentType,
 		});
 
 		return {
-			url: result.url,
-			pathname: result.pathname,
-			contentType: result.contentType ?? "application/octet-stream",
-			size: result.size ?? 0,
+			url: String(result.url),
+			pathname: String(result.pathname),
+			contentType: result.contentType
+				? String(result.contentType)
+				: "application/octet-stream",
+			size: typeof result.size === "number" ? result.size : 0,
 		};
 	} catch (error) {
 		throw new StorageError(
@@ -156,7 +162,12 @@ export async function deleteDocument(url: string): Promise<void> {
 		const blob = require("@vercel/blob");
 		await blob.del(url);
 	} catch (error) {
-		if ((error as any)?.code === "STORAGE_MISSING_DEPENDENCY") throw error;
+		if (
+			error instanceof Error &&
+			"code" in error &&
+			(error as { code: string }).code === "STORAGE_MISSING_DEPENDENCY"
+		)
+			throw error;
 		throw new StorageError(
 			`Delete failed: ${error instanceof Error ? error.message : "Unknown error"}`,
 			{
@@ -187,10 +198,10 @@ export async function listDocuments(options?: {
 			cursor: options?.cursor,
 		});
 		return {
-			blobs: result.blobs.map((b: any) => ({
-				url: b.url,
-				pathname: b.pathname,
-				size: b.size,
+			blobs: result.blobs.map((b: Record<string, unknown>) => ({
+				url: String(b.url),
+				pathname: String(b.pathname),
+				size: typeof b.size === "number" ? b.size : 0,
 			})),
 			cursor: result.cursor,
 		};
