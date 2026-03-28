@@ -29,7 +29,7 @@ export interface KnowledgeConfig {
 	/** Function to generate embeddings from text */
 	embedder: EmbedFunction;
 	/** Vector storage backend */
-	store?: VectorStore;
+	store: VectorStore;
 	/** Default chunk size for splitting */
 	chunkSize?: number;
 	/** Default chunk overlap for splitting */
@@ -38,6 +38,7 @@ export interface KnowledgeConfig {
 
 /**
  * Function that generates embeddings from text.
+ * Accepts an array of strings and returns an array of number arrays (one embedding per input).
  */
 export type EmbedFunction = (texts: string[]) => Promise<number[][]>;
 

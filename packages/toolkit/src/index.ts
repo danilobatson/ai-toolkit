@@ -104,6 +104,28 @@ export {
 // Health
 export type { HealthCheckConfig, HealthCheckResult } from "./health/index.js";
 export { createHealthCheck } from "./health/index.js";
+// Knowledge
+export type {
+	ChunkOptions,
+	DocumentChunk,
+	EmbedFunction,
+	IngestOptions,
+	IngestResult,
+	KnowledgeClient,
+	KnowledgeConfig,
+	KnowledgeDocument,
+	SearchOptions,
+	SearchResult,
+	VectorStore,
+	VectorStoreSearchOptions,
+} from "./knowledge/index.js";
+export {
+	chunk,
+	createKnowledge,
+	ingest,
+	parseDocument,
+	search,
+} from "./knowledge/index.js";
 // Monitor (v5 — replaces observability/)
 export type {
 	CostEntry,
