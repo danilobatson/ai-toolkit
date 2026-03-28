@@ -1,6 +1,6 @@
 {
   "name": "@jamaalbuilds/ai-toolkit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript SDK for building AI-powered full-stack applications. LLM client, MCP tools, caching, auth, observability, and more.",
   "author": "Danilo Batson <djbatson19@gmail.com>",
   "license": "MIT",
@@ -92,7 +92,8 @@
   "files": [
     "dist",
     "README.md",
-    "LLMS.md"
+    "LLMS.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc",

@@ -1,11 +1,21 @@
 # AI Toolkit — Session State
 > Last updated: 2026-03-28
-> Last session: Fix deferred code quality issues
+> Last session: Fill remaining testing gaps
 
 ## Current Phase
 Phase 2 — Integration, polish, remaining modules.
 
 ## What Was Just Completed
+
+### Session 22: Fill Testing Gaps
+1. **ai/provider.test.ts** — added cost calculation edge cases: zero tokens, very large token counts, unknown model pricing (3 tests)
+2. **config/config.test.ts** — added schema validation edges: invalid NODE_ENV, invalid LOG_LEVEL, extra unknown fields, coercion from string (4 tests)
+3. **security/security.test.ts** — added rate limiter edge cases: rapid sequential burst, max=1, reset behavior, separate counters per identifier, resetAt in future (5 tests)
+4. **database/database.test.ts** — added getVectorColumn test: missing dependency error, async contract (2 tests)
+5. **errors/base.test.ts** — added property preservation tests: LLMError.model, RateLimitError.retryAfter, StorageError.retryable defaults and overrides (6 tests)
+
+Commits:
+- `5720aa0 test(toolkit): fill testing gaps in provider, config, security, database, errors`
 
 ### Session 21: Code Quality Refactoring
 1. **ai/ai-client.ts** — extracted `wrapStreamWithCallback` helper, stream method now under 50 lines
@@ -55,7 +65,7 @@ Phase 2 continues:
 - None
 
 ## Test Baseline
-- Total tests: 588 passing, 0 todo (30 test files)
+- Total tests: 608 passing, 0 todo (30 test files)
 - Build: PASS (typecheck clean)
 - Lint: PASS (biome clean with biome.json, 91 files checked)
 - Semantic checks: 5/5 passing
