@@ -310,6 +310,7 @@ describe("rate limiting", () => {
 	});
 
 	it("DATA QUALITY — rate limit error has retryable flag", async () => {
+		expect.assertions(2);
 		mockGenerateText.mockResolvedValue({
 			text: "ok",
 			usage: { promptTokens: 5, completionTokens: 5 },
