@@ -52,11 +52,13 @@ route(condition: RouteCondition, targets: string[]): RouteResult
 
 ### knowledge
 ```ts
-parseDocument(options: { source: string }): Promise<KnowledgeDocument>
-chunk(text: string, options?: ChunkOptions): DocumentChunk[]
-ingest(options: IngestOptions): Promise<IngestResult>
-search(options: SearchOptions): Promise<SearchResult[]>
+parseDocument(input: string | Buffer | Uint8Array, metadata?: Record<string, unknown>): Promise<KnowledgeDocument>
+chunk(text: string, options?: ChunkOptions): Promise<DocumentChunk[]>
+ingest(input: string | Buffer | Uint8Array, embedder: EmbedFunction, store: VectorStore, options?: IngestOptions): Promise<IngestResult>
+search(query: string, embedder: EmbedFunction, store: VectorStore, options?: SearchOptions): Promise<SearchResult[]>
 createKnowledge(config: KnowledgeConfig): KnowledgeClient
+// KnowledgeClient.ingest(input, options?): Promise<IngestResult>
+// KnowledgeClient.search(query, options?): Promise<SearchResult[]>
 ```
 
 ### monitor
@@ -65,6 +67,10 @@ createMonitor(config?: MonitorConfig): Promise<MonitorClient>
 trace(monitor: MonitorClient, name: string, fn: (span: TraceSpan) => Promise<T>): Promise<TraceResult<T>>
 evaluate(monitor: MonitorClient, options: EvaluateOptions): Promise<void>
 getCostReport(monitor: MonitorClient): CostReport
+getTraces(monitor: MonitorClient): StoredTrace[]
+getTrace(monitor: MonitorClient, traceId: string): StoredTrace | undefined
+onTrace(monitor: MonitorClient, callback: OnTraceCallback): () => void
+exportMetrics(monitor: MonitorClient): MetricsExport
 createLogger(options?: { level?: LogLevel }): Logger
 ```
 
@@ -90,22 +96,24 @@ getVectorColumn(dimension?: number, metric?: DistanceMetric): unknown
 ### mcp
 ```ts
 new McpServerBuilder(config: McpServerConfig)
-// .addTool(definition: ToolDefinition)
-// .addResource(definition: ResourceDefinition)
-// .build(): McpServer
-new McpTestHarness(server: McpServer)
-// .callTool(name, args): Promise<McpToolResponse>
-// .readResource(uri): Promise<McpContent[]>
+// .defineTool(definition: ToolDefinition): this
+// .defineResource(definition: ResourceDefinition): this
+// .start(): Promise<void>
+// .createTestHarness(): McpTestHarness
+new McpTestHarness(tools, resources)
+// .callTool(name, params?): Promise<McpToolResponse>
+// .readResource(uri): Promise<unknown>
 ```
 
 ### security
 ```ts
 detectPII(text: string): PIIFinding[]
 sanitizeForLLM(text: string): string
-createGuardrails(options: { rules: GuardrailRule[] }): Guardrails
-checkOutput(guardrails: Guardrails, text: string): GuardrailResult
-createRateLimiter(config: RateLimitConfig): RateLimiter
-createAuditLogger(options?: object): AuditLogger
+createGuardrails(rules: GuardrailRule[]): Guardrails
+// Guardrails.check(text: string): GuardrailResult  — synchronous, returns { allowed, violations, reasons }
+checkOutput(response: string, rules: GuardrailRule[]): GuardrailResult
+createRateLimiter(cache: CacheClient, config?: RateLimitConfig): RateLimiter
+createAuditLogger(serviceName: string): AuditLogger
 ```
 
 ### auth
@@ -190,14 +198,16 @@ for await (const chunk of stream.textStream) {
 ### Security — PII Detection and Guardrails
 
 ```ts
-import { detectPII, createGuardrails } from '@jamaalbuilds/ai-toolkit/security';
+import { detectPII, createGuardrails, checkOutput } from '@jamaalbuilds/ai-toolkit/security';
 
 const findings = detectPII('Email john@acme.com or call 555-0123');
 // [{ type: 'EMAIL', match: 'john@acme.com' }, { type: 'PHONE', match: '555-0123' }]
 
-const guardrails = createGuardrails({ rules: [{ type: 'no-pii' }, { type: 'max-length', value: 5000 }] });
-const result = await guardrails.check(llmOutput);
-if (!result.passed) console.log(result.violations);
+const guardrails = createGuardrails([
+  { id: 'no-pii', description: 'Block PII', test: /\d{3}-\d{2}-\d{4}/ },
+]);
+const result = guardrails.check(llmOutput); // synchronous
+if (!result.allowed) console.log(result.violations);
 ```
 
 ### MCP — Build a Tool Server
@@ -207,13 +217,13 @@ import { McpServerBuilder } from '@jamaalbuilds/ai-toolkit/mcp';
 import { z } from 'zod';
 
 const server = new McpServerBuilder({ name: 'my-tools', version: '1.0.0' });
-server.addTool({
+server.defineTool({
   name: 'lookup-user',
   description: 'Look up a user by ID',
-  schema: z.object({ userId: z.string() }),
+  schema: { userId: z.string() },
   handler: async ({ userId }) => ({ name: 'Alice', id: userId }),
 });
-const mcp = server.build();
+await server.start();
 ```
 
 ## Install

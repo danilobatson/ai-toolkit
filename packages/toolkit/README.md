@@ -92,11 +92,11 @@ console.log(structured.object); // { name: "...", age: ... }
 ## Chain — Prompt Templates, Parsing, RAG
 
 ```typescript
-import { prompt, parse, createChain, rag } from '@jamaalbuilds/ai-toolkit/chain';
+import { prompt, parse, createChain, rag, createSplitter, createLanguageSplitter } from '@jamaalbuilds/ai-toolkit/chain';
 
 // Prompt template
 const template = prompt({ template: 'Summarize: {text}', variables: ['text'] });
-const filled = template.format({ text: 'Long document...' });
+const filled = await template.format({ text: 'Long document...' });
 
 // Output parsing (JSON, list, regex)
 const parser = parse({ format: 'json', schema: z.object({ summary: z.string() }) });
@@ -107,6 +107,13 @@ const result = await rag({
   retriever: myRetriever,
   model: myModel,
 });
+
+// Text splitting
+const splitter = createSplitter({ chunkSize: 500, chunkOverlap: 50 });
+const chunks = await splitter.split(longDocument);
+
+// Language-aware splitting (TypeScript, Python, Markdown, etc.)
+const tsSplitter = createLanguageSplitter('typescript', { chunkSize: 1000 });
 ```
 
 ## Agents — Multi-Agent Orchestration
@@ -130,38 +137,63 @@ const result = await graph.invoke({ messages: [{ role: 'user', content: 'Write a
 ```typescript
 import { createKnowledge, parseDocument, chunk, ingest, search } from '@jamaalbuilds/ai-toolkit/knowledge';
 
-// Parse a document
-const doc = await parseDocument({ source: './report.pdf' });
+// Parse a document (file path, Buffer, or plain text)
+const doc = await parseDocument('./report.pdf');
 
-// Chunk it
-const chunks = chunk(doc.content, { strategy: 'paragraph', maxTokens: 512 });
+// Chunk it (async — uses chain splitter when available)
+const chunks = await chunk(doc.content, { chunkSize: 512, chunkOverlap: 50 });
 
-// Full pipeline
-const client = createKnowledge({ vectorStore: myStore, embedFn: myEmbedFn });
-await client.ingest({ source: './report.pdf' });
-const results = await client.search('quarterly revenue');
+// Full pipeline with client
+const client = createKnowledge({ store: myStore, embedder: myEmbedFn });
+await client.ingest('./report.pdf', { metadata: { source: 'quarterly' } });
+const results = await client.search('quarterly revenue', { limit: 5 });
+
+// Standalone operations (without client)
+await ingest('./doc.pdf', embedder, store, { metadata: { source: 'manual' } });
+const found = await search('revenue', embedder, store, { limit: 10 });
 ```
 
 ## Monitor — Tracing & Cost Tracking
 
 ```typescript
-import { createMonitor, trace } from '@jamaalbuilds/ai-toolkit/monitor';
+import {
+  createMonitor, trace, evaluate, getCostReport,
+  getTraces, getTrace, onTrace, exportMetrics, createLogger,
+} from '@jamaalbuilds/ai-toolkit/monitor';
 
-const monitor = await createMonitor({ langfusePublicKey: '...', langfuseSecretKey: '...' });
+const monitor = await createMonitor(); // reads LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY from env
 
-// Trace an LLM call
-const span = trace(monitor, { name: 'summarize', attributes: { model: 'gpt-4' } });
-span.end({ output: 'Summary result' });
+// Trace an LLM call — async callback API
+const { result, traceId } = await trace(monitor, 'summarize', async (span) => {
+  span.update({ input: 'Summarize this', model: 'gpt-4o' });
+  const answer = await ai.generate('Summarize this');
+  span.update({ output: answer.text, usage: { promptTokens: 100, completionTokens: 50 } });
+  return answer;
+});
 
-// Cost tracking
-monitor.recordCost({ model: 'gpt-4', inputTokens: 100, outputTokens: 50 });
-const report = monitor.getCostReport();
+// Evaluate quality (scores sent to Langfuse)
+await evaluate(monitor, { traceId, name: 'relevance', value: 0.95, dataType: 'NUMERIC' });
+
+// Cost report (standalone function, not a method)
+const report = getCostReport(monitor);
+
+// In-memory trace access (works without Langfuse)
+const allTraces = getTraces(monitor);
+const single = getTrace(monitor, traceId);
+const unsub = onTrace(monitor, (t) => console.log(`${t.name}: ${t.durationMs}ms`));
+
+// OpenTelemetry-compatible metrics export
+const metrics = exportMetrics(monitor);
+
+// Structured logger
+const logger = createLogger({ level: 'info' });
+logger.info('Pipeline complete', { traceId });
 ```
 
 ## Workflow — Durable Background Jobs
 
 ```typescript
-import { createWorkflow, defineJob, serve } from '@jamaalbuilds/ai-toolkit/workflow';
+import { createWorkflow, defineJob, serve, humanInTheLoop, aiStep } from '@jamaalbuilds/ai-toolkit/workflow';
 
 const workflow = createWorkflow({ id: 'my-app' });
 
@@ -172,6 +204,18 @@ const emailJob = defineJob(workflow, {
     await step.run('send-email', async () => {
       await sendEmail(event.data.email);
     });
+
+    // Human-in-the-loop approval (pauses workflow until approved)
+    const approval = await humanInTheLoop(step, {
+      prompt: 'Approve welcome email?',
+      timeout: '24h',
+    });
+
+    // AI-powered step (calls LLM inside a durable step)
+    const summary = await aiStep(step, {
+      name: 'summarize-signup',
+      prompt: `Summarize signup for ${event.data.email}`,
+    });
   },
 });
 
@@ -181,17 +225,23 @@ serve(workflow, { framework: 'next' });
 ## Database — Vector Search & Migrations
 
 ```typescript
-import { createDatabase, vectorSearch, migrate } from '@jamaalbuilds/ai-toolkit/database';
+import { createDatabase, vectorSearch, vectorSearchRaw, migrate, getVectorColumn } from '@jamaalbuilds/ai-toolkit/database';
 
 const db = createDatabase({ connectionString: process.env.DATABASE_URL });
 
-// Vector similarity search
+// Vector similarity search (typed results)
 const results = await vectorSearch(db, {
   table: 'documents',
   column: 'embedding',
   query: [0.1, 0.2, ...],
   limit: 10,
 });
+
+// Raw vector search (untyped — for custom column selection)
+const raw = await vectorSearchRaw(db, { table: 'documents', column: 'embedding', query: vec });
+
+// Get a pgvector column definition for Drizzle schemas
+const embeddingCol = getVectorColumn(1536, 'cosine');
 
 // Run migrations
 await migrate(db, { migrationsFolder: './drizzle' });
@@ -200,19 +250,39 @@ await migrate(db, { migrationsFolder: './drizzle' });
 ## Security — PII Detection, Guardrails, Rate Limiting
 
 ```typescript
-import { detectPII, createGuardrails, createRateLimiter } from '@jamaalbuilds/ai-toolkit/security';
+import {
+  detectPII, sanitizeForLLM, createGuardrails, checkOutput,
+  createRateLimiter, createAuditLogger,
+} from '@jamaalbuilds/ai-toolkit/security';
+import { createCache } from '@jamaalbuilds/ai-toolkit/cache';
 
 // Detect PII in text
 const findings = detectPII('Contact john@example.com or call 555-1234');
 // [{ type: 'EMAIL', match: 'john@example.com' }, { type: 'PHONE', match: '555-1234' }]
 
-// Guardrails for LLM output
-const guardrails = createGuardrails({ rules: [{ type: 'no-pii' }] });
-const result = await guardrails.check('LLM response text');
+// Sanitize text before sending to LLM (replaces PII with placeholders)
+const safe = sanitizeForLLM('Email john@example.com for details');
 
-// Rate limiting
-const limiter = createRateLimiter({ windowMs: 60000, maxRequests: 100 });
+// Input guardrails — takes an array of rules with { id, description, test }
+const guardrails = createGuardrails([
+  { id: 'no-pii', description: 'Block PII in output', test: /\d{3}-\d{2}-\d{4}/ },
+]);
+const result = guardrails.check('LLM response text'); // synchronous
+if (!result.allowed) console.log(result.violations, result.reasons);
+
+// Output guardrails (standalone function)
+const outputResult = checkOutput('LLM response', [
+  { id: 'no-hedging', description: 'No uncertain language', test: /I think|maybe/i },
+]);
+
+// Rate limiting — requires a CacheClient
+const cache = createCache();
+const limiter = createRateLimiter(cache, { max: 100, windowSeconds: 60 });
 const allowed = await limiter.check('user-123');
+
+// Audit logging (structured JSON to stdout)
+const audit = createAuditLogger('my-service');
+audit.log('query_executed', { userId: 'u_123', resource: 'rag-search' });
 ```
 
 ## Testing — Zero API Calls
@@ -228,7 +298,7 @@ test('AI pipeline', async () => {
   // Use in your code — identical interfaces, zero API calls
   const result = await ai.generate('test');
   expect(result.text).toBe('Generated response');
-  expect(ai.generate.callCount).toBe(1);
+  expect(ai._tracker.callCount).toBe(1);
 });
 ```
 
@@ -275,7 +345,7 @@ Error types: `ToolkitError`, `LLMError`, `ValidationError`, `RateLimitError`, `A
 No peer deps required.
 
 ```typescript
-import { createApiKeyGuard, requireApiKey, getTenantContext } from '@jamaalbuilds/ai-toolkit/auth';
+import { createApiKeyGuard, requireApiKey, getTenantContext, getOrgId, getUserId } from '@jamaalbuilds/ai-toolkit/auth';
 
 // Express/Next.js middleware — validates X-API-Key header
 const guard = createApiKeyGuard({ apiKey: process.env.API_KEY });
@@ -285,6 +355,10 @@ requireApiKey(request); // throws AuthError if invalid
 
 // Multi-tenant context from headers
 const tenant = getTenantContext(request); // { orgId, userId }
+
+// Direct header extraction
+const orgId = getOrgId(request);   // reads X-Org-Id header
+const userId = getUserId(request); // reads X-User-Id header
 ```
 
 ## Cache — Redis or In-Memory
@@ -365,16 +439,23 @@ const created = await api.post('/users', { name: 'Alice' });
 ## MCP — Model Context Protocol Servers
 
 ```typescript
-import { McpServerBuilder, defineTool, defineResource } from '@jamaalbuilds/ai-toolkit/mcp';
+import { McpServerBuilder } from '@jamaalbuilds/ai-toolkit/mcp';
+import { z } from 'zod';
 
 const server = new McpServerBuilder({ name: 'my-tools', version: '1.0.0' });
 
-server.addTool(defineTool({
+server.defineTool({
   name: 'get-weather',
   description: 'Get current weather',
-  schema: z.object({ city: z.string() }),
+  schema: { city: z.string() },
   handler: async ({ city }) => ({ temperature: 72, city }),
-}));
+});
+
+server.defineResource({
+  uri: 'config://settings',
+  name: 'App Settings',
+  handler: async () => ({ theme: 'dark', language: 'en' }),
+});
 ```
 
 ## Configuration

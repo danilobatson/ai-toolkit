@@ -149,19 +149,27 @@ export type {
 	EvaluateOptions,
 	Logger,
 	LogLevel,
+	MetricsExport,
 	ModelCostSummary,
 	MonitorClient,
 	MonitorConfig,
+	OnTraceCallback,
 	ScoreDataType,
+	StoredTrace,
 	TraceAttributes,
 	TraceResult,
 	TraceSpan,
+	TraceStoreConfig,
 } from "./monitor/index.js";
 export {
 	createLogger,
 	createMonitor,
 	evaluate,
+	exportMetrics,
 	getCostReport,
+	getTrace,
+	getTraces,
+	onTrace,
 	trace,
 } from "./monitor/index.js";
 // Security
@@ -198,8 +206,29 @@ export {
 	validateFile,
 } from "./storage/index.js";
 // Testing
-export type { MockLLMOptions, MockLLMResult } from "./testing/index.js";
-export { mockCache, mockDatabase, mockDb, mockLLM } from "./testing/index.js";
+export type {
+	CallTracker,
+	MockAgentsOptions,
+	MockAIOptions,
+	MockChainOptions,
+	MockKnowledgeOptions,
+	MockLLMOptions,
+	MockLLMResult,
+	MockMonitorOptions,
+	MockWorkflowOptions,
+} from "./testing/index.js";
+export {
+	mockAgents,
+	mockAI,
+	mockCache,
+	mockChain,
+	mockDatabase,
+	mockDb,
+	mockKnowledge,
+	mockLLM,
+	mockMonitor,
+	mockWorkflow,
+} from "./testing/index.js";
 // Workflow
 export type {
 	AIStepOptions,

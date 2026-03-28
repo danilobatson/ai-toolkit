@@ -42,7 +42,7 @@ These are the PUBLIC names developers import. Map them to the underlying librari
 | `security`  | Custom                   | PII detection, audit logging, RBAC, guardrails             |
 | `database`  | Drizzle ORM + pgvector   | Typed queries, vector search, migrations                   |
 | `api`       | GraphQL Yoga + tRPC      | Type-safe APIs with subscriptions                          |
-| `realtime`  | Pusher / SSE             | Subscribe, broadcast, auto-cleanup                         |
+| `realtime`  | Pusher / SSE             | Subscribe, broadcast, auto-cleanup (planned v2)            |
 | `auth`      | NextAuth.js / Clerk      | Sessions, RBAC, API keys, multi-tenant                     |
 | `storage`   | Vercel Blob / S3         | File upload with validation                                |
 | `cache`     | Redis / in-memory        | Get/set/invalidate with TTL                                |
@@ -50,6 +50,8 @@ These are the PUBLIC names developers import. Map them to the underlying librari
 | `errors`    | Custom                   | Typed errors, retry logic                                  |
 | `health`    | Custom                   | Self-diagnostics, per-service status                       |
 | `testing`   | Custom                   | Mock AI, MCP, DB, workflows — zero API calls               |
+| `data`      | —                        | Shared API types (PaginatedResponse, ErrorResponse)        |
+| `observability` | Re-exports from monitor | Deprecated — use `monitor` instead                     |
 
 ## Architecture Rules
 
