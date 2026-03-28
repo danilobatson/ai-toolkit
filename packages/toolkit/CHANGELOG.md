@@ -5,6 +5,12 @@ All notable changes to `@jamaalbuilds/ai-toolkit` will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-03-28
+
+### Changed
+- Refactored 10 functions across 9 files — all public functions now under 50 lines
+- Added expect.assertions to rate limit test (stream-fallback)
+
 ## [0.3.1] - 2026-03-28
 
 ### Fixed
