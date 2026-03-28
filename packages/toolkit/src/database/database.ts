@@ -69,7 +69,8 @@ function defaultSsl(provider: DatabaseProvider): boolean {
 /**
  * Determine the default driver for a provider.
  */
-function defaultDriver(_provider: DatabaseProvider): DatabaseDriver {
+function defaultDriver(provider: DatabaseProvider): DatabaseDriver {
+	if (provider === "neon") return "neon-http";
 	return "postgres-js";
 }
 
