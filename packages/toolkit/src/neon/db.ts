@@ -63,7 +63,10 @@ export function createDb(config?: DbConfig): DbClient {
 	}
 
 	// Try @neondatabase/serverless first, then pg
-	let pool: any;
+	let pool: {
+		query(sql: string, params?: unknown[]): Promise<{ rows: unknown[] }>;
+		end(): Promise<void>;
+	};
 
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
