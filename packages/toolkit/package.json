@@ -32,9 +32,9 @@
       "types": "./dist/storage/index.d.ts",
       "import": "./dist/storage/index.js"
     },
-    "./neon": {
-      "types": "./dist/neon/index.d.ts",
-      "import": "./dist/neon/index.js"
+    "./database": {
+      "types": "./dist/database/index.d.ts",
+      "import": "./dist/database/index.js"
     },
     "./auth": {
       "types": "./dist/auth/index.d.ts",
@@ -91,7 +91,9 @@
     "@ai-sdk/groq": "3.0.31",
     "@anthropic-ai/sdk": ">=0.30.0",
     "@modelcontextprotocol/sdk": ">=1.0.0",
+    "drizzle-orm": "0.45.2",
     "@neondatabase/serverless": ">=0.9.0",
+    "postgres": ">=3.4.0",
     "@openrouter/ai-sdk-provider": "2.3.3",
     "@vercel/blob": ">=0.20.0",
     "ai": "6.0.141",
@@ -103,7 +105,9 @@
     "@ai-sdk/groq": { "optional": true },
     "@anthropic-ai/sdk": { "optional": true },
     "@modelcontextprotocol/sdk": { "optional": true },
+    "drizzle-orm": { "optional": true },
     "@neondatabase/serverless": { "optional": true },
+    "postgres": { "optional": true },
     "@openrouter/ai-sdk-provider": { "optional": true },
     "@vercel/blob": { "optional": true },
     "ai": { "optional": true },
