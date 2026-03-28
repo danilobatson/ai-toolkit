@@ -6,9 +6,9 @@
  *
  * @example
  * ```ts
- * import { createWorkflow, defineJob } from '@jamaalbuilds/ai-toolkit/workflow';
+ * import { createWorkflow, defineJob, humanInTheLoop, aiStep } from '@jamaalbuilds/ai-toolkit/workflow';
  *
- * const workflow = createWorkflow({ id: 'my-app' });
+ * const workflow = await createWorkflow({ id: 'my-app' });
  *
  * const processJob = defineJob(workflow, {
  *   id: 'process-data',
@@ -17,7 +17,43 @@
  *   const result = await step.run('transform', async () => {
  *     return transformData(event.data);
  *   });
- *   return result;
+ *
+ *   const approval = await humanInTheLoop(step, {
+ *     stepId: 'wait-approval',
+ *     event: 'app/data.approved',
+ *     timeout: '7d',
+ *   });
+ *
+ *   if (!approval) return { status: 'timed_out' };
+ *
+ *   const summary = await aiStep(step, {
+ *     stepId: 'summarize',
+ *     prompt: `Summarize: ${JSON.stringify(result)}`,
+ *     fallback: 'Summary unavailable',
+ *   });
+ *
+ *   return { status: 'complete', summary: summary.text };
  * });
  * ```
  */
+
+export type {
+	AIStepOptions,
+	AIStepResult,
+	HITLOptions,
+	JobConfig,
+	JobContext,
+	ServeOptions,
+	Trigger,
+	WorkflowClient,
+	WorkflowConfig,
+	WorkflowJob,
+	WorkflowStep,
+} from "./types.js";
+export {
+	aiStep,
+	createWorkflow,
+	defineJob,
+	humanInTheLoop,
+	serve,
+} from "./workflow.js";

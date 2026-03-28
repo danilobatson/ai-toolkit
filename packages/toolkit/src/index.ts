@@ -184,3 +184,24 @@ export {
 // Testing
 export type { MockLLMOptions, MockLLMResult } from "./testing/index.js";
 export { mockCache, mockDatabase, mockDb, mockLLM } from "./testing/index.js";
+// Workflow
+export type {
+	AIStepOptions,
+	AIStepResult,
+	HITLOptions,
+	JobConfig,
+	JobContext,
+	ServeOptions,
+	Trigger,
+	WorkflowClient,
+	WorkflowConfig,
+	WorkflowJob,
+	WorkflowStep,
+} from "./workflow/index.js";
+export {
+	aiStep,
+	createWorkflow,
+	defineJob,
+	humanInTheLoop,
+	serve,
+} from "./workflow/index.js";
