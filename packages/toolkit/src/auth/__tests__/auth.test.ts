@@ -32,6 +32,19 @@ describe("requireApiKey", () => {
 		const req = makeRequest({ "x-api-key": "wrong-key" });
 		expect(() => requireApiKey(req, "secret-123")).toThrow(/invalid api key/i);
 	});
+
+	it("rejects key with different length via constant-time comparison", () => {
+		const req = makeRequest({ "x-api-key": "short" });
+		expect(() => requireApiKey(req, "much-longer-key")).toThrow(
+			/invalid api key/i,
+		);
+	});
+
+	it("accepts valid key from Authorization Bearer header", () => {
+		const req = makeRequest({ authorization: "Bearer secret-123" });
+		const result = requireApiKey(req, "secret-123");
+		expect(result).toBe("secret-123");
+	});
 });
 
 describe("getTenantContext", () => {

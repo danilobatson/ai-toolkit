@@ -24,6 +24,7 @@
  * ```
  */
 
+import { timingSafeEqual } from "node:crypto";
 import { AuthError } from "../errors/types.js";
 
 // ─── Header Extraction ──────────────────────────────────────────────────────
@@ -87,7 +88,19 @@ export function requireApiKey(
 	const apiKeyHeader = getHeader(request, "x-api-key");
 	const token = apiKeyHeader ?? authHeader.replace(/^Bearer\s+/i, "").trim();
 
-	if (!token || token !== expected) {
+	if (!token) {
+		throw new AuthError("Invalid API key", {
+			code: "AUTH_INVALID_KEY",
+			statusCode: 401,
+		});
+	}
+
+	const tokenBuffer = Buffer.from(token);
+	const expectedBuffer = Buffer.from(expected);
+	if (
+		tokenBuffer.length !== expectedBuffer.length ||
+		!timingSafeEqual(tokenBuffer, expectedBuffer)
+	) {
 		throw new AuthError("Invalid API key", {
 			code: "AUTH_INVALID_KEY",
 			statusCode: 401,
