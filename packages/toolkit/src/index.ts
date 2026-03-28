@@ -85,11 +85,23 @@ export { createLogger, initLangfuse } from "./observability/index.js";
 export type {
 	AuditEvent,
 	AuditLogger,
+	GuardrailResult,
+	GuardrailRule,
+	Guardrails,
+	PIIFinding,
+	PIIType,
 	RateLimitConfig,
 	RateLimiter,
 	RateLimitResult,
 } from "./security/index.js";
-export { createAuditLogger, createRateLimiter } from "./security/index.js";
+export {
+	checkOutput,
+	createAuditLogger,
+	createGuardrails,
+	createRateLimiter,
+	detectPII,
+	sanitizeForLLM,
+} from "./security/index.js";
 // Storage
 export type {
 	FileValidationOptions,
