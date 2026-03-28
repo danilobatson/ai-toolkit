@@ -1,5 +1,5 @@
 {
-  "name": "healthcare-ai-portfolio",
+  "name": "ai-toolkit",
   "private": true,
   "workspaces": [
     "packages/toolkit",
