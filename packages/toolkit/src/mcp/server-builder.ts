@@ -181,10 +181,8 @@ export class McpServerBuilder {
 	 */
 	async start(): Promise<void> {
 		// Dynamic import — SDK is a peer dependency
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		let McpServer: any;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		let StdioServerTransport: any;
+		let McpServer: unknown;
+		let StdioServerTransport: unknown;
 
 		try {
 			// Variable-based imports to skip TypeScript module resolution.
@@ -201,7 +199,11 @@ export class McpServerBuilder {
 			);
 		}
 
-		const server = new McpServer({
+		const McpServerCtor = McpServer as new (opts: {
+			name: string;
+			version: string;
+		}) => Record<string, (...args: unknown[]) => unknown>;
+		const server = new McpServerCtor({
 			name: this._config.name,
 			version: this._config.version,
 		});
@@ -244,8 +246,11 @@ export class McpServerBuilder {
 			);
 		}
 
-		const transport = new StdioServerTransport();
-		await server.connect(transport);
+		const TransportCtor = StdioServerTransport as new () => unknown;
+		const transport = new TransportCtor();
+		await (server as { connect: (t: unknown) => Promise<void> }).connect(
+			transport,
+		);
 	}
 
 	/**
