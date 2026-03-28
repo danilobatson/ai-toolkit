@@ -5,6 +5,26 @@ All notable changes to `@jamaalbuilds/ai-toolkit` will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-03-28
+
+### Fixed
+- README: 4 code examples that wouldn't compile (chain `await`, knowledge params, testing mock API, monitor trace)
+- README: MCP section used nonexistent standalone `defineTool`/`defineResource` imports
+- README: Security section had wrong method signatures (`createGuardrails` params, sync `.check()`, `createRateLimiter` args)
+- LLMS.md: 7 wrong function signatures (MCP, Security, Knowledge)
+- CLAUDE.md: module table missing `data`/`observability`, listed nonexistent `realtime` without annotation
+- Root barrel missing v5 mock exports (`mockAI`, `mockChain`, `mockAgents`, `mockKnowledge`, `mockMonitor`, `mockWorkflow`)
+- Root barrel missing monitor exports (`exportMetrics`, `getTraces`, `getTrace`, `onTrace`) and types
+- 12 silent-pass database tests now use `expect.assertions()`
+- 2 relative dynamic imports verified to use variable indirection pattern
+
+### Added
+- api module: 23 tests (was zero coverage) — HTTP methods, retry, error wrapping, rate limit detection
+- health module: 3 new edge case tests
+- workflow/serve: happy-path test
+- `@example` JSDoc on 18 previously undocumented exports
+- README: 25+ previously undocumented exports now documented (monitor, security, database, auth, chain, workflow)
+
 ## [0.2.0] - 2026-03-28
 
 ### Added
