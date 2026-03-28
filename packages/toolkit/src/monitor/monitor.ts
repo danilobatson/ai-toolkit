@@ -209,6 +209,58 @@ function scoreLangfuse(
 	}
 }
 
+function buildStoredTrace(
+	traceId: string,
+	name: string,
+	startTime: number,
+	attrs: TraceAttributes,
+	error: boolean,
+	errorMessage?: string,
+): StoredTrace {
+	return {
+		traceId,
+		name,
+		startedAt: new Date(startTime),
+		durationMs: Date.now() - startTime,
+		attributes: { ...attrs },
+		error,
+		...(errorMessage ? { errorMessage } : {}),
+	};
+}
+
+function scoreOnError(
+	monitor: MonitorClient,
+	traceId: string,
+	errorMessage: string,
+): void {
+	if (monitor.enabled && monitor.langfuse) {
+		scoreLangfuse(
+			monitor.langfuse as LangfuseClientLike,
+			traceId,
+			"error",
+			1,
+			"BOOLEAN",
+			errorMessage,
+		);
+	}
+}
+
+function scoreOnSuccess(
+	monitor: MonitorClient,
+	traceId: string,
+	durationMs: number,
+): void {
+	if (monitor.enabled && monitor.langfuse) {
+		scoreLangfuse(
+			monitor.langfuse as LangfuseClientLike,
+			traceId,
+			"duration_ms",
+			durationMs,
+			"NUMERIC",
+		);
+	}
+}
+
 // ─── Trace ─────────────────────────────────────────────────────────────────
 
 /**
@@ -245,96 +297,26 @@ export async function trace<T>(
 
 	const traceId = crypto.randomUUID();
 	const attrs: TraceAttributes = {};
-
 	const span: TraceSpan = {
-		update(newAttrs) {
-			Object.assign(attrs, newAttrs);
-		},
+		update(newAttrs) { Object.assign(attrs, newAttrs); },
 	};
 
 	const startTime = Date.now();
 
-	if (!monitor.enabled) {
-		let result: T;
-		try {
-			result = await fn(span);
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error);
-			storeTrace(monitor, {
-				traceId,
-				name,
-				startedAt: new Date(startTime),
-				durationMs: Date.now() - startTime,
-				attributes: { ...attrs },
-				error: true,
-				errorMessage,
-			});
-			throw error;
-		}
-		recordTraceCost(monitor, name, attrs, traceId);
-		storeTrace(monitor, {
-			traceId,
-			name,
-			startedAt: new Date(startTime),
-			durationMs: Date.now() - startTime,
-			attributes: { ...attrs },
-			error: false,
-		});
-		return { result, traceId };
-	}
-
-	let result: T;
-
 	try {
-		result = await fn(span);
+		const result = await fn(span);
+		const durationMs = Date.now() - startTime;
+		recordTraceCost(monitor, name, attrs, traceId);
+		scoreOnSuccess(monitor, traceId, durationMs);
+		storeTrace(monitor, buildStoredTrace(traceId, name, startTime, attrs, false));
+		return { result, traceId };
 	} catch (error) {
 		const durationMs = Date.now() - startTime;
 		const errorMessage = error instanceof Error ? error.message : String(error);
-		if (monitor.langfuse) {
-			scoreLangfuse(
-				monitor.langfuse as LangfuseClientLike,
-				traceId,
-				"error",
-				1,
-				"BOOLEAN",
-				errorMessage,
-			);
-		}
-		storeTrace(monitor, {
-			traceId,
-			name,
-			startedAt: new Date(startTime),
-			durationMs,
-			attributes: { ...attrs },
-			error: true,
-			errorMessage,
-		});
+		scoreOnError(monitor, traceId, errorMessage);
+		storeTrace(monitor, buildStoredTrace(traceId, name, startTime, attrs, true, errorMessage));
 		throw error;
 	}
-
-	const durationMs = Date.now() - startTime;
-	recordTraceCost(monitor, name, attrs, traceId);
-
-	if (monitor.langfuse) {
-		scoreLangfuse(
-			monitor.langfuse as LangfuseClientLike,
-			traceId,
-			"duration_ms",
-			durationMs,
-			"NUMERIC",
-		);
-	}
-
-	storeTrace(monitor, {
-		traceId,
-		name,
-		startedAt: new Date(startTime),
-		durationMs,
-		attributes: { ...attrs },
-		error: false,
-	});
-
-	return { result, traceId };
 }
 
 // ─── Evaluate ──────────────────────────────────────────────────────────────

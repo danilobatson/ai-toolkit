@@ -211,19 +211,7 @@ export async function vectorSearch<T = Record<string, unknown>>(
 	database: DatabaseClient,
 	options: VectorSearchTableOptions,
 ): Promise<VectorSearchResult<T>[]> {
-	if (!options.queryVector || options.queryVector.length === 0) {
-		throw new ValidationError("queryVector must be a non-empty number array", {
-			code: "DATABASE_INVALID_VECTOR",
-			fields: { queryVector: "required, non-empty number[]" },
-		});
-	}
-
-	if (options.limit !== undefined && options.limit < 1) {
-		throw new ValidationError("limit must be >= 1", {
-			code: "DATABASE_INVALID_LIMIT",
-			fields: { limit: "must be >= 1" },
-		});
-	}
+	validateVectorOptions(options);
 
 	const metric = options.metric ?? "cosine";
 	const threshold = options.threshold ?? 0;
@@ -232,52 +220,14 @@ export async function vectorSearch<T = Record<string, unknown>>(
 	const distanceFns = await loadDistanceFunctions();
 	const drizzleHelpers = await loadDrizzleHelpers();
 
-	const distanceExpr = getDistanceExpression(
-		distanceFns,
-		metric,
-		options.column,
-		options.queryVector,
+	const similarityExpr = buildSimilarityExpr(
+		distanceFns, drizzleHelpers, metric, options.column, options.queryVector,
 	);
 
-	// For cosine distance: similarity = 1 - distance
-	// For L2/innerProduct: negate for ordering (lower distance = more similar)
-	const similarityExpr =
-		metric === "cosine"
-			? drizzleHelpers.sql`1 - (${distanceExpr as never})`
-			: drizzleHelpers.sql`-(${distanceExpr as never})`;
-
 	try {
-		const db = database.db as {
-			select(columns: Record<string, unknown>): {
-				from(table: unknown): {
-					where(condition: unknown): {
-						orderBy(order: unknown): {
-							limit(n: number): Promise<Record<string, unknown>[]>;
-						};
-					};
-				};
-			};
-		};
-
-		const selectColumns = {
-			...(options.select ?? {}),
-			similarity: similarityExpr,
-		};
-
-		const rows = await db
-			.select(selectColumns)
-			.from(options.table)
-			.where(drizzleHelpers.gt(similarityExpr, threshold))
-			.orderBy(drizzleHelpers.desc(similarityExpr))
-			.limit(limit);
-
-		return rows.map((row) => {
-			const { similarity: sim, ...data } = row;
-			return {
-				data: data as T,
-				similarity: Number(sim),
-			};
-		});
+		return await executeVectorQuery<T>(
+			database, options, similarityExpr, drizzleHelpers, threshold, limit,
+		);
 	} catch (err) {
 		if (err instanceof ToolkitError) throw err;
 		throw new ToolkitError(
@@ -290,6 +240,74 @@ export async function vectorSearch<T = Record<string, unknown>>(
 			},
 		);
 	}
+}
+
+// ─── Vector Search Helpers ─────────────────────────────────────────────────
+
+function validateVectorOptions(options: VectorSearchTableOptions): void {
+	if (!options.queryVector || options.queryVector.length === 0) {
+		throw new ValidationError("queryVector must be a non-empty number array", {
+			code: "DATABASE_INVALID_VECTOR",
+			fields: { queryVector: "required, non-empty number[]" },
+		});
+	}
+	if (options.limit !== undefined && options.limit < 1) {
+		throw new ValidationError("limit must be >= 1", {
+			code: "DATABASE_INVALID_LIMIT",
+			fields: { limit: "must be >= 1" },
+		});
+	}
+}
+
+function buildSimilarityExpr(
+	distanceFns: DistanceFunctions,
+	drizzleHelpers: DrizzleHelpers,
+	metric: DistanceMetric,
+	column: unknown,
+	queryVector: number[],
+): unknown {
+	const distanceExpr = getDistanceExpression(distanceFns, metric, column, queryVector);
+	return metric === "cosine"
+		? drizzleHelpers.sql`1 - (${distanceExpr as never})`
+		: drizzleHelpers.sql`-(${distanceExpr as never})`;
+}
+
+async function executeVectorQuery<T>(
+	database: DatabaseClient,
+	options: VectorSearchTableOptions,
+	similarityExpr: unknown,
+	drizzleHelpers: DrizzleHelpers,
+	threshold: number,
+	limit: number,
+): Promise<VectorSearchResult<T>[]> {
+	const db = database.db as {
+		select(columns: Record<string, unknown>): {
+			from(table: unknown): {
+				where(condition: unknown): {
+					orderBy(order: unknown): {
+						limit(n: number): Promise<Record<string, unknown>[]>;
+					};
+				};
+			};
+		};
+	};
+
+	const selectColumns = {
+		...(options.select ?? {}),
+		similarity: similarityExpr,
+	};
+
+	const rows = await db
+		.select(selectColumns)
+		.from(options.table)
+		.where(drizzleHelpers.gt(similarityExpr, threshold))
+		.orderBy(drizzleHelpers.desc(similarityExpr))
+		.limit(limit);
+
+	return rows.map((row) => {
+		const { similarity: sim, ...data } = row;
+		return { data: data as T, similarity: Number(sim) };
+	});
 }
 
 // ─── Raw Vector Search (SQL) ───────────────────────────────────────────────

@@ -59,6 +59,37 @@ export async function migrate(
 		);
 	}
 
+	const { postgres, drizzle, runMigrate } = await loadMigrationDeps();
+
+	const migrationClient = postgres(connectionString, { max: 1 });
+	const db = drizzle(migrationClient);
+
+	try {
+		await runMigrate(db, { migrationsFolder });
+		return { success: true, appliedCount: -1 };
+	} catch (err) {
+		throw new ToolkitError(
+			`Migration failed: ${err instanceof Error ? err.message : String(err)}`,
+			{
+				code: "DATABASE_MIGRATION_FAILED",
+				statusCode: 500,
+				cause: err instanceof Error ? err : undefined,
+			},
+		);
+	} finally {
+		await migrationClient.end();
+	}
+}
+
+// ─── Migration Dependency Loader ──────────────────────────────────────────
+
+interface MigrationDeps {
+	postgres: (url: string, opts?: Record<string, unknown>) => { end(): Promise<void> };
+	drizzle: (client: unknown) => unknown;
+	runMigrate: (db: unknown, config: { migrationsFolder: string }) => Promise<void>;
+}
+
+async function loadMigrationDeps(): Promise<MigrationDeps> {
 	let postgresFactory: unknown;
 	try {
 		const mod = await import(POSTGRES_PATH);
@@ -84,33 +115,9 @@ export async function migrate(
 		);
 	}
 
-	const postgres = postgresFactory as (
-		url: string,
-		opts?: Record<string, unknown>,
-	) => { end(): Promise<void> };
-	const drizzle = drizzleFactory as (client: unknown) => unknown;
-	const runMigrate = drizzleMigrate as (
-		db: unknown,
-		config: { migrationsFolder: string },
-	) => Promise<void>;
-
-	// Single connection for migrations (required by Drizzle)
-	const migrationClient = postgres(connectionString, { max: 1 });
-	const db = drizzle(migrationClient);
-
-	try {
-		await runMigrate(db, { migrationsFolder });
-		return { success: true, appliedCount: -1 };
-	} catch (err) {
-		throw new ToolkitError(
-			`Migration failed: ${err instanceof Error ? err.message : String(err)}`,
-			{
-				code: "DATABASE_MIGRATION_FAILED",
-				statusCode: 500,
-				cause: err instanceof Error ? err : undefined,
-			},
-		);
-	} finally {
-		await migrationClient.end();
-	}
+	return {
+		postgres: postgresFactory as MigrationDeps["postgres"],
+		drizzle: drizzleFactory as MigrationDeps["drizzle"],
+		runMigrate: drizzleMigrate as MigrationDeps["runMigrate"],
+	};
 }

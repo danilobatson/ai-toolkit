@@ -232,133 +232,18 @@ export async function createGraph(config: GraphConfig): Promise<GraphInstance> {
 		);
 	}
 
-	// Validate agent names are unique (not covered by Zod)
-	const names = new Set<string>();
-	for (const agent of config.agents) {
-		if (names.has(agent.name)) {
-			throw new ToolkitError(
-				`createGraph() duplicate agent name: "${agent.name}"`,
-				{ code: "AGENTS_INVALID_CONFIG" },
-			);
-		}
-		names.add(agent.name);
-	}
+	validateUniqueAgentNames(config.agents);
 
 	const langGraph = await loadLangGraph();
 
 	try {
-		// Build state definition using LangGraph's Annotation
-		const stateDefinition: Record<string, unknown> = {
-			messages: langGraph.Annotation({
-				reducer: (
-					current: GraphState["messages"],
-					update: GraphState["messages"],
-				) => [...(current ?? []), ...(update ?? [])],
-				default: () => [],
-			}),
-			currentAgent: langGraph.Annotation({
-				reducer: (_current: string | undefined, update: string | undefined) =>
-					update,
-				default: () => undefined,
-			}),
-			metadata: langGraph.Annotation({
-				reducer: (
-					current: Record<string, unknown> | undefined,
-					update: Record<string, unknown> | undefined,
-				) => ({ ...current, ...update }),
-				default: () => ({}),
-			}),
-		};
-
-		const stateSchema = langGraph.Annotation.Root(stateDefinition);
-		const graph = new langGraph.StateGraph(
-			stateSchema as Record<string, unknown>,
-		);
-
-		// Add agent nodes
-		for (const agent of config.agents) {
-			graph.addNode(agent.name, async (state: Record<string, unknown>) => {
-				try {
-					return await agent.handler(state as unknown as GraphState);
-				} catch (error) {
-					if (error instanceof ToolkitError) throw error;
-					throw new ToolkitError(`Agent "${agent.name}" failed`, {
-						code: "AGENTS_NODE_FAILED",
-						retryable: true,
-						cause: error instanceof Error ? error : undefined,
-					});
-				}
-			});
-		}
-
-		// Add edges
-		for (const edge of config.edges) {
-			const fromKey = edge.from === "__start__" ? langGraph.START : edge.from;
-
-			if (isRouteResult(edge.to)) {
-				const routeResult = edge.to;
-				// Conditional edge
-				const destinations =
-					routeResult.destinations.length > 0
-						? routeResult.destinations
-						: config.agents.map((a) => a.name);
-
-				// Build path map including __end__
-				const pathTargets = [...destinations];
-				if (!pathTargets.includes(langGraph.END)) {
-					pathTargets.push(langGraph.END);
-				}
-
-				graph.addConditionalEdges(
-					fromKey,
-					async (state: Record<string, unknown>) => {
-						const result = await routeResult.condition(
-							state as unknown as GraphState,
-						);
-						return result === "__end__" ? langGraph.END : result;
-					},
-					pathTargets,
-				);
-			} else {
-				const toKey = edge.to === "__end__" ? langGraph.END : edge.to;
-				graph.addEdge(fromKey, toKey);
-			}
-		}
+		const graph = buildStateGraph(langGraph);
+		addAgentNodes(graph, config.agents);
+		addGraphEdges(graph, config.edges, config.agents, langGraph);
 
 		const compiled = graph.compile();
-
 		return {
-			invoke: async (input: Partial<GraphState>): Promise<GraphState> => {
-				try {
-					const initialState = {
-						messages: input.messages ?? [],
-						currentAgent: input.currentAgent,
-						metadata: input.metadata ?? {},
-					};
-
-					const result = await compiled.invoke(
-						initialState as unknown as Record<string, unknown>,
-					);
-
-					return {
-						messages:
-							((result as Record<string, unknown>)
-								.messages as GraphState["messages"]) ?? [],
-						currentAgent: (result as Record<string, unknown>).currentAgent as
-							| string
-							| undefined,
-						metadata: (result as Record<string, unknown>).metadata as
-							| Record<string, unknown>
-							| undefined,
-					};
-				} catch (error) {
-					if (error instanceof ToolkitError) throw error;
-					throw new ToolkitError("Graph invocation failed", {
-						code: "AGENTS_INVOKE_FAILED",
-						cause: error instanceof Error ? error : undefined,
-					});
-				}
-			},
+			invoke: createGraphInvoker(compiled),
 			compiledGraph: compiled,
 		};
 	} catch (error) {
@@ -371,6 +256,149 @@ export async function createGraph(config: GraphConfig): Promise<GraphInstance> {
 }
 
 // ─── Internal Helpers ───────────────────────────────────────────────────────
+
+function validateUniqueAgentNames(agents: AgentNode[]): void {
+	const names = new Set<string>();
+	for (const agent of agents) {
+		if (names.has(agent.name)) {
+			throw new ToolkitError(
+				`createGraph() duplicate agent name: "${agent.name}"`,
+				{ code: "AGENTS_INVALID_CONFIG" },
+			);
+		}
+		names.add(agent.name);
+	}
+}
+
+function buildStateGraph(langGraph: LangGraphModule) {
+	const stateDefinition: Record<string, unknown> = {
+		messages: langGraph.Annotation({
+			reducer: (
+				current: GraphState["messages"],
+				update: GraphState["messages"],
+			) => [...(current ?? []), ...(update ?? [])],
+			default: () => [],
+		}),
+		currentAgent: langGraph.Annotation({
+			reducer: (_current: string | undefined, update: string | undefined) =>
+				update,
+			default: () => undefined,
+		}),
+		metadata: langGraph.Annotation({
+			reducer: (
+				current: Record<string, unknown> | undefined,
+				update: Record<string, unknown> | undefined,
+			) => ({ ...current, ...update }),
+			default: () => ({}),
+		}),
+	};
+
+	const stateSchema = langGraph.Annotation.Root(stateDefinition);
+	return new langGraph.StateGraph(stateSchema as Record<string, unknown>);
+}
+
+function addAgentNodes(
+	graph: ReturnType<typeof buildStateGraph>,
+	agents: AgentNode[],
+): void {
+	for (const agent of agents) {
+		graph.addNode(agent.name, async (state: Record<string, unknown>) => {
+			try {
+				return await agent.handler(state as unknown as GraphState);
+			} catch (error) {
+				if (error instanceof ToolkitError) throw error;
+				throw new ToolkitError(`Agent "${agent.name}" failed`, {
+					code: "AGENTS_NODE_FAILED",
+					retryable: true,
+					cause: error instanceof Error ? error : undefined,
+				});
+			}
+		});
+	}
+}
+
+function addGraphEdges(
+	graph: ReturnType<typeof buildStateGraph>,
+	edges: GraphConfig["edges"],
+	agents: AgentNode[],
+	langGraph: LangGraphModule,
+): void {
+	for (const edge of edges) {
+		const fromKey = edge.from === "__start__" ? langGraph.START : edge.from;
+
+		if (isRouteResult(edge.to)) {
+			addConditionalEdge(graph, fromKey, edge.to, agents, langGraph);
+		} else {
+			const toKey = edge.to === "__end__" ? langGraph.END : edge.to;
+			graph.addEdge(fromKey, toKey);
+		}
+	}
+}
+
+function addConditionalEdge(
+	graph: ReturnType<typeof buildStateGraph>,
+	fromKey: string,
+	routeResult: RouteResult,
+	agents: AgentNode[],
+	langGraph: LangGraphModule,
+): void {
+	const destinations =
+		routeResult.destinations.length > 0
+			? routeResult.destinations
+			: agents.map((a) => a.name);
+
+	const pathTargets = [...destinations];
+	if (!pathTargets.includes(langGraph.END)) {
+		pathTargets.push(langGraph.END);
+	}
+
+	graph.addConditionalEdges(
+		fromKey,
+		async (state: Record<string, unknown>) => {
+			const result = await routeResult.condition(
+				state as unknown as GraphState,
+			);
+			return result === "__end__" ? langGraph.END : result;
+		},
+		pathTargets,
+	);
+}
+
+function createGraphInvoker(
+	compiled: { invoke: (input: Record<string, unknown>) => Promise<Record<string, unknown>> },
+): (input: Partial<GraphState>) => Promise<GraphState> {
+	return async (input: Partial<GraphState>): Promise<GraphState> => {
+		try {
+			const initialState = {
+				messages: input.messages ?? [],
+				currentAgent: input.currentAgent,
+				metadata: input.metadata ?? {},
+			};
+
+			const result = await compiled.invoke(
+				initialState as unknown as Record<string, unknown>,
+			);
+
+			return {
+				messages:
+					((result as Record<string, unknown>)
+						.messages as GraphState["messages"]) ?? [],
+				currentAgent: (result as Record<string, unknown>).currentAgent as
+					| string
+					| undefined,
+				metadata: (result as Record<string, unknown>).metadata as
+					| Record<string, unknown>
+					| undefined,
+			};
+		} catch (error) {
+			if (error instanceof ToolkitError) throw error;
+			throw new ToolkitError("Graph invocation failed", {
+				code: "AGENTS_INVOKE_FAILED",
+				cause: error instanceof Error ? error : undefined,
+			});
+		}
+	};
+}
 
 function isRouteResult(value: unknown): value is RouteResult {
 	return (

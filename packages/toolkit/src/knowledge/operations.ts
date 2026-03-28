@@ -121,36 +121,11 @@ export async function ingest(
 	store: VectorStore,
 	options?: IngestOptions,
 ): Promise<IngestResult> {
-	if (input === null || input === undefined) {
-		throw new ToolkitError("ingest() requires a non-null input", {
-			code: "KNOWLEDGE_INVALID_INPUT",
-		});
-	}
-
-	if (typeof input === "string" && !input.trim()) {
-		throw new ToolkitError("ingest() received empty input", {
-			code: "KNOWLEDGE_INVALID_INPUT",
-		});
-	}
-
-	if (typeof embedder !== "function") {
-		throw new ToolkitError("ingest() requires an embedder function", {
-			code: "KNOWLEDGE_INVALID_CONFIG",
-		});
-	}
-
-	if (!store || typeof store.upsert !== "function") {
-		throw new ToolkitError("ingest() requires a valid vector store", {
-			code: "KNOWLEDGE_INVALID_CONFIG",
-		});
-	}
+	validateIngestArgs(input, embedder, store);
 
 	const metadata = options?.metadata ?? {};
-
-	// Step 1: Parse
 	const doc = await parseDocument(input, metadata);
 
-	// Step 2: Chunk
 	const chunks = await chunk(doc.content, {
 		chunkSize: options?.chunkSize,
 		chunkOverlap: options?.chunkOverlap,
@@ -160,7 +135,50 @@ export async function ingest(
 		return { chunks: 0, embeddings: 0, metadata: doc.metadata };
 	}
 
-	// Step 3: Embed
+	const vectors = await embedChunks(embedder, chunks);
+	const enrichedChunks = attachEmbeddings(chunks, vectors, doc.metadata);
+	await storeChunks(store, enrichedChunks);
+
+	return {
+		chunks: chunks.length,
+		embeddings: vectors.length,
+		metadata: doc.metadata,
+	};
+}
+
+// ─── Ingest Helpers ──────────────────────────────────────────────────────────
+
+function validateIngestArgs(
+	input: string | Buffer | Uint8Array,
+	embedder: EmbedFunction,
+	store: VectorStore,
+): void {
+	if (input === null || input === undefined) {
+		throw new ToolkitError("ingest() requires a non-null input", {
+			code: "KNOWLEDGE_INVALID_INPUT",
+		});
+	}
+	if (typeof input === "string" && !input.trim()) {
+		throw new ToolkitError("ingest() received empty input", {
+			code: "KNOWLEDGE_INVALID_INPUT",
+		});
+	}
+	if (typeof embedder !== "function") {
+		throw new ToolkitError("ingest() requires an embedder function", {
+			code: "KNOWLEDGE_INVALID_CONFIG",
+		});
+	}
+	if (!store || typeof store.upsert !== "function") {
+		throw new ToolkitError("ingest() requires a valid vector store", {
+			code: "KNOWLEDGE_INVALID_CONFIG",
+		});
+	}
+}
+
+async function embedChunks(
+	embedder: EmbedFunction,
+	chunks: DocumentChunk[],
+): Promise<number[][]> {
 	const texts = chunks.map((c) => c.content);
 	let vectors: number[][];
 	try {
@@ -171,36 +189,39 @@ export async function ingest(
 			cause: error instanceof Error ? error : undefined,
 		});
 	}
-
 	if (vectors.length !== chunks.length) {
 		throw new ToolkitError(
 			`Embedder returned ${vectors.length} vectors for ${chunks.length} chunks`,
 			{ code: "KNOWLEDGE_EMBED_MISMATCH" },
 		);
 	}
+	return vectors;
+}
 
-	// Step 4: Attach embeddings and merge metadata
-	const enrichedChunks: DocumentChunk[] = chunks.map((c, i) => ({
+function attachEmbeddings(
+	chunks: DocumentChunk[],
+	vectors: number[][],
+	docMetadata: Record<string, unknown>,
+): DocumentChunk[] {
+	return chunks.map((c, i) => ({
 		content: c.content,
-		metadata: { ...doc.metadata, ...c.metadata },
+		metadata: { ...docMetadata, ...c.metadata },
 		embedding: vectors[i],
 	}));
+}
 
-	// Step 5: Store
+async function storeChunks(
+	store: VectorStore,
+	chunks: DocumentChunk[],
+): Promise<void> {
 	try {
-		await store.upsert(enrichedChunks);
+		await store.upsert(chunks);
 	} catch (error) {
 		throw new ToolkitError("Vector store upsert failed", {
 			code: "KNOWLEDGE_STORE_FAILED",
 			cause: error instanceof Error ? error : undefined,
 		});
 	}
-
-	return {
-		chunks: chunks.length,
-		embeddings: vectors.length,
-		metadata: doc.metadata,
-	};
 }
 
 // ─── search() ────────────────────────────────────────────────────────────────

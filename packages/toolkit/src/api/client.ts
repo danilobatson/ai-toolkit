@@ -100,118 +100,26 @@ export class ApiClient {
 	): Promise<T> {
 		const url = `${this.baseUrl}${path}`;
 		const timeout = options?.timeout ?? this.timeout;
-
-		const headers: Record<string, string> = {
-			...this.defaultHeaders,
-			...options?.headers,
-		};
-
-		if (this.apiKey) {
-			headers["X-API-Key"] = this.apiKey;
-		}
+		const headers = this.buildHeaders(options?.headers);
 
 		let lastError: Error | undefined;
 
 		for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
 			try {
-				const controller = new AbortController();
-				const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-				const response = await fetch(url, {
-					method,
-					headers,
-					body: body ? JSON.stringify(body) : undefined,
-					signal: options?.signal ?? controller.signal,
-				});
-
-				clearTimeout(timeoutId);
-
-				if (response.ok) {
-					// Handle 204 No Content
-					if (response.status === 204) return undefined as T;
-
-					return (await response.json()) as T;
-				}
-
-				// 429 Rate Limited — wrap as RateLimitError
-				if (response.status === 429) {
-					const retryAfter = response.headers.get("Retry-After");
-					throw new RateLimitError(`Rate limited: ${method} ${path}`, {
-						retryAfter: retryAfter ? parseInt(retryAfter, 10) : undefined,
-					});
-				}
-
-				// 4xx Client errors — don't retry
-				if (response.status >= 400 && response.status < 500) {
-					const errorBody = await response.text().catch(() => "Unknown error");
-					throw new ApiClientError(
-						`${method} ${path} failed: ${response.status} ${errorBody}`,
-						{
-							url,
-							method,
-							statusCode: response.status,
-							retryable: false,
-						},
-					);
-				}
-
-				// 5xx Server errors — retry
-				if (response.status >= 500) {
-					lastError = new ApiClientError(
-						`${method} ${path} failed: ${response.status}`,
-						{
-							url,
-							method,
-							statusCode: response.status,
-							retryable: true,
-						},
-					);
-
-					// Don't retry on last attempt
-					if (attempt < this.maxRetries) {
-						const delay = 2 ** attempt * 500; // 500ms, 1s, 2s
-						await new Promise((resolve) => setTimeout(resolve, delay));
-					}
-				}
+				const result = await this.executeRequest<T>(
+					method, url, headers, body, timeout, options?.signal,
+				);
+				return result;
 			} catch (error) {
-				// Already one of our error types — rethrow
-				if (
-					error instanceof ApiClientError ||
-					error instanceof RateLimitError
-				) {
-					throw error;
-				}
-
-				// AbortError = timeout
-				if (error instanceof DOMException && error.name === "AbortError") {
-					lastError = new ApiClientError(
-						`${method} ${path} timed out after ${timeout}ms`,
-						{
-							url,
-							method,
-							code: "API_CLIENT_TIMEOUT",
-							statusCode: 504,
-							retryable: true,
-						},
-					);
+				if (error instanceof ApiClientError || error instanceof RateLimitError) {
+					if (!isRetryable(error)) throw error;
+					lastError = error;
 				} else {
-					// Network error, DNS failure, etc.
-					lastError = new ApiClientError(
-						`${method} ${path} failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-						{
-							url,
-							method,
-							code: "API_CLIENT_NETWORK_ERROR",
-							statusCode: 502,
-							retryable: true,
-							cause: error instanceof Error ? error : undefined,
-						},
-					);
+					lastError = wrapFetchError(error, method, path, url, timeout);
 				}
 
 				if (attempt < this.maxRetries) {
-					const delay = 2 ** attempt * 500;
-					await new Promise((resolve) => setTimeout(resolve, delay));
+					await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 500));
 				}
 			}
 		}
@@ -223,6 +131,45 @@ export class ApiClient {
 				{ url, method, retryable: false },
 			)
 		);
+	}
+
+	private buildHeaders(extra?: Record<string, string>): Record<string, string> {
+		const headers: Record<string, string> = {
+			...this.defaultHeaders,
+			...extra,
+		};
+		if (this.apiKey) {
+			headers["X-API-Key"] = this.apiKey;
+		}
+		return headers;
+	}
+
+	private async executeRequest<T>(
+		method: string,
+		url: string,
+		headers: Record<string, string>,
+		body: unknown,
+		timeout: number,
+		signal?: AbortSignal,
+	): Promise<T> {
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+		const response = await fetch(url, {
+			method,
+			headers,
+			body: body ? JSON.stringify(body) : undefined,
+			signal: signal ?? controller.signal,
+		});
+
+		clearTimeout(timeoutId);
+
+		if (response.ok) {
+			if (response.status === 204) return undefined as T;
+			return (await response.json()) as T;
+		}
+
+		return handleErrorResponse(response, method, url);
 	}
 }
 
@@ -242,4 +189,65 @@ export class ApiClient {
  */
 export function createApiClient(config: ApiClientConfig): ApiClient {
 	return new ApiClient(config);
+}
+
+// ─── Internal Helpers ───────────────────────────────────────────────────────
+
+async function handleErrorResponse(
+	response: Response,
+	method: string,
+	url: string,
+): Promise<never> {
+	const path = new URL(url).pathname;
+
+	if (response.status === 429) {
+		const retryAfter = response.headers.get("Retry-After");
+		throw new RateLimitError(`Rate limited: ${method} ${path}`, {
+			retryAfter: retryAfter ? parseInt(retryAfter, 10) : undefined,
+		});
+	}
+
+	if (response.status >= 400 && response.status < 500) {
+		const errorBody = await response.text().catch(() => "Unknown error");
+		throw new ApiClientError(
+			`${method} ${path} failed: ${response.status} ${errorBody}`,
+			{ url, method, statusCode: response.status, retryable: false },
+		);
+	}
+
+	throw new ApiClientError(
+		`${method} ${path} failed: ${response.status}`,
+		{ url, method, statusCode: response.status, retryable: true },
+	);
+}
+
+function wrapFetchError(
+	error: unknown,
+	method: string,
+	path: string,
+	url: string,
+	timeout: number,
+): ApiClientError {
+	if (error instanceof DOMException && error.name === "AbortError") {
+		return new ApiClientError(
+			`${method} ${path} timed out after ${timeout}ms`,
+			{ url, method, code: "API_CLIENT_TIMEOUT", statusCode: 504, retryable: true },
+		);
+	}
+
+	return new ApiClientError(
+		`${method} ${path} failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+		{
+			url, method,
+			code: "API_CLIENT_NETWORK_ERROR",
+			statusCode: 502,
+			retryable: true,
+			cause: error instanceof Error ? error : undefined,
+		},
+	);
+}
+
+function isRetryable(error: Error): boolean {
+	if (error instanceof ApiClientError) return error.retryable ?? false;
+	return false;
 }

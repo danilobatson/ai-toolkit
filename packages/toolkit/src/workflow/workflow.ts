@@ -156,83 +156,12 @@ export function defineJob(
 		) => unknown;
 	};
 
-	// Build Inngest v4 2-arg config
-	const fnConfig: Record<string, unknown> = {
-		id: parsed.data.id,
-	};
+	const fnConfig = buildInngestConfig(parsed.data);
 
-	// Set trigger(s) — v4 uses triggers in first arg
-	if ("event" in parsed.data.trigger) {
-		fnConfig.triggers = [{ event: parsed.data.trigger.event }];
-	} else {
-		fnConfig.triggers = [{ cron: parsed.data.trigger.cron }];
-	}
-
-	if (parsed.data.retries !== undefined) {
-		fnConfig.retries = parsed.data.retries;
-	}
-
-	if (parsed.data.concurrency !== undefined) {
-		fnConfig.concurrency = [{ limit: parsed.data.concurrency }];
-	}
-
-	// Wrap Inngest's raw context into our typed JobContext
 	const inngestFn = inngest.createFunction(
 		fnConfig,
 		async (rawCtx: Record<string, unknown>) => {
-			const rawEvent = rawCtx.event as {
-				name: string;
-				data: Record<string, unknown>;
-			};
-			const rawStep = rawCtx.step as {
-				run: (id: string, fn: () => unknown) => Promise<unknown>;
-				sleep: (id: string, duration: string) => Promise<void>;
-				waitForEvent: (
-					id: string,
-					opts: Record<string, unknown>,
-				) => Promise<Record<string, unknown> | null>;
-				sendEvent: (
-					id: string,
-					event: Record<string, unknown>,
-				) => Promise<void>;
-			};
-
-			const ctx: JobContext = {
-				event: {
-					name: rawEvent?.name ?? "",
-					data: rawEvent?.data ?? {},
-				},
-				step: {
-					run: async <T>(id: string, fn: () => T | Promise<T>): Promise<T> => {
-						try {
-							return (await rawStep.run(id, fn)) as T;
-						} catch (error) {
-							if (error instanceof ToolkitError) throw error;
-							throw new ToolkitError(`Step "${id}" failed`, {
-								code: "WORKFLOW_STEP_FAILED",
-								retryable: true,
-								cause: error instanceof Error ? error : undefined,
-							});
-						}
-					},
-					sleep: async (id: string, duration: string): Promise<void> => {
-						await rawStep.sleep(id, duration);
-					},
-					waitForEvent: async (
-						id: string,
-						opts: { event: string; timeout: string; match?: string },
-					) => {
-						return rawStep.waitForEvent(id, opts);
-					},
-					sendEvent: async (
-						id: string,
-						event: { name: string; data: Record<string, unknown> },
-					) => {
-						await rawStep.sendEvent(id, event);
-					},
-				},
-			};
-
+			const ctx = wrapJobContext(rawCtx);
 			try {
 				return await handler(ctx);
 			} catch (error) {
@@ -249,6 +178,80 @@ export function defineJob(
 	return {
 		config: parsed.data,
 		inngestFn,
+	};
+}
+
+// ─── defineJob Helpers ──────────────────────────────────────────────────────
+
+function buildInngestConfig(data: JobConfig): Record<string, unknown> {
+	const fnConfig: Record<string, unknown> = { id: data.id };
+
+	if ("event" in data.trigger) {
+		fnConfig.triggers = [{ event: data.trigger.event }];
+	} else {
+		fnConfig.triggers = [{ cron: data.trigger.cron }];
+	}
+
+	if (data.retries !== undefined) fnConfig.retries = data.retries;
+	if (data.concurrency !== undefined) {
+		fnConfig.concurrency = [{ limit: data.concurrency }];
+	}
+
+	return fnConfig;
+}
+
+function wrapJobContext(rawCtx: Record<string, unknown>): JobContext {
+	const rawEvent = rawCtx.event as {
+		name: string;
+		data: Record<string, unknown>;
+	};
+	const rawStep = rawCtx.step as {
+		run: (id: string, fn: () => unknown) => Promise<unknown>;
+		sleep: (id: string, duration: string) => Promise<void>;
+		waitForEvent: (
+			id: string,
+			opts: Record<string, unknown>,
+		) => Promise<Record<string, unknown> | null>;
+		sendEvent: (
+			id: string,
+			event: Record<string, unknown>,
+		) => Promise<void>;
+	};
+
+	return {
+		event: {
+			name: rawEvent?.name ?? "",
+			data: rawEvent?.data ?? {},
+		},
+		step: {
+			run: async <T>(id: string, fn: () => T | Promise<T>): Promise<T> => {
+				try {
+					return (await rawStep.run(id, fn)) as T;
+				} catch (error) {
+					if (error instanceof ToolkitError) throw error;
+					throw new ToolkitError(`Step "${id}" failed`, {
+						code: "WORKFLOW_STEP_FAILED",
+						retryable: true,
+						cause: error instanceof Error ? error : undefined,
+					});
+				}
+			},
+			sleep: async (id: string, duration: string): Promise<void> => {
+				await rawStep.sleep(id, duration);
+			},
+			waitForEvent: async (
+				id: string,
+				opts: { event: string; timeout: string; match?: string },
+			) => {
+				return rawStep.waitForEvent(id, opts);
+			},
+			sendEvent: async (
+				id: string,
+				event: { name: string; data: Record<string, unknown> },
+			) => {
+				await rawStep.sendEvent(id, event);
+			},
+		},
 	};
 }
 
@@ -369,57 +372,9 @@ export async function aiStep(
 		);
 	}
 
-	return step.run(parsed.data.stepId, async () => {
-		try {
-			const aiModule = await tryLoadAI();
-			if (!aiModule) {
-				if (parsed.data.fallback !== undefined) {
-					return {
-						text: parsed.data.fallback,
-						usedFallback: true,
-					};
-				}
-				throw new ToolkitError(
-					"ai module not available and no fallback provided. Install ai SDK or provide a fallback.",
-					{ code: "WORKFLOW_AI_UNAVAILABLE" },
-				);
-			}
-
-			const generateOptions: Record<string, unknown> = {
-				prompt: parsed.data.prompt,
-			};
-			if (parsed.data.model) {
-				generateOptions.model = parsed.data.model;
-			}
-
-			const result = await aiModule.generate(generateOptions);
-			return {
-				text: result.text,
-				usedFallback: false,
-				cost: result.usage
-					? estimateStepCost(
-							result.usage as { inputTokens?: number; outputTokens?: number },
-							parsed.data.pricing,
-						)
-					: undefined,
-			};
-		} catch (error) {
-			if (error instanceof ToolkitError && !parsed.data.fallback) throw error;
-
-			if (parsed.data.fallback !== undefined) {
-				return {
-					text: parsed.data.fallback,
-					usedFallback: true,
-				};
-			}
-
-			throw new ToolkitError(`AI step "${parsed.data.stepId}" failed`, {
-				code: "WORKFLOW_AI_FAILED",
-				retryable: true,
-				cause: error instanceof Error ? error : undefined,
-			});
-		}
-	});
+	return step.run(parsed.data.stepId, () =>
+		generateWithFallback(parsed.data),
+	);
 }
 
 // ─── serve() ────────────────────────────────────────────────────────────────
@@ -489,6 +444,50 @@ export async function serve(
 }
 
 // ─── Internal Helpers ───────────────────────────────────────────────────────
+
+async function generateWithFallback(
+	data: { stepId: string; prompt: string; model?: string; fallback?: string; pricing?: { inputCostPerMillionTokens: number; outputCostPerMillionTokens: number } },
+): Promise<AIStepResult> {
+	try {
+		const aiModule = await tryLoadAI();
+		if (!aiModule) {
+			if (data.fallback !== undefined) {
+				return { text: data.fallback, usedFallback: true };
+			}
+			throw new ToolkitError(
+				"ai module not available and no fallback provided. Install ai SDK or provide a fallback.",
+				{ code: "WORKFLOW_AI_UNAVAILABLE" },
+			);
+		}
+
+		const generateOptions: Record<string, unknown> = { prompt: data.prompt };
+		if (data.model) generateOptions.model = data.model;
+
+		const result = await aiModule.generate(generateOptions);
+		return {
+			text: result.text,
+			usedFallback: false,
+			cost: result.usage
+				? estimateStepCost(
+						result.usage as { inputTokens?: number; outputTokens?: number },
+						data.pricing,
+					)
+				: undefined,
+		};
+	} catch (error) {
+		if (error instanceof ToolkitError && !data.fallback) throw error;
+
+		if (data.fallback !== undefined) {
+			return { text: data.fallback, usedFallback: true };
+		}
+
+		throw new ToolkitError(`AI step "${data.stepId}" failed`, {
+			code: "WORKFLOW_AI_FAILED",
+			retryable: true,
+			cause: error instanceof Error ? error : undefined,
+		});
+	}
+}
 
 interface AIModuleInterface {
 	generate: (opts: Record<string, unknown>) => Promise<{

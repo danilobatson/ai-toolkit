@@ -304,32 +304,120 @@ export async function createDatabase(
 	const ssl = config?.ssl ?? defaultSsl(provider);
 	const driver = config?.driver ?? defaultDriver(provider);
 
-	let result: DriverResult;
+	const result = await loadDriver(driver, connectionString, ssl, config);
 
+	return {
+		db: result.db,
+		provider,
+		driver: result.driver,
+		query: createQueryFn(result.rawQuery),
+		queryOne: createQueryOneFn(result.rawQuery),
+		withTenant: createWithTenantFn(result.rawQuery),
+		end: createEndFn(result.end),
+	};
+}
+
+// ─── Client Method Factories ──────────────────────────────────────────────
+
+function createQueryFn(
+	rawQuery: DriverResult["rawQuery"],
+): DatabaseClient["query"] {
+	return async <T>(sql: string, params?: unknown[]): Promise<T[]> => {
+		try {
+			const rows = await rawQuery(sql, params);
+			return rows as T[];
+		} catch (err) {
+			throw wrapQueryError(err);
+		}
+	};
+}
+
+function createQueryOneFn(
+	rawQuery: DriverResult["rawQuery"],
+): DatabaseClient["queryOne"] {
+	return async <T>(sql: string, params?: unknown[]): Promise<T | null> => {
+		try {
+			const rows = await rawQuery(sql, params);
+			return (rows[0] as T) ?? null;
+		} catch (err) {
+			throw wrapQueryError(err);
+		}
+	};
+}
+
+/**
+ * Scope a query to a specific tenant by appending `WHERE org_id = $N`.
+ *
+ * **Limitation:** WHERE detection uses simple string matching.
+ * Not reliable with CTEs, subqueries, or comments containing WHERE.
+ * For complex queries, use Drizzle's `.where()` directly.
+ */
+function createWithTenantFn(
+	rawQuery: DriverResult["rawQuery"],
+): DatabaseClient["withTenant"] {
+	return async <T>(
+		orgId: string,
+		sql: string,
+		params?: unknown[],
+	): Promise<T[]> => {
+		const allParams = [...(params ?? []), orgId];
+		const paramIndex = allParams.length;
+		const upperSql = sql.toUpperCase();
+		const separator = upperSql.includes("WHERE") ? " AND" : " WHERE";
+		const scopedSql = `${sql}${separator} org_id = $${paramIndex}`;
+
+		try {
+			const rows = await rawQuery(scopedSql, allParams);
+			return rows as T[];
+		} catch (err) {
+			throw wrapQueryError(err);
+		}
+	};
+}
+
+function createEndFn(endDriver: () => Promise<void>): DatabaseClient["end"] {
+	return async (): Promise<void> => {
+		try {
+			await endDriver();
+		} catch (err) {
+			throw new ToolkitError(
+				`Failed to close database connection: ${err instanceof Error ? err.message : String(err)}`,
+				{
+					code: "DATABASE_CLOSE_FAILED",
+					statusCode: 500,
+					cause: err instanceof Error ? err : undefined,
+				},
+			);
+		}
+	};
+}
+
+function wrapQueryError(err: unknown): ToolkitError {
+	return new ToolkitError(
+		`Query failed: ${err instanceof Error ? err.message : String(err)}`,
+		{
+			code: "DATABASE_QUERY_FAILED",
+			statusCode: 500,
+			retryable: true,
+			cause: err instanceof Error ? err : undefined,
+		},
+	);
+}
+
+async function loadDriver(
+	driver: DatabaseDriver,
+	connectionString: string,
+	ssl: boolean,
+	config?: DatabaseConfig,
+): Promise<DriverResult> {
 	try {
 		switch (driver) {
 			case "neon-http":
-				result = await loadNeonHttp(
-					connectionString,
-					config?.schema,
-					config?.logger,
-				);
-				break;
+				return await loadNeonHttp(connectionString, config?.schema, config?.logger);
 			case "neon-serverless":
-				result = await loadNeonServerless(
-					connectionString,
-					config?.schema,
-					config?.logger,
-				);
-				break;
+				return await loadNeonServerless(connectionString, config?.schema, config?.logger);
 			default:
-				result = await loadPostgresJs(
-					connectionString,
-					ssl,
-					config?.schema,
-					config?.logger,
-				);
-				break;
+				return await loadPostgresJs(connectionString, ssl, config?.schema, config?.logger);
 		}
 	} catch (err) {
 		if (err instanceof ToolkitError) throw err;
@@ -342,94 +430,4 @@ export async function createDatabase(
 			},
 		);
 	}
-
-	return {
-		db: result.db,
-		provider,
-		driver: result.driver,
-
-		async query<T>(sql: string, params?: unknown[]): Promise<T[]> {
-			try {
-				const rows = await result.rawQuery(sql, params);
-				return rows as T[];
-			} catch (err) {
-				throw new ToolkitError(
-					`Query failed: ${err instanceof Error ? err.message : String(err)}`,
-					{
-						code: "DATABASE_QUERY_FAILED",
-						statusCode: 500,
-						retryable: true,
-						cause: err instanceof Error ? err : undefined,
-					},
-				);
-			}
-		},
-
-		async queryOne<T>(sql: string, params?: unknown[]): Promise<T | null> {
-			try {
-				const rows = await result.rawQuery(sql, params);
-				return (rows[0] as T) ?? null;
-			} catch (err) {
-				throw new ToolkitError(
-					`Query failed: ${err instanceof Error ? err.message : String(err)}`,
-					{
-						code: "DATABASE_QUERY_FAILED",
-						statusCode: 500,
-						retryable: true,
-						cause: err instanceof Error ? err : undefined,
-					},
-				);
-			}
-		},
-
-		/**
-		 * Scope a query to a specific tenant by appending `WHERE org_id = $N`.
-		 *
-		 * **Limitation:** WHERE detection uses simple string matching.
-		 * Not reliable with CTEs, subqueries, or comments containing WHERE.
-		 * For complex queries, use Drizzle's `.where()` directly.
-		 */
-		async withTenant<T>(
-			orgId: string,
-			sql: string,
-			params?: unknown[],
-		): Promise<T[]> {
-			const allParams = [...(params ?? []), orgId];
-			const paramIndex = allParams.length;
-
-			const upperSql = sql.toUpperCase();
-			const separator = upperSql.includes("WHERE") ? " AND" : " WHERE";
-			const scopedSql = `${sql}${separator} org_id = $${paramIndex}`;
-
-			try {
-				const rows = await result.rawQuery(scopedSql, allParams);
-				return rows as T[];
-			} catch (err) {
-				throw new ToolkitError(
-					`Query failed: ${err instanceof Error ? err.message : String(err)}`,
-					{
-						code: "DATABASE_QUERY_FAILED",
-						statusCode: 500,
-						retryable: true,
-						cause: err instanceof Error ? err : undefined,
-					},
-				);
-			}
-		},
-
-		async end(): Promise<void> {
-			try {
-				await result.end();
-			} catch (err) {
-				throw new ToolkitError(
-					`Failed to close database connection: ${err instanceof Error ? err.message : String(err)}`,
-					{
-						code: "DATABASE_CLOSE_FAILED",
-						statusCode: 500,
-						cause: err instanceof Error ? err : undefined,
-					},
-				);
-			}
-		},
-	};
 }
