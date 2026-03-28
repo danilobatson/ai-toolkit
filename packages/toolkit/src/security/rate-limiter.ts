@@ -22,7 +22,7 @@
  */
 
 import type { CacheClient } from "../cache/client.js";
-import { RateLimitError, ValidationError } from "../errors/types.js";
+import { ValidationError } from "../errors/types.js";
 
 // ─── Rate Limiter ───────────────────────────────────────────────────────────
 
