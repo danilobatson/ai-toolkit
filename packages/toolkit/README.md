@@ -20,7 +20,8 @@ import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 import { createCache } from '@jamaalbuilds/ai-toolkit/cache';
 
 // Validate env vars at startup
-const config = initToolkit();
+const toolkit = initToolkit();
+// toolkit.config.NODE_ENV, toolkit.config.LOG_LEVEL, etc.
 
 // Auto-detects provider from env (Groq, OpenRouter, OpenAI, Anthropic)
 const ai = createAI();
@@ -124,7 +125,7 @@ import { createAgent, createGraph, route } from '@jamaalbuilds/ai-toolkit/agents
 const researcher = createAgent({ name: 'researcher', instructions: 'Research topics' });
 const writer = createAgent({ name: 'writer', instructions: 'Write content' });
 
-const graph = createGraph({
+const graph = await createGraph({
   agents: { researcher, writer },
   edges: [{ from: 'researcher', to: 'writer' }],
 });
@@ -195,28 +196,27 @@ logger.info('Pipeline complete', { traceId });
 ```typescript
 import { createWorkflow, defineJob, serve, humanInTheLoop, aiStep } from '@jamaalbuilds/ai-toolkit/workflow';
 
-const workflow = createWorkflow({ id: 'my-app' });
+const workflow = await createWorkflow({ id: 'my-app' });
 
 const emailJob = defineJob(workflow, {
   id: 'send-welcome-email',
   trigger: { event: 'user/signup' },
-  handler: async ({ event, step }) => {
-    await step.run('send-email', async () => {
-      await sendEmail(event.data.email);
-    });
+}, async ({ event, step }) => {
+  await step.run('send-email', async () => {
+    await sendEmail(event.data.email);
+  });
 
-    // Human-in-the-loop approval (pauses workflow until approved)
-    const approval = await humanInTheLoop(step, {
-      prompt: 'Approve welcome email?',
-      timeout: '24h',
-    });
+  // Human-in-the-loop approval (pauses workflow until approved)
+  const approval = await humanInTheLoop(step, {
+    prompt: 'Approve welcome email?',
+    timeout: '24h',
+  });
 
-    // AI-powered step (calls LLM inside a durable step)
-    const summary = await aiStep(step, {
-      name: 'summarize-signup',
-      prompt: `Summarize signup for ${event.data.email}`,
-    });
-  },
+  // AI-powered step (calls LLM inside a durable step)
+  const summary = await aiStep(step, {
+    name: 'summarize-signup',
+    prompt: `Summarize signup for ${event.data.email}`,
+  });
 });
 
 serve(workflow, { framework: 'next' });
@@ -313,8 +313,8 @@ No peer deps required.
 import { initToolkit, parseConfig } from '@jamaalbuilds/ai-toolkit/config';
 
 // Validate all env vars at startup — throws on missing/invalid
-const config = initToolkit();
-console.log(config.nodeEnv, config.logLevel);
+const toolkit = initToolkit();
+console.log(toolkit.config.NODE_ENV, toolkit.config.LOG_LEVEL);
 
 // Or parse manually with a custom schema
 const custom = parseConfig(); // uses built-in toolkitConfigSchema
@@ -348,7 +348,7 @@ No peer deps required.
 import { createApiKeyGuard, requireApiKey, getTenantContext, getOrgId, getUserId } from '@jamaalbuilds/ai-toolkit/auth';
 
 // Express/Next.js middleware — validates X-API-Key header
-const guard = createApiKeyGuard({ apiKey: process.env.API_KEY });
+const guard = createApiKeyGuard(process.env.API_KEY!);
 
 // Or one-shot validation
 requireApiKey(request); // throws AuthError if invalid
@@ -384,7 +384,7 @@ Peer deps: `yarn add @vercel/blob`
 import { validateFile, uploadDocument, deleteDocument, listDocuments } from '@jamaalbuilds/ai-toolkit/storage';
 
 // Validate before upload
-validateFile(file, { maxSizeBytes: 10_000_000, allowedTypes: ['application/pdf'] });
+validateFile(file, { maxSizeMB: 10, allowedTypes: ['application/pdf'] });
 
 // Upload to Vercel Blob
 const result = await uploadDocument(file, { folder: 'reports' });
@@ -409,7 +409,7 @@ const check = createHealthCheck({
   },
 });
 
-const report = await check(); // { status: 'healthy', checks: { database: 'ok', redis: 'ok' } }
+const report = await check(); // { status: 'healthy', checks: { database: { status: 'pass' }, redis: { status: 'pass' } } }
 ```
 
 ## Data — Shared API Types
@@ -420,7 +420,10 @@ No peer deps required. Types only — no runtime code.
 import type { PaginatedResponse, ErrorResponse, ApiResult } from '@jamaalbuilds/ai-toolkit/data';
 
 function listUsers(): PaginatedResponse<User> {
-  return { data: users, total: 100, page: 1, pageSize: 20 };
+  return {
+    data: users,
+    pagination: { total: 100, page: 1, pageSize: 20, totalPages: 5, hasMore: true },
+  };
 }
 ```
 
@@ -431,7 +434,7 @@ No peer deps required.
 ```typescript
 import { createApiClient } from '@jamaalbuilds/ai-toolkit/api';
 
-const api = createApiClient({ baseUrl: 'https://api.example.com', retries: 3 });
+const api = createApiClient({ baseUrl: 'https://api.example.com', maxRetries: 3 });
 const users = await api.get('/users');
 const created = await api.post('/users', { name: 'Alice' });
 ```

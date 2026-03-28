@@ -16,13 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Root barrel missing v5 mock exports (`mockAI`, `mockChain`, `mockAgents`, `mockKnowledge`, `mockMonitor`, `mockWorkflow`)
 - Root barrel missing monitor exports (`exportMetrics`, `getTraces`, `getTrace`, `onTrace`) and types
 - 12 silent-pass database tests now use `expect.assertions()`
-- 2 relative dynamic imports verified to use variable indirection pattern
 
 ### Added
 - api module: 23 tests (was zero coverage) — HTTP methods, retry, error wrapping, rate limit detection
 - health module: 3 new edge case tests
 - workflow/serve: happy-path test
-- `@example` JSDoc on 18 previously undocumented exports
+- `@example` JSDoc on 10 previously undocumented exports
 - README: 25+ previously undocumented exports now documented (monitor, security, database, auth, chain, workflow)
 
 ## [0.2.0] - 2026-03-28

@@ -42,7 +42,6 @@ These are the PUBLIC names developers import. Map them to the underlying librari
 | `security`  | Custom                   | PII detection, audit logging, RBAC, guardrails             |
 | `database`  | Drizzle ORM + pgvector   | Typed queries, vector search, migrations                   |
 | `api`       | GraphQL Yoga + tRPC      | Type-safe APIs with subscriptions                          |
-| `realtime`  | Pusher / SSE             | Subscribe, broadcast, auto-cleanup (planned v2)            |
 | `auth`      | NextAuth.js / Clerk      | Sessions, RBAC, API keys, multi-tenant                     |
 | `storage`   | Vercel Blob / S3         | File upload with validation                                |
 | `cache`     | Redis / in-memory        | Get/set/invalidate with TTL                                |

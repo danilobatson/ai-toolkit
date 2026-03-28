@@ -19,6 +19,7 @@ yarn test              # run all tests
 yarn build             # compile TypeScript
 yarn lint              # biome check
 yarn typecheck         # tsc --noEmit
+yarn verify            # all of the above in sequence
 yarn semantic-checks   # run semantic verification
 ```
 

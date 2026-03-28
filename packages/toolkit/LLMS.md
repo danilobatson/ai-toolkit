@@ -119,18 +119,19 @@ createAuditLogger(serviceName: string): AuditLogger
 ### auth
 ```ts
 getOrgId(request: Request): string
-getUserId(request: Request): string
+getUserId(request: Request): string | undefined
 getTenantContext(request: Request): TenantContext
-requireApiKey(request: Request, expectedKey: string): void
+requireApiKey(request: Request, expectedKey?: string): string
 createApiKeyGuard(expectedKey: string): NestJS Guard
 ```
 
 ### cache
 ```ts
-createCache(options?: CacheOptions): CacheClient
+createCache(options?: { redisUrl?: string; defaultTtl?: number }): CacheClient
 // CacheClient.get<T>(key): Promise<T | null>
 // CacheClient.set(key, value, options?): Promise<void>
-// CacheClient.del(key): Promise<void>
+// CacheClient.invalidate(key): Promise<void>
+// CacheClient.invalidatePrefix(prefix): Promise<void>
 ```
 
 ### storage
@@ -143,8 +144,8 @@ listDocuments(options?: object): Promise<UploadResult[]>
 
 ### config
 ```ts
-initToolkit(env?: Record<string, string>): ToolkitConfig
-parseConfig(schema: ZodSchema, env?: Record<string, string>): T
+initToolkit(env?: Record<string, string>): ToolkitInstances
+parseConfig(env?: Record<string, string | undefined>): ToolkitConfig
 ```
 
 ### errors
