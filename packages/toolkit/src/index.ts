@@ -1,11 +1,23 @@
-// AI
+// AI (v5)
+// AI (legacy)
 export type {
+	AIClient,
+	AIConfig,
+	AIProvider,
 	CompletionOptions,
+	CostEstimate,
+	GenerateOptions,
+	GenerateResult,
 	LLMClient,
 	LLMConfig,
 	LLMResponse,
+	StreamOptions,
+	StreamResult,
+	StructuredOptions,
+	StructuredResult,
+	TokenUsage,
 } from "./ai/index.js";
-export { createLLM } from "./ai/index.js";
+export { createAI, createLLM } from "./ai/index.js";
 // API
 export type { ApiClientConfig } from "./api/index.js";
 export { createApiClient } from "./api/index.js";
