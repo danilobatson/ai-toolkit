@@ -157,7 +157,8 @@ function createAnthropicClient(model: string, apiKey: string): LLMClient {
 		): Promise<LLMResponse> {
 			let Anthropic: unknown;
 			try {
-				const mod: Record<string, unknown> = await import("@anthropic-ai/sdk");
+				const moduleName = "@anthropic-ai/sdk";
+				const mod: Record<string, unknown> = await import(moduleName);
 				Anthropic = mod.default ?? mod;
 			} catch {
 				throw new LLMError(
@@ -233,7 +234,8 @@ function createOpenAIClient(model: string, apiKey: string): LLMClient {
 		): Promise<LLMResponse> {
 			let OpenAI: unknown;
 			try {
-				const mod: Record<string, unknown> = await import("openai");
+				const moduleName = "openai";
+				const mod: Record<string, unknown> = await import(moduleName);
 				OpenAI = mod.default ?? mod;
 			} catch {
 				throw new LLMError("OpenAI SDK not installed. Run: yarn add openai", {
