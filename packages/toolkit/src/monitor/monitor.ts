@@ -137,6 +137,45 @@ export async function createMonitor(
 	};
 }
 
+// ─── Trace Helpers ────────────────────────────────────────────────────────
+
+function recordTraceCost(
+	monitor: MonitorClient,
+	traceName: string,
+	attrs: TraceAttributes,
+	traceId: string,
+): void {
+	if (attrs.usage && attrs.model) {
+		monitor.recordCost({
+			model: attrs.model,
+			module: traceName.split("/")[0] ?? traceName,
+			usage: attrs.usage,
+			traceId,
+		});
+	}
+}
+
+function scoreLangfuse(
+	langfuse: LangfuseClientLike,
+	traceId: string,
+	name: string,
+	value: unknown,
+	dataType: string,
+	comment?: string,
+): void {
+	try {
+		langfuse.score.create({
+			traceId,
+			name,
+			value,
+			dataType,
+			...(comment ? { comment } : {}),
+		});
+	} catch {
+		// Tracing failure should never block the operation
+	}
+}
+
 // ─── Trace ─────────────────────────────────────────────────────────────────
 
 let traceCounter = 0;
@@ -184,17 +223,7 @@ export async function trace<T>(
 
 	if (!monitor.enabled) {
 		const result = await fn(span);
-
-		// Still record costs locally even without Langfuse
-		if (attrs.usage && attrs.model) {
-			monitor.recordCost({
-				model: attrs.model,
-				module: name.split("/")[0] ?? name,
-				usage: attrs.usage,
-				traceId,
-			});
-		}
-
+		recordTraceCost(monitor, name, attrs, traceId);
 		return { result, traceId };
 	}
 
@@ -204,49 +233,29 @@ export async function trace<T>(
 	try {
 		result = await fn(span);
 	} catch (error) {
-		// Record the error in the trace
 		if (monitor.langfuse) {
-			const langfuse = monitor.langfuse as LangfuseClientLike;
-			try {
-				langfuse.score.create({
-					traceId,
-					name: "error",
-					value: 1,
-					dataType: "BOOLEAN",
-					comment: error instanceof Error ? error.message : String(error),
-				});
-			} catch {
-				// Tracing failure should never block the operation
-			}
+			scoreLangfuse(
+				monitor.langfuse as LangfuseClientLike,
+				traceId,
+				"error",
+				1,
+				"BOOLEAN",
+				error instanceof Error ? error.message : String(error),
+			);
 		}
 		throw error;
 	}
 
-	const endTime = Date.now();
+	recordTraceCost(monitor, name, attrs, traceId);
 
-	// Record cost locally
-	if (attrs.usage && attrs.model) {
-		monitor.recordCost({
-			model: attrs.model,
-			module: name.split("/")[0] ?? name,
-			usage: attrs.usage,
-			traceId,
-		});
-	}
-
-	// Send trace data to Langfuse via score (lightweight integration)
 	if (monitor.langfuse) {
-		const langfuse = monitor.langfuse as LangfuseClientLike;
-		try {
-			langfuse.score.create({
-				traceId,
-				name: "duration_ms",
-				value: endTime - startTime,
-				dataType: "NUMERIC",
-			});
-		} catch {
-			// Tracing failure should never block the operation
-		}
+		scoreLangfuse(
+			monitor.langfuse as LangfuseClientLike,
+			traceId,
+			"duration_ms",
+			Date.now() - startTime,
+			"NUMERIC",
+		);
 	}
 
 	return { result, traceId };
@@ -309,6 +318,22 @@ export async function evaluate(
 	}
 }
 
+// ─── Cost Report Helpers ──────────────────────────────────────────────────
+
+function addToBucket(
+	buckets: Record<string, ModelCostSummary>,
+	key: string,
+	tokens: number,
+	cost: number,
+): void {
+	if (!buckets[key]) {
+		buckets[key] = { operations: 0, totalTokens: 0, estimatedCostUsd: 0 };
+	}
+	buckets[key].operations += 1;
+	buckets[key].totalTokens += tokens;
+	buckets[key].estimatedCostUsd += cost;
+}
+
 // ─── Cost Report ───────────────────────────────────────────────────────────
 
 /**
@@ -355,29 +380,8 @@ export function getCostReport(monitor: MonitorClient): CostReport {
 		totalTokens += tokens;
 		totalCost += cost;
 
-		// Aggregate by model
-		if (!byModel[entry.model]) {
-			byModel[entry.model] = {
-				operations: 0,
-				totalTokens: 0,
-				estimatedCostUsd: 0,
-			};
-		}
-		byModel[entry.model].operations += 1;
-		byModel[entry.model].totalTokens += tokens;
-		byModel[entry.model].estimatedCostUsd += cost;
-
-		// Aggregate by module
-		if (!byModule[entry.module]) {
-			byModule[entry.module] = {
-				operations: 0,
-				totalTokens: 0,
-				estimatedCostUsd: 0,
-			};
-		}
-		byModule[entry.module].operations += 1;
-		byModule[entry.module].totalTokens += tokens;
-		byModule[entry.module].estimatedCostUsd += cost;
+		addToBucket(byModel, entry.model, tokens, cost);
+		addToBucket(byModule, entry.module, tokens, cost);
 	}
 
 	const timestamps = costs.map((c) => c.timestamp.getTime());
