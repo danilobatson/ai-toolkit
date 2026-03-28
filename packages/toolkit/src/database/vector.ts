@@ -30,6 +30,20 @@ import type {
 	VectorSearchResult,
 } from "./types.js";
 
+// ─── Identifier Validation ────────────────────────────────────────────────
+
+function validateIdentifier(name: string, label: string): void {
+	if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+		throw new ValidationError(
+			`Invalid ${label}: must be alphanumeric/underscore`,
+			{
+				code: "DATABASE_INVALID_IDENTIFIER",
+				fields: { [label]: "must match /^[a-zA-Z_][a-zA-Z0-9_]*$/" },
+			},
+		);
+	}
+}
+
 // Import paths as variables to prevent TS from resolving peer deps
 const DRIZZLE_PG_CORE_PATH = "drizzle-orm/pg-core";
 const DRIZZLE_ORM_PATH = "drizzle-orm";
@@ -299,6 +313,15 @@ export async function vectorSearchRaw<T = Record<string, unknown>>(
 			code: "DATABASE_INVALID_VECTOR",
 			fields: { queryVector: "required, non-empty number[]" },
 		});
+	}
+
+	// Validate identifiers to prevent SQL injection
+	validateIdentifier(options.table, "table");
+	validateIdentifier(options.column, "column");
+	if (options.select) {
+		for (const field of options.select) {
+			validateIdentifier(field, "select field");
+		}
 	}
 
 	const metric = options.metric ?? "cosine";

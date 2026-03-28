@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { LLMError } from "../../errors/types.js";
 import {
 	detectProvider,
 	estimateCost,
@@ -42,7 +41,7 @@ describe("detectProvider", () => {
 		delete process.env.OPENROUTER_API_KEY;
 		delete process.env.ANTHROPIC_API_KEY;
 		delete process.env.OPENAI_API_KEY;
-		expect(() => detectProvider()).toThrow(LLMError);
+		expect(() => detectProvider()).toThrow(/no ai provider/i);
 	});
 });
 

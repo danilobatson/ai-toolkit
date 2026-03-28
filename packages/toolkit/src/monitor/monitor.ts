@@ -31,6 +31,9 @@ import type {
 	TraceSpan,
 } from "./types.js";
 
+/** Well-known default URL for Langfuse Cloud. */
+const LANGFUSE_DEFAULT_URL = "https://cloud.langfuse.com";
+
 // ─── Langfuse Dynamic Import ──────────────────────────────────────────────
 
 interface LangfuseClientLike {
@@ -104,9 +107,7 @@ export function createMonitor(config?: MonitorConfig): MonitorClient {
 	const publicKey = config?.publicKey ?? process.env.LANGFUSE_PUBLIC_KEY;
 	const secretKey = config?.secretKey ?? process.env.LANGFUSE_SECRET_KEY;
 	const baseUrl =
-		config?.baseUrl ??
-		process.env.LANGFUSE_BASE_URL ??
-		"https://cloud.langfuse.com";
+		config?.baseUrl ?? process.env.LANGFUSE_BASE_URL ?? LANGFUSE_DEFAULT_URL;
 
 	if (!publicKey || !secretKey) {
 		return createNoopMonitor();

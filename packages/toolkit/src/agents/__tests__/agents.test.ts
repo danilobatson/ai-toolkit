@@ -56,7 +56,14 @@ function createMockStateGraph() {
 						const handler = nodes.get(current);
 						if (handler) {
 							const result = await handler(state);
-							state = { ...state, ...result };
+							// Simulate message accumulation reducer
+							const currentMsgs = (state.messages ?? []) as unknown[];
+							const updateMsgs = (result.messages ?? []) as unknown[];
+							state = {
+								...state,
+								...result,
+								messages: [...currentMsgs, ...updateMsgs],
+							};
 						}
 
 						// Check conditional edges first
@@ -153,7 +160,7 @@ describe("agents", () => {
 			expect(typeof agent.handler).toBe("function");
 		});
 
-		it("createAgent handler prepends system message", async () => {
+		it("createAgent handler returns system message as delta", async () => {
 			const agent = createAgent({
 				name: "bot",
 				systemPrompt: "You are helpful.",
@@ -164,17 +171,15 @@ describe("agents", () => {
 			const result = await agent.handler(state);
 			expect(result.messages).toBeDefined();
 			const msgs = result.messages ?? [];
+			// Handler returns only new messages (delta for accumulation)
+			expect(msgs).toHaveLength(1);
 			expect(msgs[0]).toEqual({
 				role: "system",
 				content: "You are helpful.",
 			});
-			expect(msgs[1]).toEqual({
-				role: "user",
-				content: "Hello",
-			});
 		});
 
-		it("createAgent handler does not duplicate system message", async () => {
+		it("createAgent handler returns empty delta when system message exists", async () => {
 			const agent = createAgent({
 				name: "bot",
 				systemPrompt: "You are helpful.",
@@ -186,7 +191,7 @@ describe("agents", () => {
 				],
 			};
 			const result = await agent.handler(state);
-			expect(result.messages).toHaveLength(2);
+			expect(result.messages).toHaveLength(0);
 		});
 
 		it("createAgent handler sets currentAgent and metadata", async () => {
@@ -332,6 +337,38 @@ describe("agents", () => {
 				expect.any(Array),
 			);
 		});
+
+		it("multi-agent message accumulation preserves all agents' messages", async () => {
+			const agent1 = createAgent({
+				name: "agent-1",
+				systemPrompt: "First agent.",
+			});
+			const agent2 = createAgent({
+				name: "agent-2",
+				systemPrompt: "Second agent.",
+			});
+
+			// Simulate accumulation: start with user message
+			const initial = [{ role: "user" as const, content: "Hello" }];
+
+			// Agent 1 returns its delta
+			const result1 = await agent1.handler({ messages: initial });
+			// Accumulate: initial + delta from agent1
+			const afterAgent1 = [...initial, ...(result1.messages ?? [])];
+
+			// Agent 2 sees accumulated state, returns its delta
+			const result2 = await agent2.handler({ messages: afterAgent1 });
+			// Accumulate: afterAgent1 + delta from agent2
+			const finalMessages = [...afterAgent1, ...(result2.messages ?? [])];
+
+			// Both system messages should be present
+			const systemMessages = finalMessages.filter((m) => m.role === "system");
+			expect(systemMessages).toHaveLength(2);
+			expect(systemMessages[0].content).toBe("First agent.");
+			expect(systemMessages[1].content).toBe("Second agent.");
+			// User message preserved
+			expect(finalMessages.some((m) => m.content === "Hello")).toBe(true);
+		});
 	});
 
 	// ─── Level 3: DATA QUALITY ──────────────────────────────────────────────
@@ -450,6 +487,7 @@ describe("agents", () => {
 
 	describe("PATTERN", () => {
 		it("all errors are ToolkitError instances", () => {
+			expect.assertions(1);
 			try {
 				createAgent({ name: "", systemPrompt: "" });
 			} catch (error) {
@@ -458,6 +496,7 @@ describe("agents", () => {
 		});
 
 		it("error codes use AGENTS_ prefix", () => {
+			expect.assertions(1);
 			try {
 				createAgent({ name: "", systemPrompt: "" });
 			} catch (error) {

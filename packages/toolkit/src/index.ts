@@ -140,6 +140,8 @@ export {
 	parseDocument,
 	search,
 } from "./knowledge/index.js";
+// MCP
+export * from "./mcp/index.js";
 // Monitor (v5 — replaces observability/)
 export type {
 	CostEntry,

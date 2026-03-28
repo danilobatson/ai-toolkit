@@ -286,6 +286,53 @@ describe("vectorSearchRaw", () => {
 		expect(queries[0].params?.[1]).toBe(0.7);
 		expect(queries[0].params?.[2]).toBe(5);
 	});
+
+	// ─── SQL Injection Prevention ──────────────────────────────────────
+
+	it("rejects table name with SQL injection", async () => {
+		const db = mockDatabaseClient();
+		await expect(
+			vectorSearchRaw(db, {
+				table: "documents; DROP TABLE users",
+				column: "embedding",
+				queryVector: [0.1],
+			}),
+		).rejects.toThrow(/invalid table/i);
+	});
+
+	it("rejects column name with spaces", async () => {
+		const db = mockDatabaseClient();
+		await expect(
+			vectorSearchRaw(db, {
+				table: "documents",
+				column: "embedding col",
+				queryVector: [0.1],
+			}),
+		).rejects.toThrow(/invalid column/i);
+	});
+
+	it("rejects select field with injection", async () => {
+		const db = mockDatabaseClient();
+		await expect(
+			vectorSearchRaw(db, {
+				table: "documents",
+				column: "embedding",
+				queryVector: [0.1],
+				select: ["id", "1; DROP TABLE users"],
+			}),
+		).rejects.toThrow(/invalid select field/i);
+	});
+
+	it("allows valid identifiers", async () => {
+		const db = mockDatabaseClient();
+		const results = await vectorSearchRaw(db, {
+			table: "my_documents",
+			column: "embedding_col",
+			queryVector: [0.1],
+			select: ["id", "content", "_meta"],
+		});
+		expect(results).toEqual([]);
+	});
 });
 
 describe("vectorSearch (Drizzle-based)", () => {

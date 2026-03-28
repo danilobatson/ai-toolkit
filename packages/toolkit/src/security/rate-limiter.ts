@@ -51,6 +51,10 @@ export function createRateLimiter(
 	cache: CacheClient,
 	config?: RateLimitConfig,
 ): RateLimiter {
+	if (!cache) {
+		throw new ValidationError("cache is required for createRateLimiter");
+	}
+
 	const max = config?.max ?? 100;
 	const windowSeconds = config?.windowSeconds ?? 60;
 	const prefix = config?.keyPrefix ?? "ratelimit";

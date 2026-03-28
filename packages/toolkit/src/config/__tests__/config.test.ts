@@ -26,6 +26,7 @@ describe("parseConfig", () => {
 	});
 
 	it("throws an instance of ValidationError", () => {
+		expect.assertions(1);
 		try {
 			parseConfig({ DATABASE_URL: "not-a-url" });
 		} catch (err) {

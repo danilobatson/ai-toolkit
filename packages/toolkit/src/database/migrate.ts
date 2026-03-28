@@ -26,6 +26,7 @@ const DRIZZLE_MIGRATOR_PATH = "drizzle-orm/postgres-js/migrator";
  *
  * Creates a dedicated single-connection client, applies all pending
  * migrations from the specified folder, then closes the connection.
+ * Returns -1 for appliedCount (Drizzle migrator does not expose count).
  *
  * @example
  * ```ts
@@ -99,7 +100,7 @@ export async function migrate(
 
 	try {
 		await runMigrate(db, { migrationsFolder });
-		return { success: true, appliedCount: 1 };
+		return { success: true, appliedCount: -1 };
 	} catch (err) {
 		throw new ToolkitError(
 			`Migration failed: ${err instanceof Error ? err.message : String(err)}`,

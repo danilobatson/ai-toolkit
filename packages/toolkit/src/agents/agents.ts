@@ -115,8 +115,11 @@ export function createAgent(config: AgentConfig): AgentNode {
 			(m) => m.role === "system" && m.content === parsed.data.systemPrompt,
 		);
 
+		// Return only new messages (delta) — the reducer accumulates them
+		const newMessages = hasSystem ? [] : [systemMessage];
+
 		return {
-			messages: hasSystem ? state.messages : [systemMessage, ...state.messages],
+			messages: newMessages,
 			currentAgent: parsed.data.name,
 			metadata: {
 				...state.metadata,
@@ -262,7 +265,7 @@ export async function createGraph(config: GraphConfig): Promise<GraphInstance> {
 				reducer: (
 					current: GraphState["messages"],
 					update: GraphState["messages"],
-				) => update ?? current,
+				) => [...(current ?? []), ...(update ?? [])],
 				default: () => [],
 			}),
 			currentAgent: langGraph.Annotation({

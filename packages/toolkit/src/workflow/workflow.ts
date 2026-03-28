@@ -96,8 +96,10 @@ export async function createWorkflow(
 /**
  * Define a durable background job with automatic retries.
  *
- * Uses Inngest's v4 2-arg createFunction API. The handler receives
- * event data and durable step helpers (run, sleep, waitForEvent, sendEvent).
+ * Uses Inngest v4 2-arg createFunction API (config with triggers array + handler).
+ * Verified in spike-all (2026-03-28).
+ *
+ * The handler receives event data and durable step helpers (run, sleep, waitForEvent, sendEvent).
  *
  * @param client - The workflow client from createWorkflow()
  * @param config - Job configuration (id, trigger, retries, concurrency)

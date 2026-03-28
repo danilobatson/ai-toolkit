@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { MemoryCacheAdapter } from "../../cache/client.js";
+import { ValidationError } from "../../errors/types.js";
 import { createAuditLogger, createRateLimiter } from "../rate-limiter.js";
 
 describe("createRateLimiter", () => {
@@ -16,6 +17,24 @@ describe("createRateLimiter", () => {
 		const result = await limiter.check("user:1");
 		expect(result.allowed).toBe(true);
 		expect(result.remaining).toBe(4);
+	});
+
+	it("throws ValidationError when cache is null/undefined", () => {
+		expect(() => createRateLimiter(null as never)).toThrow(
+			/cache is required/i,
+		);
+		expect(() => createRateLimiter(undefined as never)).toThrow(
+			/cache is required/i,
+		);
+	});
+
+	it("throws ValidationError instance when cache missing", () => {
+		expect.assertions(1);
+		try {
+			createRateLimiter(null as never);
+		} catch (err) {
+			expect(err).toBeInstanceOf(ValidationError);
+		}
 	});
 
 	it("blocks requests over limit", async () => {
