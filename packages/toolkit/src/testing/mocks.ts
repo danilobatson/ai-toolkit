@@ -20,7 +20,20 @@
  */
 
 import type { CacheClient, CacheOptions } from "../cache/client.js";
-import type { DbClient } from "../neon/db.js";
+import type { DatabaseClient } from "../database/types.js";
+
+/** @deprecated Use DatabaseClient instead */
+type DbClient = {
+	query<T = Record<string, unknown>>(
+		sql: string,
+		params?: unknown[],
+	): Promise<T[]>;
+	queryOne<T = Record<string, unknown>>(
+		sql: string,
+		params?: unknown[],
+	): Promise<T | null>;
+	end(): Promise<void>;
+};
 
 // ─── Mock Cache ─────────────────────────────────────────────────────────────
 
@@ -167,6 +180,61 @@ export function mockDb(
 		async queryOne<T>(sql: string, params?: unknown[]): Promise<T | null> {
 			queries.push({ sql, params });
 			return (defaultRows[0] as T) ?? null;
+		},
+
+		async end(): Promise<void> {},
+	};
+}
+
+// ─── Mock Database (v5) ────────────────────────────────────────────────────
+
+/**
+ * Mock database client for testing (v5 DatabaseClient interface).
+ * Returns provided rows for any query.
+ *
+ * @example
+ * ```ts
+ * import { mockDatabase } from '@jamaalbuilds/ai-toolkit/testing';
+ *
+ * const db = mockDatabase([{ id: 1, content: 'test' }]);
+ * const rows = await db.query('SELECT * FROM docs');
+ * expect(db._queries).toHaveLength(1);
+ * ```
+ */
+export function mockDatabase(
+	rows?: Record<string, unknown>[],
+): DatabaseClient & { _queries: Array<{ sql: string; params?: unknown[] }> } {
+	const queries: Array<{ sql: string; params?: unknown[] }> = [];
+	const defaultRows = rows ?? [];
+
+	return {
+		db: {},
+		provider: "local",
+		driver: "postgres-js",
+		_queries: queries,
+
+		async query<T>(sql: string, params?: unknown[]): Promise<T[]> {
+			queries.push({ sql, params });
+			return defaultRows as T[];
+		},
+
+		async queryOne<T>(sql: string, params?: unknown[]): Promise<T | null> {
+			queries.push({ sql, params });
+			return (defaultRows[0] as T) ?? null;
+		},
+
+		async withTenant<T>(
+			orgId: string,
+			sql: string,
+			params?: unknown[],
+		): Promise<T[]> {
+			const allParams = [...(params ?? []), orgId];
+			const paramIndex = allParams.length;
+			const upperSql = sql.toUpperCase();
+			const separator = upperSql.includes("WHERE") ? " AND" : " WHERE";
+			const scopedSql = `${sql}${separator} org_id = $${paramIndex}`;
+			queries.push({ sql: scopedSql, params: allParams });
+			return defaultRows as T[];
 		},
 
 		async end(): Promise<void> {},

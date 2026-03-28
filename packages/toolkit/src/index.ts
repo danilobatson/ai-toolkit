@@ -43,6 +43,27 @@ export type {
 	HealthReport,
 	PaginatedResponse,
 } from "./data/index.js";
+// Database (v5 — replaces neon/)
+export type {
+	DatabaseClient,
+	DatabaseConfig,
+	DatabaseDriver,
+	DatabaseProvider,
+	DistanceMetric,
+	MigrateOptions,
+	MigrateResult,
+	VectorSearchOptions,
+	VectorSearchResult,
+	VectorSearchTableOptions,
+} from "./database/index.js";
+export {
+	createDatabase,
+	detectProvider,
+	getVectorColumn,
+	migrate,
+	vectorSearch,
+	vectorSearchRaw,
+} from "./database/index.js";
 // Errors
 export {
 	ApiClientError,
@@ -57,9 +78,6 @@ export {
 // Health
 export type { HealthCheckConfig, HealthCheckResult } from "./health/index.js";
 export { createHealthCheck } from "./health/index.js";
-// Neon
-export type { DbClient, DbConfig } from "./neon/index.js";
-export { createDb, withTenant } from "./neon/index.js";
 // Observability
 export type { LangfuseConfig, Logger } from "./observability/index.js";
 export { createLogger, initLangfuse } from "./observability/index.js";
@@ -86,4 +104,4 @@ export {
 } from "./storage/index.js";
 // Testing
 export type { MockLLMOptions, MockLLMResult } from "./testing/index.js";
-export { mockCache, mockDb, mockLLM } from "./testing/index.js";
+export { mockCache, mockDatabase, mockDb, mockLLM } from "./testing/index.js";
