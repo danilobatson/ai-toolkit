@@ -5,6 +5,25 @@ All notable changes to `@jamaalbuilds/ai-toolkit` will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-03-28
+
+### Fixed
+- README: 9 additional code example fixes (agents `await`, workflow `await`, config return type, auth params, storage/api options, data/health shapes)
+- LLMS.md: 6 wrong signatures (`getUserId`, `requireApiKey`, cache methods, `initToolkit`, `parseConfig`, `createCache`)
+- CHANGELOG: removed overclaimed fix, corrected JSDoc count
+- CONTRIBUTING.md: added `yarn verify` command
+- 11 silent-pass try/catch tests now use `expect.assertions()` (ai, knowledge, workflow)
+- 3 weak `toBeDefined()` assertions replaced with behavioral checks (agents, config, stream-fallback)
+- JSDoc `@example` added to 10+ exports missing documentation (ai, config, auth, cache, data, database, health, mcp, storage, testing)
+- Input validation added to `createLLM`, `getProviderConfig`, auth middleware, cache client, `createHealthCheck`
+- Error messages improved across api, storage, security modules
+- MCP server builder: comprehensive JSDoc and validation on `defineTool`, `defineResource`, `readResource`
+
+### Added
+- 14 new tests: ai rate-limit (3), stream abort signal, mcp error paths (2), mcp content variants (3), config schema validation (4), mcp tool handler error
+- knowledge `createKnowledge` factory with input validation
+- `builtInSplit` internal utility JSDoc
+
 ## [0.3.0] - 2026-03-28
 
 ### Fixed
