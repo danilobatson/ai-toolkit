@@ -6,6 +6,7 @@ export default defineConfig({
 			"src/**/__tests__/**/*.test.ts",
 			"src/**/__verification__/**/*.test.ts",
 			"src/**/__integration__/**/*.test.ts",
+			"src/**/__security__/**/*.test.ts",
 		],
 		exclude: ["node_modules", "dist"],
 		coverage: {

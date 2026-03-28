@@ -14,7 +14,7 @@ function grep(pattern: string, path: string, exclude?: string): string[] {
 	const excludeFlag = exclude ? ` | grep -v "${exclude}"` : "";
 	try {
 		const result = execSync(
-			`grep -rn "${pattern}" ${path} --include="*.ts" | grep -v __tests__ | grep -v __verification__ | grep -v __integration__${excludeFlag}`,
+			`grep -rn "${pattern}" ${path} --include="*.ts" | grep -v __tests__ | grep -v __verification__ | grep -v __integration__ | grep -v __security__${excludeFlag}`,
 			{ encoding: "utf-8" },
 		);
 		return result.trim().split("\n").filter(Boolean);
