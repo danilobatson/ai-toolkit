@@ -63,7 +63,7 @@ Or use OpenRouter for access to multiple providers:
 
 AI Toolkit is ESM-only. Your `tsconfig.json` should include:
 
-```json
+```json title="tsconfig.json"
 {
   "compilerOptions": {
     "module": "esnext",
@@ -77,7 +77,7 @@ AI Toolkit is ESM-only. Your `tsconfig.json` should include:
 
 Configure your AI provider credentials:
 
-```bash
+```bash title=".env"
 # .env
 GROQ_API_KEY=gsk_...
 # or
@@ -88,7 +88,7 @@ OPENAI_API_KEY=sk-...
 
 ## Verify Installation
 
-```ts
+```ts title="verify.ts"
 import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
 
 initToolkit({ name: 'test-app' });

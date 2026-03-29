@@ -22,7 +22,7 @@ const cache = createCache(); // in-memory by default
 
 await cache.set('user:123', { name: 'John' }, { ttl: 3600 });
 const user = await cache.get('user:123');
-await cache.del('user:123');
+await cache.invalidate('user:123');
 ```
 
 ## API Reference
@@ -37,21 +37,18 @@ function createCache(options?: CacheOptions): CacheClient
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `options.adapter` | `CacheAdapter` | `MemoryCacheAdapter` or `RedisCacheAdapter` |
-| `options.prefix` | `string` | Key prefix namespace |
+| `options.redisUrl` | `string` | Redis connection URL (uses in-memory if omitted) |
+| `options.defaultTtl` | `number` | Default TTL in seconds |
 
 ```ts
 // In-memory (default)
 const cache = createCache();
 
 // Redis
-import { RedisCacheAdapter } from '@jamaalbuilds/ai-toolkit/cache';
-const cache = createCache({
-  adapter: new RedisCacheAdapter({ url: process.env.REDIS_URL }),
-});
+const cache = createCache({ redisUrl: process.env.REDIS_URL });
 ```
 
-### `cache.get(key)`, `cache.set(key, value, options?)`, `cache.del(key)`
+### `cache.get(key)`, `cache.set(key, value, options?)`, `cache.invalidate(key)`
 
 Standard cache operations.
 
@@ -71,5 +68,5 @@ Redis adapter wrapping ioredis.
 
 ## Types
 
-- `CacheClient` — client with get(), set(), del()
-- `CacheOptions` — adapter, prefix
+- `CacheClient` — client with get(), set(), invalidate()
+- `CacheOptions` — redisUrl, defaultTtl

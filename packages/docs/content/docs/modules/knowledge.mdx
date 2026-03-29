@@ -77,28 +77,35 @@ const knowledge = createKnowledge({
 });
 ```
 
-### `ingest(knowledge, source, options?)`
+### `ingest(input, embedder, store, options?)`
 
 Parse, chunk, embed, and store a document in one call.
 
 ```ts
 function ingest(
-  knowledge: KnowledgeClient,
-  source: string | Buffer,
+  input: string | Buffer | Uint8Array,
+  embedder: EmbedFunction,
+  store: VectorStore,
   options?: IngestOptions,
 ): Promise<IngestResult>
 ```
 
 | Parameter | Type | Description |
 | --- | --- | --- |
+| `input` | `string \| Buffer \| Uint8Array` | Document source (path, raw text, or binary) |
+| `embedder` | `EmbedFunction` | `async (texts: string[]) => number[][]` |
+| `store` | `VectorStore` | Vector store with `upsert()` and `search()` |
 | `options.metadata` | `Record<string, unknown>` | Metadata to attach to chunks |
 | `options.chunkSize` | `number` | Override chunk size |
 | `options.chunkOverlap` | `number` | Override chunk overlap |
 
 ```ts
-const result = await ingest(knowledge, './report.pdf', {
-  metadata: { source: 'quarterly-report', year: 2024 },
-});
+const result = await ingest(
+  './report.pdf',
+  async (texts) => embeddings.embed(texts),
+  myVectorStore,
+  { metadata: { source: 'quarterly-report', year: 2024 } },
+);
 // result.chunks — number of chunks stored
 ```
 

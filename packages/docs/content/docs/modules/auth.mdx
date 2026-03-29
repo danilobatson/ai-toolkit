@@ -14,31 +14,29 @@ The `auth` module provides API key authentication with timing-safe comparison, r
 ```ts title="auth-example.ts"
 import { createApiKeyGuard, requireApiKey } from '@jamaalbuilds/ai-toolkit/auth';
 
-const guard = createApiKeyGuard({ keys: [process.env.API_KEY!] });
-const isValid = guard.validate(request.headers.get('x-api-key'));
+const Guard = createApiKeyGuard(process.env.API_KEY!);
+// Guard is a NestJS guard class — use with @UseGuards(Guard)
+
+// For direct validation in any framework:
+requireApiKey(request, process.env.API_KEY!);
 ```
 
 ## API Reference
 
-### `createApiKeyGuard(config)`
+### `createApiKeyGuard(expectedKey)`
 
-Create an API key validator with timing-safe comparison.
+Create a NestJS guard class for API key authentication with timing-safe comparison.
 
 ```ts
-function createApiKeyGuard(config: { keys: string[] }): { validate: (key: string | null) => boolean }
+function createApiKeyGuard(expectedKey: string): Type<CanActivate>
 ```
 
 ```ts
-const guard = createApiKeyGuard({
-  keys: [process.env.API_KEY!, process.env.ADMIN_KEY!],
-});
-
-if (!guard.validate(apiKey)) {
-  throw new AuthError('Invalid API key');
-}
+const Guard = createApiKeyGuard(process.env.API_KEY!);
+// Use as a NestJS guard: @UseGuards(Guard)
 ```
 
-### `requireApiKey(headers, keys)`
+### `requireApiKey(request, expectedKey?)`
 
 Validate an API key from request headers. Throws `AuthError` if invalid.
 

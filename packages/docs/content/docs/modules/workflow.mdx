@@ -136,12 +136,15 @@ const summary = await aiStep(step, {
 console.log(summary.text);
 ```
 
-### `serve(workflow, options?)`
+### `serve(options)`
 
 Create an HTTP handler for serving workflow functions.
 
 ```ts
-function serve(workflow: WorkflowClient, options?: ServeOptions): unknown
+function serve(options: {
+  client: WorkflowClient;
+  functions: WorkflowJob[];
+}): Promise<{ GET; POST; PUT }>
 ```
 
 ## Types

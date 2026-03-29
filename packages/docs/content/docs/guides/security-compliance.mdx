@@ -29,13 +29,11 @@ const result = await ai.generate(safeInput);
 
 | Type | Example |
 | --- | --- |
+| `SSN` | 123-45-6789 |
 | `EMAIL` | john@example.com |
 | `PHONE` | (555) 123-4567 |
-| `SSN` | 123-45-6789 |
-| `CREDIT_CARD` | 4111-1111-1111-1111 |
 | `NAME` | John Smith |
 | `DOB` | 1990-01-15 |
-| `IP_ADDRESS` | 192.168.1.1 |
 
 ## Audit Logging
 
@@ -44,10 +42,9 @@ Track every security-relevant event:
 ```ts
 import { createAuditLogger } from '@jamaalbuilds/ai-toolkit/security';
 
-const audit = createAuditLogger();
+const audit = createAuditLogger('my-service');
 
-audit.log({
-  action: 'llm_query',
+audit.log('llm_query', {
   userId: user.id,
   details: {
     model: 'llama-3.3-70b',
@@ -55,9 +52,6 @@ audit.log({
     sanitized: true,
   },
 });
-
-// Query audit trail
-const events = audit.getEvents();
 ```
 
 ## Guardrails
@@ -67,24 +61,32 @@ Validate AI outputs before returning to users:
 ```ts
 import { createGuardrails, checkOutput, detectPII } from '@jamaalbuilds/ai-toolkit/security';
 
-const guardrails = createGuardrails([
+const rules = [
   {
-    name: 'no-pii-in-output',
-    check: (text) => detectPII(text).length === 0,
+    id: 'no-pii-in-output',
+    description: 'No PII in AI output',
+    test: (text: string) => detectPII(text).length === 0,
   },
   {
-    name: 'no-harmful-content',
-    check: (text) => !text.match(/\b(hack|exploit|attack)\b/i),
+    id: 'no-harmful-content',
+    description: 'No harmful content in output',
+    test: (text: string) => !text.match(/\b(hack|exploit|attack)\b/i),
   },
   {
-    name: 'reasonable-length',
-    check: (text) => text.length < 10000,
+    id: 'reasonable-length',
+    description: 'Output must be under 10000 chars',
+    test: (text: string) => text.length < 10000,
   },
-]);
+];
 
-const result = checkOutput(guardrails, aiResponse);
-if (!result.passed) {
-  console.error('Guardrail failures:', result.failures);
+const guardrails = createGuardrails(rules);
+const result = guardrails.check(aiResponse);
+
+// Or use checkOutput directly
+const directResult = checkOutput(aiResponse, rules);
+if (!directResult.allowed) {
+  console.error('Guardrail violations:', directResult.violations);
+  console.error('Reasons:', directResult.reasons);
   return 'I cannot provide that response.';
 }
 ```
@@ -96,16 +98,16 @@ Protect your API from abuse:
 ```ts
 import { createRateLimiter } from '@jamaalbuilds/ai-toolkit/security';
 
-const limiter = createRateLimiter({
-  maxRequests: 100,
-  windowMs: 60_000, // per minute
+const limiter = createRateLimiter(cache, {
+  max: 100,
+  windowSeconds: 60, // per minute
 });
 
 // In your API handler
 const result = limiter.check(userId);
 if (!result.allowed) {
   return Response.json(
-    { error: 'Rate limited', retryAfter: result.retryAfterMs },
+    { error: 'Rate limited', retryAfter: result.resetAt },
     { status: 429 },
   );
 }

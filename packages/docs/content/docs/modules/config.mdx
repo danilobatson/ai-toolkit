@@ -15,9 +15,9 @@ The `config` module provides Zod-based environment validation and toolkit initia
 import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
 
 initToolkit({
-  name: 'my-app',
-  aiProvider: 'groq',
-  aiModel: 'llama-3.3-70b-versatile',
+  TOOLKIT_NAME: 'my-app',
+  TOOLKIT_AI_PROVIDER: 'groq',
+  TOOLKIT_AI_MODEL: 'llama-3.3-70b-versatile',
 });
 ```
 
@@ -28,16 +28,12 @@ initToolkit({
 Initialize the toolkit with validated configuration.
 
 ```ts
-function initToolkit(config: Partial<ToolkitConfig>): ToolkitInstances
+function initToolkit(env?: Record<string, string | undefined>): ToolkitInstances
 ```
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `config.name` | `string` | Application name |
-| `config.aiProvider` | `string` | AI provider name |
-| `config.aiModel` | `string` | AI model name |
-| `config.databaseUrl` | `string` | Database connection URL |
-| `config.logLevel` | `string` | Log level |
+| `env` | `Record<string, string \| undefined>` | Environment variables (default: `process.env`) |
 
 ### `parseConfig(env)`
 

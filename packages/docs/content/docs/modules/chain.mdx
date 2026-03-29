@@ -110,7 +110,7 @@ const result = await chain.invoke({ text: 'John is 30' });
 Create a retrieval-augmented generation chain.
 
 ```ts
-function rag(config: RAGConfig): Promise<RAGResult>
+function rag(config: RAGConfig): Chain<{ question: string }, RAGResult>
 ```
 
 | Parameter | Type | Description |
@@ -118,15 +118,15 @@ function rag(config: RAGConfig): Promise<RAGResult>
 | `config.retriever` | `Retriever` | Function that returns relevant documents |
 | `config.promptTemplate` | `string` | Template with `{context}` and `{question}` placeholders |
 | `config.model` | `(prompt: string) => Promise<string>` | LLM function |
-| `config.query` | `string` | The user's question |
 
 ```ts
-const result = await rag({
+const ragChain = rag({
   retriever: async (query) => searchDocs(query),
   promptTemplate: 'Context:\n{context}\n\nQuestion: {question}\n\nAnswer:',
   model: async (prompt) => callLLM(prompt),
-  query: 'What is the return policy?',
 });
+
+const result = await ragChain.invoke({ question: 'What is the return policy?' });
 ```
 
 ### `createSplitter(config)`
@@ -152,12 +152,11 @@ const chunks = await splitter.split('Very long document text...');
 Create a code-aware splitter that respects language syntax boundaries.
 
 ```ts
-function createLanguageSplitter(config: SplitterConfig & { language: SplitterLanguage }): Splitter
+function createLanguageSplitter(language: SplitterLanguage, config?: { chunkSize?: number; chunkOverlap?: number }): Splitter
 ```
 
 ```ts
-const splitter = createLanguageSplitter({
-  language: 'typescript',
+const splitter = createLanguageSplitter('typescript', {
   chunkSize: 1000,
   chunkOverlap: 100,
 });

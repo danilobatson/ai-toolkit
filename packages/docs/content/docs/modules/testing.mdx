@@ -33,7 +33,7 @@ function mockAI(options?: MockAIOptions): AIClient
 const ai = mockAI({ response: 'Test response' });
 const result = await ai.generate('any prompt');
 expect(result.text).toBe('Test response');
-expect(ai.generate.callCount).toBe(1);
+expect(ai._tracker.callCount).toBe(1);
 ```
 
 ### `mockChain(options?)`
@@ -54,7 +54,7 @@ Mock the database client.
 
 ```ts
 const db = mockDatabase();
-db.query.mockResolvedValue([{ id: 1, name: 'Test' }]);
+db._queries; // Array<{ sql: string; params?: unknown[] }>
 ```
 
 ### `mockMonitor(options?)`
@@ -86,9 +86,9 @@ const ai = mockAI({ response: 'Hello' });
 await ai.generate('test');
 await ai.generate('test 2');
 
-expect(ai.generate.callCount).toBe(2);
-expect(ai.generate.lastArgs).toEqual(['test 2']);
-expect(ai.generate.allArgs).toHaveLength(2);
+expect(ai._tracker.callCount).toBe(2);
+expect(ai._tracker.lastArgs).toEqual(['test 2']);
+expect(ai._tracker.allArgs).toHaveLength(2);
 ```
 
 ## Types

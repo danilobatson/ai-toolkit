@@ -64,7 +64,10 @@ server.defineResource({
   name: 'AI Toolkit API Reference',
   handler: async () => {
     const res = await fetch('https://ai-toolkit-docs.vercel.app/llms-full.txt');
-    return res.text();
+    const text = await res.text();
+    return {
+      contents: [{ uri: 'docs://ai-toolkit/api-reference', mimeType: 'text/plain', text }],
+    };
   },
 });
 ```

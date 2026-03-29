@@ -19,7 +19,7 @@ The `storage` module wraps Vercel Blob for file uploads with built-in validation
 import { validateFile, uploadDocument } from '@jamaalbuilds/ai-toolkit/storage';
 
 const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
-validateFile(file, { maxSizeBytes: 10_000_000, allowedTypes: ['application/pdf'] });
+validateFile(file, { maxSizeMB: 10, allowedTypes: ['application/pdf'] });
 
 const result = await uploadDocument(file, { access: 'public' });
 console.log(result.url);
@@ -37,7 +37,7 @@ function validateFile(file: File, options: FileValidationOptions): void
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `options.maxSizeBytes` | `number` | Maximum file size |
+| `options.maxSizeMB` | `number` | Maximum file size in MB (default: 10) |
 | `options.allowedTypes` | `string[]` | Allowed MIME types |
 
 Throws `StorageError` if validation fails.
@@ -60,6 +60,6 @@ List uploaded files.
 
 ## Types
 
-- `FileValidationOptions` — maxSizeBytes, allowedTypes
+- `FileValidationOptions` — maxSizeMB, allowedTypes
 - `UploadOptions` — access, prefix
 - `UploadResult` — url, pathname, size

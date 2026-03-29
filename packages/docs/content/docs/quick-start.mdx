@@ -127,7 +127,7 @@ Combine modules for a complete retrieval-augmented generation pipeline:
 
 ```ts title="rag.ts"
 import { parseDocument, chunk } from '@jamaalbuilds/ai-toolkit/knowledge';
-import { prompt, createChain } from '@jamaalbuilds/ai-toolkit/chain';
+import { createChain } from '@jamaalbuilds/ai-toolkit/chain';
 
 // Parse and chunk a document
 const doc = await parseDocument('./guide.pdf');

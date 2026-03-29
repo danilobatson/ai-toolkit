@@ -49,7 +49,7 @@ const knowledge = createKnowledge({
       return vectorSearch(db, {
         table: 'documents',
         column: 'embedding',
-        vector,
+        queryVector: vector,
         limit: options?.limit ?? 5,
         metric: 'cosine',
       });
@@ -57,7 +57,7 @@ const knowledge = createKnowledge({
   },
 });
 
-await ingest(knowledge, './handbook.pdf', {
+await ingest('./handbook.pdf', knowledge.embedder, knowledge.store, {
   metadata: { source: 'handbook', version: '2024' },
 });
 ```
@@ -70,7 +70,7 @@ import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 
 const ai = createAI();
 
-const result = await rag({
+const ragChain = rag({
   retriever: async (query) => {
     const results = await knowledge.search(query, { limit: 5 });
     return results.map((r) => ({ text: r.chunk.content, metadata: r.chunk.metadata }));
@@ -87,8 +87,9 @@ Answer:`,
     const result = await ai.generate(prompt);
     return result.text;
   },
-  query: 'What is the vacation policy?',
 });
+
+const result = await ragChain.invoke({ question: 'What is the vacation policy?' });
 
 // result.answer — the generated response
 // result.sources — the retrieved documents

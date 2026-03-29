@@ -15,7 +15,7 @@ The `security` module provides enterprise-grade security features: PII detection
 import { detectPII, sanitizeForLLM } from '@jamaalbuilds/ai-toolkit/security';
 
 const findings = detectPII('Contact John Smith at john@example.com');
-// [{ type: 'EMAIL', value: 'john@example.com', ... }, { type: 'NAME', ... }]
+// [{ type: 'EMAIL', match: 'john@example.com', ... }, { type: 'NAME', ... }]
 
 const safe = sanitizeForLLM('My SSN is 123-45-6789');
 // 'My SSN is [REDACTED_SSN]'
@@ -31,12 +31,12 @@ Detect personally identifiable information in text.
 function detectPII(text: string): PIIFinding[]
 ```
 
-Detects: `EMAIL`, `PHONE`, `SSN`, `CREDIT_CARD`, `NAME`, `DOB`, `IP_ADDRESS`, `URL`
+Detects: `EMAIL`, `PHONE`, `SSN`, `NAME`, `DOB`
 
 ```ts
 const findings = detectPII('John Smith, born 1990-01-15, SSN 123-45-6789');
 for (const f of findings) {
-  console.log(`${f.type}: ${f.value} at position ${f.start}-${f.end}`);
+  console.log(`${f.type}: ${f.match} at position ${f.start}-${f.end}`);
 }
 ```
 
@@ -53,43 +53,42 @@ const safe = sanitizeForLLM('Email me at john@example.com');
 // 'Email me at [REDACTED_EMAIL]'
 ```
 
-### `createRateLimiter(config)`
+### `createRateLimiter(cache, config)`
 
 Create a rate limiter for request throttling.
 
 ```ts
-function createRateLimiter(config: RateLimitConfig): RateLimiter
+function createRateLimiter(cache: CacheClient, config?: RateLimitConfig): RateLimiter
 ```
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `config.maxRequests` | `number` | Maximum requests per window |
-| `config.windowMs` | `number` | Window duration in milliseconds |
+| `cache` | `CacheClient` | Cache client instance |
+| `config.max` | `number` | Maximum requests per window |
+| `config.windowSeconds` | `number` | Window duration in seconds |
 
 ```ts
-const limiter = createRateLimiter({ maxRequests: 100, windowMs: 60_000 });
+const limiter = createRateLimiter(cache, { max: 100, windowSeconds: 60 });
 const result = limiter.check('user-123');
 if (!result.allowed) {
-  console.log(`Rate limited. Retry after ${result.retryAfterMs}ms`);
+  console.log(`Rate limited. Resets at ${result.resetAt}`);
 }
 ```
 
-### `createAuditLogger()`
+### `createAuditLogger(serviceName)`
 
 Create an audit logger for tracking security-relevant events.
 
 ```ts
-function createAuditLogger(): AuditLogger
+function createAuditLogger(serviceName: string): AuditLogger
 ```
 
 ```ts
-const audit = createAuditLogger();
-audit.log({
-  action: 'pii_detected',
+const audit = createAuditLogger('my-service');
+audit.log('pii_detected', {
   userId: 'user-123',
   details: { types: ['EMAIL', 'SSN'], sanitized: true },
 });
-const events = audit.getEvents();
 ```
 
 ### `createGuardrails(rules)`
@@ -100,34 +99,36 @@ Create configurable guardrails for AI output validation.
 function createGuardrails(rules: GuardrailRule[]): Guardrails
 ```
 
-### `checkOutput(guardrails, text)`
+### `checkOutput(response, rules)`
 
 Validate AI output against guardrail rules.
 
 ```ts
-function checkOutput(guardrails: Guardrails, text: string): GuardrailResult
+function checkOutput(response: string, rules: GuardrailRule[]): GuardrailResult
 ```
 
 ```ts
-const guardrails = createGuardrails([
-  { name: 'no-pii', check: (text) => detectPII(text).length === 0 },
-  { name: 'max-length', check: (text) => text.length < 10000 },
-]);
+const rules = [
+  { id: 'no-pii', description: 'No PII in output', test: (text) => detectPII(text).length === 0 },
+  { id: 'max-length', description: 'Under 10k chars', test: (text) => text.length < 10000 },
+];
 
-const result = checkOutput(guardrails, aiResponse);
-if (!result.passed) {
-  console.log('Failed rules:', result.failures);
+const guardrails = createGuardrails(rules);
+const result = guardrails.check(aiResponse);
+if (!result.allowed) {
+  console.log('Violations:', result.violations);
+  console.log('Reasons:', result.reasons);
 }
 ```
 
 ## Types
 
-- `PIIFinding` — type, value, start, end
-- `PIIType` — `'EMAIL' | 'PHONE' | 'SSN' | 'CREDIT_CARD' | 'NAME' | 'DOB' | 'IP_ADDRESS' | 'URL'`
+- `PIIFinding` — type, match, start, end
+- `PIIType` — `'SSN' | 'EMAIL' | 'PHONE' | 'NAME' | 'DOB'`
 - `RateLimiter` — limiter with check() method
-- `RateLimitResult` — allowed, remaining, retryAfterMs
-- `AuditLogger` — logger with log(), getEvents()
+- `RateLimitResult` — allowed, remaining, resetAt
+- `AuditLogger` — logger with log()
 - `AuditEvent` — action, userId, details, timestamp
-- `Guardrails` — validator instance
-- `GuardrailResult` — passed, failures
-- `GuardrailRule` — name, check function
+- `Guardrails` — validator instance with check() method
+- `GuardrailResult` — allowed, violations, reasons
+- `GuardrailRule` — id, description, test function

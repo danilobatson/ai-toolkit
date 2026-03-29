@@ -1,10 +1,12 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import { GITHUB_REPO } from '@/lib/constants';
 
 export const baseOptions: BaseLayoutProps = {
   nav: {
     title: (
       <>
         <svg
+          aria-hidden="true"
           xmlns="http://www.w3.org/2000/svg"
           width="20"
           height="20"
@@ -31,7 +33,7 @@ export const baseOptions: BaseLayoutProps = {
     },
     {
       text: 'GitHub',
-      url: 'https://github.com/danilobatson/ai-toolkit',
+      url: GITHUB_REPO,
     },
     {
       text: 'npm',

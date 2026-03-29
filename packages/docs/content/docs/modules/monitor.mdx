@@ -24,7 +24,7 @@ const monitor = await createMonitor({
 });
 
 const result = await trace(monitor, 'my-query', async (span) => {
-  span.event('generating', { model: 'llama-3.3-70b' });
+  span.update({ model: 'llama-3.3-70b', input: 'Hello world' });
   return await ai.generate('Hello world');
 });
 ```
@@ -63,7 +63,6 @@ const { result, traceId } = await trace(monitor, 'rag-pipeline', async (span) =>
   span.update({ input: query, model: 'gpt-4o' });
   const answer = await generate(ai, query);
   span.update({ output: answer.text, usage: { promptTokens: 100, completionTokens: 50 } });
-  span.event('completed', { latency: 230 });
   return answer;
 });
 ```
@@ -119,21 +118,21 @@ Subscribe to new traces as they complete.
 
 Export metrics in a structured format for dashboards.
 
-### `createLogger(config?)`
+### `createLogger(service, options?)`
 
 Create a structured logger.
 
 ```ts
 import { createLogger } from '@jamaalbuilds/ai-toolkit/monitor';
 
-const logger = createLogger({ level: 'info', prefix: 'my-app' });
+const logger = createLogger('my-app', { level: 'info' });
 logger.info('Server started', { port: 3000 });
 ```
 
 ## Types
 
 - `MonitorClient` — client with trace, evaluate, getCostReport
-- `TraceSpan` — span with update(), event() methods
+- `TraceSpan` — span with update() method
 - `TraceResult<T>` — result, traceId
 - `CostReport` — totalCost, byModel, entries
 - `StoredTrace` — id, name, input, output, duration, scores

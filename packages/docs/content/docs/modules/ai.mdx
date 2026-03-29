@@ -123,14 +123,13 @@ ai.structured<T>(prompt: string, options: StructuredOptions<T>): Promise<Structu
 ```ts
 import { z } from 'zod';
 
-const result = await ai.structured('Extract the person', {
+const result = await ai.structured('John is a 30-year-old software engineer', {
   schema: z.object({
     name: z.string(),
     age: z.number(),
     occupation: z.string(),
   }),
   schemaName: 'Person',
-  prompt: 'John is a 30-year-old software engineer',
 });
 
 console.log(result.object); // { name: 'John', age: 30, occupation: 'software engineer' }

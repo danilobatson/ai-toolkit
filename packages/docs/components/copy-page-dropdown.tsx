@@ -46,6 +46,7 @@ export function CopyPageDropdown({ title, url }: CopyPageDropdownProps) {
       <PopoverTrigger asChild>
         <button
           type="button"
+          aria-label="Copy options"
           className="inline-flex items-center rounded-md border border-fd-border text-xs font-medium text-fd-muted-foreground transition-colors hover:bg-fd-accent hover:text-fd-accent-foreground shrink-0"
         >
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 border-r border-fd-border">

@@ -1,11 +1,12 @@
 import Link from 'next/link';
+import { GITHUB_REPO } from '@/lib/constants';
 
 const features = [
   {
     title: 'AI Models',
     description: 'Generate, stream, and structured output with provider fallback and cost tracking.',
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 2L2 7l10 5 10-5-10-5z" />
         <path d="M2 17l10 5 10-5" />
         <path d="M2 12l10 5 10-5" />
@@ -16,7 +17,7 @@ const features = [
     title: 'Security',
     description: 'PII detection, audit logging, guardrails, and rate limiting built in.',
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
     ),
@@ -25,7 +26,7 @@ const features = [
     title: 'Observability',
     description: 'Trace every LLM call, evaluate quality, and track costs with Langfuse.',
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
         <circle cx="12" cy="12" r="3" />
       </svg>
@@ -35,7 +36,7 @@ const features = [
     title: 'MCP Servers',
     description: 'Build Model Context Protocol servers with Zod-validated tools and resources.',
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
         <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
         <line x1="6" y1="6" x2="6.01" y2="6" />
@@ -80,7 +81,7 @@ export default function HomePage() {
             Get Started
           </Link>
           <a
-            href="https://github.com/danilobatson/ai-toolkit"
+            href={GITHUB_REPO}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-lg border border-fd-border px-6 py-3 text-sm font-medium transition-colors hover:bg-fd-accent"
@@ -94,10 +95,10 @@ export default function HomePage() {
         </pre>
         <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
           <a href="https://www.npmjs.com/package/@jamaalbuilds/ai-toolkit" target="_blank" rel="noopener noreferrer">
-            <img alt="npm version" src="https://img.shields.io/npm/v/@jamaalbuilds/ai-toolkit?style=flat-square" />
+            <img alt="npm version" src="https://img.shields.io/npm/v/@jamaalbuilds/ai-toolkit?style=flat-square" width={120} height={20} />
           </a>
-          <a href="https://github.com/danilobatson/ai-toolkit/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
-            <img alt="License" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" />
+          <a href={`${GITHUB_REPO}/blob/main/LICENSE`} target="_blank" rel="noopener noreferrer">
+            <img alt="License" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" width={78} height={20} />
           </a>
         </div>
       </section>

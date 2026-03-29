@@ -19,7 +19,7 @@ const client = createApiClient({
   headers: { Authorization: `Bearer ${token}` },
 });
 
-const data = await client.request('/users', { method: 'GET' });
+const data = await client.get('/users');
 ```
 
 ## API Reference
@@ -36,23 +36,21 @@ function createApiClient(config: ApiClientConfig): ApiClient
 | --- | --- | --- |
 | `config.baseUrl` | `string` | Base URL for all requests |
 | `config.headers` | `Record<string, string>` | Default headers |
-| `config.retries` | `number` | Max retry attempts (default: 3) |
-| `config.retryDelay` | `number` | Delay between retries in ms |
+| `config.apiKey` | `string` | API key for authentication |
+| `config.timeout` | `number` | Request timeout in ms |
+| `config.maxRetries` | `number` | Max retry attempts (default: 3) |
 
 ```ts
 const client = createApiClient({
   baseUrl: 'https://api.example.com',
-  retries: 3,
-  retryDelay: 1000,
+  maxRetries: 3,
+  timeout: 5000,
 });
 
-const response = await client.request('/endpoint', {
-  method: 'POST',
-  body: { key: 'value' },
-});
+const response = await client.post('/endpoint', { key: 'value' });
 ```
 
 ## Types
 
-- `ApiClient` — client with request() method
-- `ApiClientConfig` — baseUrl, headers, retries, retryDelay
+- `ApiClient` — client with get(), post(), put(), patch(), delete() methods
+- `ApiClientConfig` — baseUrl, apiKey, timeout, maxRetries, headers

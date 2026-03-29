@@ -14,14 +14,14 @@ The `health` module provides configurable health checks for monitoring service s
 ```ts
 import { createHealthCheck } from '@jamaalbuilds/ai-toolkit/health';
 
-const health = createHealthCheck({
-  checks: [
-    { name: 'database', check: async () => { await db.query('SELECT 1'); } },
-    { name: 'cache', check: async () => { await cache.get('ping'); } },
-  ],
+const checkHealth = createHealthCheck({
+  checks: {
+    database: async () => { await db.query('SELECT 1'); },
+    cache: async () => { await cache.get('ping'); },
+  },
 });
 
-const report = await health.run();
+const report = await checkHealth();
 console.log(report.status); // 'healthy' | 'degraded' | 'unhealthy'
 ```
 
@@ -32,11 +32,14 @@ console.log(report.status); // 'healthy' | 'degraded' | 'unhealthy'
 Create a health check runner.
 
 ```ts
-function createHealthCheck(config: HealthCheckConfig): { run: () => Promise<HealthReport> }
+function createHealthCheck(config: {
+  checks: Record<string, () => Promise<void>>;
+  timeoutMs?: number;
+}): () => Promise<HealthReport>
 ```
 
 ### Types
 
-- `HealthCheckConfig` — checks array with name and check function
+- `HealthCheckConfig` — checks record mapping names to check functions, optional timeoutMs
 - `HealthReport` — status, checks, timestamp
 - `HealthCheckResult` — name, status, latencyMs, error

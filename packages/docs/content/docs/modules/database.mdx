@@ -38,7 +38,7 @@ function createDatabase(config: DatabaseConfig): Promise<DatabaseClient>
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `config.connectionString` | `string` | Postgres connection URL |
-| `config.provider` | `DatabaseProvider` | `'neon' \| 'supabase' \| 'local'` (auto-detected) |
+| `config.provider` | `DatabaseProvider` | `'neon' \| 'supabase' \| 'aws-rds' \| 'local'` (auto-detected) |
 
 ```ts
 const db = await createDatabase({
@@ -70,9 +70,11 @@ function vectorSearch(db: DatabaseClient, options: VectorSearchOptions): Promise
 | --- | --- | --- |
 | `options.table` | `string` | Table name |
 | `options.column` | `string` | Vector column name |
-| `options.vector` | `number[]` | Query vector |
-| `options.limit` | `number` | Max results |
-| `options.metric` | `DistanceMetric` | `'cosine' \| 'l2' \| 'innerProduct'` |
+| `options.queryVector` | `number[]` | Query vector |
+| `options.threshold` | `number` | Minimum similarity score (optional) |
+| `options.limit` | `number` | Max results (optional) |
+| `options.metric` | `DistanceMetric` | `'cosine' \| 'l2' \| 'innerProduct'` (optional) |
+| `options.select` | `string[]` | Columns to return (optional) |
 
 ```ts
 import { vectorSearch } from '@jamaalbuilds/ai-toolkit/database';
@@ -80,7 +82,8 @@ import { vectorSearch } from '@jamaalbuilds/ai-toolkit/database';
 const results = await vectorSearch(db, {
   table: 'documents',
   column: 'embedding',
-  vector: queryEmbedding,
+  queryVector: queryEmbedding,
+  threshold: 0.7,
   limit: 10,
   metric: 'cosine',
 });
@@ -128,8 +131,8 @@ Get a reference to a pgvector column for use in queries.
 
 - `DatabaseClient` — client with query, queryOne, withTenant, end
 - `DatabaseConfig` — connectionString, provider
-- `DatabaseProvider` — `'neon' | 'supabase' | 'local'`
-- `VectorSearchOptions` — table, column, vector, limit, metric
+- `DatabaseProvider` — `'neon' | 'supabase' | 'aws-rds' | 'local'`
+- `VectorSearchOptions` — table, column, queryVector, threshold, limit, metric, select
 - `VectorSearchResult` — row data with similarity score
 - `DistanceMetric` — `'cosine' | 'l2' | 'innerProduct'`
 - `MigrateOptions` — connectionString, migrationsFolder
