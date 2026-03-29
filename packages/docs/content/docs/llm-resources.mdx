@@ -42,6 +42,8 @@ Paste the content of `/llms-full.txt` into your conversation, or reference it as
 ### With Custom Agents
 
 ```ts
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
+
 const response = await fetch('https://ai-toolkit-docs.vercel.app/prompt.txt');
 const systemPrompt = await response.text();
 

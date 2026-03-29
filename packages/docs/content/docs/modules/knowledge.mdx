@@ -127,7 +127,7 @@ function search(
 | `options.threshold` | `number` | Minimum similarity score (0-1) |
 
 ```ts
-const results = await search(knowledge, 'revenue growth Q3', { limit: 5 });
+const results = await knowledge.search('revenue growth Q3', { limit: 5 });
 for (const r of results) {
   r.chunk.content;  // matched text
   r.similarity;     // similarity score (0-1)

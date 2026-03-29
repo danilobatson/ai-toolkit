@@ -69,7 +69,7 @@ function createRateLimiter(cache: CacheClient, config?: RateLimitConfig): RateLi
 
 ```ts
 const limiter = createRateLimiter(cache, { max: 100, windowSeconds: 60 });
-const result = limiter.check('user-123');
+const result = await limiter.check('user-123');
 if (!result.allowed) {
   console.log(`Rate limited. Resets at ${result.resetAt}`);
 }

@@ -106,8 +106,10 @@ console.log(result.object); // { name: 'John', age: 30 }
 Track every LLM call with zero code changes:
 
 ```ts title="monitor.ts"
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 import { createMonitor, trace } from '@jamaalbuilds/ai-toolkit/monitor';
 
+const ai = createAI();
 const monitor = await createMonitor({
   publicKey: process.env.LANGFUSE_PUBLIC_KEY!,
   secretKey: process.env.LANGFUSE_SECRET_KEY!,
