@@ -2,12 +2,11 @@ import { source } from '@/lib/source';
 import { DocsPage, DocsBody } from 'fumadocs-ui/layouts/docs/page';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { CopyMarkdown } from '@/components/copy-markdown';
+import { CopyPageDropdown } from '@/components/copy-page-dropdown';
 import { Feedback } from '@/components/feedback';
 import { BASE_URL } from '@/lib/constants';
 
-const GITHUB_EDIT_BASE =
-  'https://github.com/danilobatson/ai-toolkit/edit/main/packages/docs/content/docs';
+const GITHUB_REPO = 'https://github.com/danilobatson/ai-toolkit';
 
 export default async function Page(props: { params: Promise<{ slug?: string[] }> }) {
   const params = await props.params;
@@ -16,8 +15,6 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
 
   const { body: Mdx, toc } = await page.data.load();
   const pageUrl = `${BASE_URL}${page.url}`;
-  const slugPath = params.slug?.join('/') ?? 'index';
-  const editUrl = `${GITHUB_EDIT_BASE}/${slugPath}.mdx`;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -44,7 +41,11 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
   };
 
   return (
-    <DocsPage toc={toc}>
+    <DocsPage
+      toc={toc}
+      breadcrumb={{ enabled: true, includePage: true }}
+      tableOfContent={{ header: <span className="text-sm font-medium">On this page</span> }}
+    >
       <script
         type="application/ld+json"
         suppressHydrationWarning
@@ -53,19 +54,37 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
       <DocsBody>
         <div className="flex items-center justify-between gap-2 mb-2">
           <h1 className="!mb-0">{page.data.title}</h1>
-          <CopyMarkdown title={page.data.title} url={pageUrl} />
+          <CopyPageDropdown title={page.data.title} url={pageUrl} />
         </div>
         <p className="text-fd-muted-foreground text-lg mb-6 -mt-2">{page.data.description}</p>
         <Mdx />
-        <div className="mt-8 flex justify-end">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-4 border-t border-fd-border pt-6">
           <a
-            href={editUrl}
+            href={GITHUB_REPO}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
           >
-            <EditIcon />
-            Edit this page on GitHub
+            <StarIcon />
+            Star on GitHub
+          </a>
+          <a
+            href={`${GITHUB_REPO}/issues/new`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
+          >
+            <IssueIcon />
+            Report Issue
+          </a>
+          <a
+            href={`${GITHUB_REPO}/fork`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
+          >
+            <ForkIcon />
+            Contribute
           </a>
         </div>
         <Feedback />
@@ -74,11 +93,32 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
   );
 }
 
-function EditIcon() {
+function StarIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function IssueIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+function ForkIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="18" r="3" />
+      <circle cx="6" cy="6" r="3" />
+      <circle cx="18" cy="6" r="3" />
+      <path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9" />
+      <path d="M12 12v3" />
     </svg>
   );
 }
