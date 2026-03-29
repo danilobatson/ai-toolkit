@@ -21,6 +21,23 @@ export const metadata: Metadata = {
   },
   description:
     'Unified AI development toolkit for TypeScript. One import. Clear names. Provider-agnostic.',
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ai-toolkit-docs.vercel.app',
+  ),
+  openGraph: {
+    type: 'website',
+    siteName: 'AI Toolkit Docs',
+    title: 'AI Toolkit',
+    description:
+      'Unified AI development toolkit for TypeScript. One import. Clear names. Provider-agnostic.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
