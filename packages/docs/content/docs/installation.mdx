@@ -3,11 +3,11 @@ title: Installation
 description: Install AI Toolkit and configure peer dependencies
 ---
 
+import { InstallTabs } from '@/components/install-tabs';
+
 ## Install the Package
 
-```bash
-npm install @jamaalbuilds/ai-toolkit
-```
+<InstallTabs packages={["@jamaalbuilds/ai-toolkit"]} />
 
 The core package includes all modules. Peer dependencies are only needed for the modules you use.
 
@@ -17,69 +17,47 @@ Each module wraps an underlying library. Install only the peer deps for the modu
 
 ### AI (generate, stream, structured output)
 
-```bash
-npm install ai @ai-sdk/groq
-```
+<InstallTabs packages={["ai", "@ai-sdk/groq"]} />
 
 Or use OpenRouter for access to multiple providers:
 
-```bash
-npm install ai @openrouter/ai-sdk-provider
-```
+<InstallTabs packages={["ai", "@openrouter/ai-sdk-provider"]} />
 
 ### Chain (prompt templates, output parsing)
 
-```bash
-npm install @langchain/core @langchain/textsplitters
-```
+<InstallTabs packages={["@langchain/core", "@langchain/textsplitters"]} />
 
 ### Agents (multi-agent orchestration)
 
-```bash
-npm install @langchain/langgraph @langchain/core
-```
+<InstallTabs packages={["@langchain/langgraph", "@langchain/core"]} />
 
 ### Knowledge (document ingestion, search)
 
-```bash
-npm install @llamaindex/liteparse
-```
+<InstallTabs packages={["@llamaindex/liteparse"]} />
 
 ### Database (typed queries, vector search)
 
-```bash
-npm install drizzle-orm postgres
-```
+<InstallTabs packages={["drizzle-orm", "postgres"]} />
 
 ### Monitor (tracing, evaluation)
 
-```bash
-npm install langfuse
-```
+<InstallTabs packages={["langfuse"]} />
 
 ### Workflow (background jobs, cron)
 
-```bash
-npm install inngest
-```
+<InstallTabs packages={["inngest"]} />
 
 ### MCP (Model Context Protocol servers)
 
-```bash
-npm install @modelcontextprotocol/sdk zod
-```
+<InstallTabs packages={["@modelcontextprotocol/sdk", "zod"]} />
 
 ### Cache (Redis adapter)
 
-```bash
-npm install ioredis
-```
+<InstallTabs packages={["ioredis"]} />
 
 ### Storage (file uploads)
 
-```bash
-npm install @vercel/blob
-```
+<InstallTabs packages={["@vercel/blob"]} />
 
 ## TypeScript Configuration
 

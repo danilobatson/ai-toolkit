@@ -3,15 +3,15 @@ title: cache
 description: Get/set/invalidate with TTL — Redis or in-memory adapters
 ---
 
+import { InstallTabs } from '@/components/install-tabs';
+
 ## Overview
 
 The `cache` module provides a unified caching interface with two adapters: in-memory (default) and Redis. Both support TTL, key invalidation, and namespace prefixes.
 
 **Peer dependencies (Redis only):** `ioredis`
 
-```bash
-npm install ioredis  # only if using Redis
-```
+<InstallTabs packages={["ioredis"]} />
 
 ## Quick Start
 

@@ -3,15 +3,15 @@ title: ai
 description: Call AI models — generate, stream, and structured output with provider fallback
 ---
 
+import { InstallTabs } from '@/components/install-tabs';
+
 ## Overview
 
 The `ai` module wraps Vercel AI SDK behind the toolkit's adapter pattern. It provides text generation, streaming, and structured output with automatic provider detection, fallback, cost tracking, and rate limiting.
 
 **Peer dependencies:** `ai`, plus one provider SDK (`@ai-sdk/groq`, `@openrouter/ai-sdk-provider`, `@ai-sdk/anthropic`, or `@ai-sdk/openai`)
 
-```bash
-npm install ai @ai-sdk/groq
-```
+<InstallTabs packages={["ai", "@ai-sdk/groq"]} />
 
 ## Quick Start
 

@@ -3,15 +3,15 @@ title: knowledge
 description: Document ingestion, chunking, embedding, and semantic search
 ---
 
+import { InstallTabs } from '@/components/install-tabs';
+
 ## Overview
 
 The `knowledge` module provides a complete pipeline for working with documents: parse PDFs, chunk text, embed with any provider, store in a vector database, and search semantically. Wraps `@llamaindex/liteparse` for PDF parsing and integrates with the `chain` module for text splitting.
 
 **Peer dependencies:** `@llamaindex/liteparse`
 
-```bash
-npm install @llamaindex/liteparse
-```
+<InstallTabs packages={["@llamaindex/liteparse"]} />
 
 ## Quick Start
 

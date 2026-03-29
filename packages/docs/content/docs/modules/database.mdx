@@ -3,15 +3,15 @@ title: database
 description: Typed queries, vector search, and migrations with Drizzle ORM
 ---
 
+import { InstallTabs } from '@/components/install-tabs';
+
 ## Overview
 
 The `database` module provides a provider-agnostic Postgres client powered by Drizzle ORM with built-in vector search (pgvector), multi-tenant support, and SQL injection prevention.
 
 **Peer dependencies:** `drizzle-orm`, `postgres`
 
-```bash
-npm install drizzle-orm postgres
-```
+<InstallTabs packages={["drizzle-orm", "postgres"]} />
 
 ## Quick Start
 

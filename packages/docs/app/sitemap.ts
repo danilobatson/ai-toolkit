@@ -1,7 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { source } from '@/lib/source';
-
-const BASE_URL = 'https://ai-toolkit-docs.vercel.app';
+import { BASE_URL } from '@/lib/constants';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const pages = source.getPages().map((page) => ({

@@ -3,6 +3,8 @@ title: Self-Hosted Deployment
 description: Deploy AI Toolkit with your own infrastructure
 ---
 
+import { InstallTabs } from '@/components/install-tabs';
+
 ## Overview
 
 AI Toolkit is designed to run anywhere — Vercel, AWS, GCP, or your own servers. This guide covers deploying with self-hosted infrastructure.
@@ -11,10 +13,7 @@ AI Toolkit is designed to run anywhere — Vercel, AWS, GCP, or your own servers
 
 ### Neon (Recommended)
 
-```bash
-# Neon provides serverless Postgres with pgvector
-npm install postgres
-```
+<InstallTabs packages={["postgres"]} />
 
 ```ts
 import { createDatabase } from '@jamaalbuilds/ai-toolkit/database';
