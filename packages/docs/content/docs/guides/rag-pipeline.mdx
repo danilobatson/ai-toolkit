@@ -71,9 +71,11 @@ import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 const ai = createAI();
 
 const ragChain = rag({
-  retriever: async (query) => {
-    const results = await knowledge.search(query, { limit: 5 });
-    return results.map((r) => ({ content: r.chunk.content, metadata: r.chunk.metadata }));
+  retriever: {
+    retrieve: async (query) => {
+      const results = await knowledge.search(query, { limit: 5 });
+      return results.map((r) => ({ content: r.chunk.content, metadata: r.chunk.metadata }));
+    },
   },
   promptTemplate: `You are a helpful assistant. Answer based on the provided context.
 

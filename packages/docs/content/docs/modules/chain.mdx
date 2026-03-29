@@ -120,7 +120,7 @@ function rag(config: RAGConfig): Chain<{ question: string }, RAGResult>
 
 ```ts
 const ragChain = rag({
-  retriever: async (query) => searchDocs(query),
+  retriever: { retrieve: async (query) => searchDocs(query) },
   promptTemplate: 'Context:\n{context}\n\nQuestion: {question}\n\nAnswer:',
   model: async (prompt) => callLLM(prompt),
 });

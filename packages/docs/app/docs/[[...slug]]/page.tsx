@@ -60,6 +60,7 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
             href={GITHUB_REPO}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Star AI Toolkit on GitHub"
             className="inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
           >
             <StarIcon />
@@ -69,6 +70,7 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
             href={`${GITHUB_REPO}/issues/new`}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Report an issue on GitHub"
             className="inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
           >
             <IssueIcon />
@@ -78,6 +80,7 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
             href={`${GITHUB_REPO}/fork`}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Fork AI Toolkit on GitHub"
             className="inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
           >
             <ForkIcon />
