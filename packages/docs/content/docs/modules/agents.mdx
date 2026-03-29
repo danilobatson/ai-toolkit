@@ -58,16 +58,11 @@ function createAgent(config: AgentConfig): AgentNode
 | `config.name` | `string` | Unique agent identifier |
 | `config.systemPrompt` | `string` | Instructions for this agent |
 | `config.tools` | `unknown[]` | Optional tools the agent can use |
-| `config.process` | `(state: GraphState) => Promise<GraphState>` | Custom processing function |
 
 ```ts
 const agent = createAgent({
   name: 'classifier',
   systemPrompt: 'Classify the user intent.',
-  process: async (state) => ({
-    ...state,
-    metadata: { intent: 'question' },
-  }),
 });
 ```
 

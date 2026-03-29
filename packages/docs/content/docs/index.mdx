@@ -44,12 +44,8 @@ import { createMonitor } from '@jamaalbuilds/ai-toolkit/monitor';
 import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
 import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 
-// Initialize with your API keys
-initToolkit({
-  name: 'my-app',
-  aiProvider: 'groq',
-  aiModel: 'llama-3.3-70b-versatile',
-});
+// Initialize (reads GROQ_API_KEY, AI_PROVIDER, AI_MODEL from env)
+const { config } = initToolkit();
 
 // Create an AI client and generate
 const ai = createAI();

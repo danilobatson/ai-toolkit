@@ -22,10 +22,10 @@ const server = new McpServerBuilder({
 server.defineTool({
   name: 'search-docs',
   description: 'Search internal documentation',
-  schema: z.object({
+  schema: {
     query: z.string().describe('Search query'),
     limit: z.number().default(5).describe('Max results'),
-  }),
+  },
   handler: async ({ query, limit }) => {
     const results = await searchDocs(query, limit);
     return {

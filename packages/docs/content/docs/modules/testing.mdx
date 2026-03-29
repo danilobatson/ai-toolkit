@@ -14,7 +14,7 @@ The `testing` module provides mock implementations for every toolkit module. Use
 ```ts
 import { mockAI, mockDatabase, mockMonitor } from '@jamaalbuilds/ai-toolkit/testing';
 
-const ai = mockAI({ response: 'Hello world' });
+const ai = mockAI({ text: 'Hello world' });
 const db = mockDatabase();
 const monitor = mockMonitor();
 ```
@@ -30,7 +30,7 @@ function mockAI(options?: MockAIOptions): AIClient
 ```
 
 ```ts
-const ai = mockAI({ response: 'Test response' });
+const ai = mockAI({ text: 'Test response' });
 const result = await ai.generate('any prompt');
 expect(result.text).toBe('Test response');
 expect(ai._tracker.callCount).toBe(1);
@@ -82,7 +82,7 @@ Legacy database mock.
 All v5 mocks use a shared `CallTracker` pattern for call tracking:
 
 ```ts
-const ai = mockAI({ response: 'Hello' });
+const ai = mockAI({ text: 'Hello' });
 await ai.generate('test');
 await ai.generate('test 2');
 
@@ -94,7 +94,7 @@ expect(ai._tracker.allArgs).toHaveLength(2);
 ## Types
 
 - `CallTracker` — callCount, lastArgs, allArgs
-- `MockAIOptions` — response
+- `MockAIOptions` — text, texts, streamChunks, structuredResult, provider, model
 - `MockChainOptions` — result
 - `MockAgentsOptions` — result
 - `MockKnowledgeOptions` — chunks, searchResults

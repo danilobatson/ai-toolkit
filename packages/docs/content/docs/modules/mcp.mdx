@@ -27,10 +27,10 @@ const server = new McpServerBuilder({
 server.defineTool({
   name: 'search',
   description: 'Search the knowledge base',
-  schema: z.object({
+  schema: {
     query: z.string().describe('Search query'),
     limit: z.number().optional().describe('Max results'),
-  }),
+  },
   handler: async ({ query, limit }) => {
     const results = await searchKnowledgeBase(query, limit);
     return { content: [{ type: 'text', text: JSON.stringify(results) }] };
@@ -68,10 +68,10 @@ Register a tool with Zod schema validation.
 server.defineTool({
   name: 'get-weather',
   description: 'Get current weather for a location',
-  schema: z.object({
+  schema: {
     location: z.string(),
     units: z.enum(['celsius', 'fahrenheit']).optional(),
-  }),
+  },
   handler: async ({ location, units }) => ({
     content: [{ type: 'text', text: `Weather in ${location}: 72F` }],
   }),
