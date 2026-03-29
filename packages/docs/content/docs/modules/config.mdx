@@ -14,11 +14,16 @@ The `config` module provides Zod-based environment validation and toolkit initia
 ```ts
 import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
 
-initToolkit({
-  TOOLKIT_NAME: 'my-app',
-  TOOLKIT_AI_PROVIDER: 'groq',
-  TOOLKIT_AI_MODEL: 'llama-3.3-70b-versatile',
+// Reads from process.env by default
+const { config, has } = initToolkit();
+
+// Or pass env vars explicitly
+const { config: cfg, has: hasFeature } = initToolkit({
+  ANTHROPIC_API_KEY: 'sk-...',
+  DATABASE_URL: 'postgresql://...',
 });
+
+console.log(hasFeature('anthropic')); // true
 ```
 
 ## API Reference

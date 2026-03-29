@@ -15,7 +15,7 @@ Every app starts with `initToolkit()`. This validates your environment and confi
 import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
 import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 
-initToolkit({ name: 'my-nextjs-app' });
+initToolkit();
 
 const ai = createAI();
 
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
 import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 
-initToolkit({ name: 'my-node-app' });
+initToolkit();
 
 const ai = createAI();
 const result = await ai.generate('Explain TypeScript generics');
@@ -44,7 +44,7 @@ import express from 'express';
 import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
 import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 
-initToolkit({ name: 'my-express-app' });
+initToolkit();
 
 const app = express();
 const ai = createAI();
@@ -91,12 +91,11 @@ import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 import { z } from 'zod';
 
 const ai = createAI();
-const result = await ai.structured('Extract the person', {
+const result = await ai.structured('John is 30 years old and lives in NYC', {
   schema: z.object({
     name: z.string(),
     age: z.number(),
   }),
-  prompt: 'John is 30 years old and lives in NYC',
 });
 
 console.log(result.object); // { name: 'John', age: 30 }

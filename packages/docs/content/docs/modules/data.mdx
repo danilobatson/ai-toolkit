@@ -18,10 +18,13 @@ Standard paginated response shape.
 ```ts
 interface PaginatedResponse<T> {
   data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  hasMore: boolean;
+  pagination: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
 }
 ```
 
@@ -31,9 +34,13 @@ Standard error response shape.
 
 ```ts
 interface ErrorResponse {
-  error: string;
-  code: string;
-  details?: Record<string, unknown>;
+  error: {
+    code: string;
+    message: string;
+    statusCode: number;
+    retryable: boolean;
+    fields?: Record<string, string>;
+  };
 }
 ```
 

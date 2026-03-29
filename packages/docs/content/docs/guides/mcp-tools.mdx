@@ -53,9 +53,7 @@ server.defineResource({
 Use `McpTestHarness` to test tools and resources directly:
 
 ```ts
-import { McpTestHarness } from '@jamaalbuilds/ai-toolkit/mcp';
-
-const harness = new McpTestHarness(server);
+const harness = server.createTestHarness();
 
 // Test a tool
 const result = await harness.callTool('search-docs', { query: 'vacation policy' });

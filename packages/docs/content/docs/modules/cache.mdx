@@ -55,7 +55,7 @@ Standard cache operations.
 ```ts
 await cache.set('key', { data: 'value' }, { ttl: 3600 }); // TTL in seconds
 const value = await cache.get('key');
-await cache.del('key');
+await cache.invalidate('key');
 ```
 
 ### `MemoryCacheAdapter`

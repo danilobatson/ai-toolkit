@@ -32,7 +32,10 @@ console.log(result.url);
 Validate a file before upload.
 
 ```ts
-function validateFile(file: File, options: FileValidationOptions): void
+function validateFile(
+  file: { size: number; type: string; name?: string },
+  options?: FileValidationOptions,
+): void
 ```
 
 | Parameter | Type | Description |
@@ -47,7 +50,10 @@ Throws `StorageError` if validation fails.
 Upload a file to Vercel Blob.
 
 ```ts
-function uploadDocument(file: File, options?: UploadOptions): Promise<UploadResult>
+function uploadDocument(
+  file: Blob | Buffer | ReadableStream,
+  options?: UploadOptions & { filename?: string; contentType?: string },
+): Promise<UploadResult>
 ```
 
 ### `deleteDocument(url)`
@@ -62,4 +68,4 @@ List uploaded files.
 
 - `FileValidationOptions` — maxSizeMB, allowedTypes
 - `UploadOptions` — access, prefix
-- `UploadResult` — url, pathname, size
+- `UploadResult` — url, pathname, contentType, size

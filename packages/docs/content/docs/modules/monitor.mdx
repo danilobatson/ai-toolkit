@@ -100,9 +100,9 @@ function getCostReport(monitor: MonitorClient): CostReport
 
 ```ts
 const report = getCostReport(monitor);
-console.log(`Total: $${report.totalCost}`);
+console.log(`Total: $${report.totalEstimatedCostUsd}`);
 for (const [model, data] of Object.entries(report.byModel)) {
-  console.log(`${model}: ${data.requests} requests, $${data.totalCost}`);
+  console.log(`${model}: ${data.operations} operations, $${data.estimatedCostUsd}`);
 }
 ```
 
@@ -134,5 +134,5 @@ logger.info('Server started', { port: 3000 });
 - `MonitorClient` — client with trace, evaluate, getCostReport
 - `TraceSpan` — span with update() method
 - `TraceResult<T>` — result, traceId
-- `CostReport` — totalCost, byModel, entries
+- `CostReport` — totalOperations, totalTokens, totalEstimatedCostUsd, byModel, byModule, timeRange
 - `StoredTrace` — id, name, input, output, duration, scores

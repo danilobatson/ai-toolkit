@@ -98,7 +98,7 @@ server.defineResource({
 Test MCP servers without starting a transport.
 
 ```ts
-const harness = new McpTestHarness(server);
+const harness = server.createTestHarness();
 const result = await harness.callTool('search', { query: 'test' });
 const resource = await harness.readResource('config://app-settings');
 ```

@@ -90,7 +90,6 @@ function createChain(config: ChainConfig): Chain
 | --- | --- | --- |
 | `config.name` | `string` | Chain identifier |
 | `config.steps` | `ChainStep[]` | Array of async functions executed in sequence |
-| `config.prompt` | `PromptTemplate` | Optional prompt template |
 
 ```ts
 const chain = createChain({
@@ -115,7 +114,7 @@ function rag(config: RAGConfig): Chain<{ question: string }, RAGResult>
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `config.retriever` | `Retriever` | Function that returns relevant documents |
+| `config.retriever` | `Retriever` | Object with `retrieve(query)` method returning documents |
 | `config.promptTemplate` | `string` | Template with `{context}` and `{question}` placeholders |
 | `config.model` | `(prompt: string) => Promise<string>` | LLM function |
 
@@ -156,7 +155,7 @@ function createLanguageSplitter(language: SplitterLanguage, config?: { chunkSize
 ```
 
 ```ts
-const splitter = createLanguageSplitter('typescript', {
+const splitter = createLanguageSplitter('js', {
   chunkSize: 1000,
   chunkOverlap: 100,
 });
@@ -169,5 +168,5 @@ const splitter = createLanguageSplitter('typescript', {
 - `Parser` — parser with `parse()` and `getFormatInstructions()`
 - `Splitter` — splitter with `split()` and `splitDocuments()` methods
 - `RAGResult` — answer, sources, context
-- `ChatMessage` — `[role, content]` tuple
-- `SplitterLanguage` — `'typescript' | 'javascript' | 'python' | 'markdown' | ...`
+- `ChatMessage` — `{ role: 'system' | 'human' | 'ai', content: string }`
+- `SplitterLanguage` — `'js' | 'python' | 'go' | 'java' | 'ruby' | 'rust' | 'cpp' | 'php' | 'scala' | 'swift' | 'markdown' | 'latex' | 'html'`

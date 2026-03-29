@@ -63,25 +63,31 @@ await db.end();
 Perform vector similarity search using pgvector.
 
 ```ts
-function vectorSearch(db: DatabaseClient, options: VectorSearchOptions): Promise<VectorSearchResult[]>
+function vectorSearch(db: DatabaseClient, options: VectorSearchTableOptions): Promise<VectorSearchResult[]>
 ```
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `options.table` | `string` | Table name |
-| `options.column` | `string` | Vector column name |
+| `options.table` | `unknown` | Drizzle table reference |
+| `options.column` | `unknown` | Drizzle vector column reference |
 | `options.queryVector` | `number[]` | Query vector |
-| `options.threshold` | `number` | Minimum similarity score (optional) |
-| `options.limit` | `number` | Max results (optional) |
-| `options.metric` | `DistanceMetric` | `'cosine' \| 'l2' \| 'innerProduct'` (optional) |
-| `options.select` | `string[]` | Columns to return (optional) |
+| `options.threshold` | `number` | Minimum similarity score (default: 0) |
+| `options.limit` | `number` | Max results (default: 10) |
+| `options.metric` | `DistanceMetric` | `'cosine' \| 'l2' \| 'innerProduct'` (default: `'cosine'`) |
+| `options.select` | `Record<string, unknown>` | Drizzle column selection (optional) |
 
 ```ts
 import { vectorSearch } from '@jamaalbuilds/ai-toolkit/database';
 
+import { getVectorColumn } from '@jamaalbuilds/ai-toolkit/database';
+
+// Define your Drizzle table with a vector column
+const vectorCol = await getVectorColumn();
+// Use with your Drizzle schema: vectorCol('embedding', { dimensions: 1536 })
+
 const results = await vectorSearch(db, {
-  table: 'documents',
-  column: 'embedding',
+  table: documentsTable,       // Drizzle table reference
+  column: documentsTable.embedding, // Drizzle column reference
   queryVector: queryEmbedding,
   threshold: 0.7,
   limit: 10,
@@ -123,16 +129,26 @@ function detectProvider(url: string): DatabaseProvider
 
 Raw vector search returning unprocessed results.
 
-### `getVectorColumn(table, column)`
+### `getVectorColumn()`
 
-Get a reference to a pgvector column for use in queries.
+Get a pgvector column factory for defining vector columns in Drizzle schemas.
+
+```ts
+async function getVectorColumn(): Promise<(name: string, config: { dimensions: number }) => unknown>
+```
+
+```ts
+const vectorCol = await getVectorColumn();
+// Use in your Drizzle schema definition:
+// embedding: vectorCol('embedding', { dimensions: 1536 })
+```
 
 ## Types
 
 - `DatabaseClient` — client with query, queryOne, withTenant, end
 - `DatabaseConfig` — connectionString, provider
 - `DatabaseProvider` — `'neon' | 'supabase' | 'aws-rds' | 'local'`
-- `VectorSearchOptions` — table, column, queryVector, threshold, limit, metric, select
+- `VectorSearchTableOptions` — table, column, queryVector, threshold, limit, metric, select
 - `VectorSearchResult` — row data with similarity score
 - `DistanceMetric` — `'cosine' | 'l2' | 'innerProduct'`
 - `MigrateOptions` — connectionString, migrationsFolder
