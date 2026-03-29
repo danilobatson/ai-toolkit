@@ -1,0 +1,136 @@
+---
+title: Security & Compliance
+description: PII protection, audit trails, and guardrails for regulated industries
+---
+
+## Overview
+
+AI Toolkit includes built-in security features for regulated industries: PII detection, data sanitization, audit logging, rate limiting, and configurable guardrails.
+
+## PII Detection and Sanitization
+
+Always sanitize user input before sending to LLMs:
+
+```ts
+import { detectPII, sanitizeForLLM } from '@jamaalbuilds/ai-toolkit/security';
+
+// Detect PII
+const findings = detectPII(userInput);
+if (findings.length > 0) {
+  console.warn('PII detected:', findings.map(f => f.type));
+}
+
+// Sanitize before sending to LLM
+const safeInput = sanitizeForLLM(userInput);
+const result = await ai.generate(safeInput);
+```
+
+### Detected PII Types
+
+| Type | Example |
+| --- | --- |
+| `EMAIL` | john@example.com |
+| `PHONE` | (555) 123-4567 |
+| `SSN` | 123-45-6789 |
+| `CREDIT_CARD` | 4111-1111-1111-1111 |
+| `NAME` | John Smith |
+| `DOB` | 1990-01-15 |
+| `IP_ADDRESS` | 192.168.1.1 |
+
+## Audit Logging
+
+Track every security-relevant event:
+
+```ts
+import { createAuditLogger } from '@jamaalbuilds/ai-toolkit/security';
+
+const audit = createAuditLogger();
+
+audit.log({
+  action: 'llm_query',
+  userId: user.id,
+  details: {
+    model: 'llama-3.3-70b',
+    piiDetected: findings.length > 0,
+    sanitized: true,
+  },
+});
+
+// Query audit trail
+const events = audit.getEvents();
+```
+
+## Guardrails
+
+Validate AI outputs before returning to users:
+
+```ts
+import { createGuardrails, checkOutput, detectPII } from '@jamaalbuilds/ai-toolkit/security';
+
+const guardrails = createGuardrails([
+  {
+    name: 'no-pii-in-output',
+    check: (text) => detectPII(text).length === 0,
+  },
+  {
+    name: 'no-harmful-content',
+    check: (text) => !text.match(/\b(hack|exploit|attack)\b/i),
+  },
+  {
+    name: 'reasonable-length',
+    check: (text) => text.length < 10000,
+  },
+]);
+
+const result = checkOutput(guardrails, aiResponse);
+if (!result.passed) {
+  console.error('Guardrail failures:', result.failures);
+  return 'I cannot provide that response.';
+}
+```
+
+## Rate Limiting
+
+Protect your API from abuse:
+
+```ts
+import { createRateLimiter } from '@jamaalbuilds/ai-toolkit/security';
+
+const limiter = createRateLimiter({
+  maxRequests: 100,
+  windowMs: 60_000, // per minute
+});
+
+// In your API handler
+const result = limiter.check(userId);
+if (!result.allowed) {
+  return Response.json(
+    { error: 'Rate limited', retryAfter: result.retryAfterMs },
+    { status: 429 },
+  );
+}
+```
+
+## API Key Authentication
+
+```ts
+import { createApiKeyGuard } from '@jamaalbuilds/ai-toolkit/auth';
+
+const guard = createApiKeyGuard({
+  keys: [process.env.API_KEY!],
+});
+
+// In your API handler
+const apiKey = request.headers.get('x-api-key');
+if (!guard.validate(apiKey)) {
+  return Response.json({ error: 'Unauthorized' }, { status: 401 });
+}
+```
+
+## Best Practices
+
+1. **Always sanitize** user input before LLM calls
+2. **Log everything** — audit trails are critical for compliance
+3. **Validate outputs** — guardrails catch PII leaks in responses
+4. **Rate limit** — protect against abuse and runaway costs
+5. **Use timing-safe comparison** for API keys (built into `createApiKeyGuard`)

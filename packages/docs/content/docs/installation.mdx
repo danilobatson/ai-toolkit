@@ -1,0 +1,118 @@
+---
+title: Installation
+description: Install AI Toolkit and configure peer dependencies
+---
+
+## Install the Package
+
+```bash
+npm install @jamaalbuilds/ai-toolkit
+```
+
+The core package includes all modules. Peer dependencies are only needed for the modules you use.
+
+## Peer Dependencies
+
+Each module wraps an underlying library. Install only the peer deps for the modules you use:
+
+### AI (generate, stream, structured output)
+
+```bash
+npm install ai @ai-sdk/groq
+```
+
+Or use OpenRouter for access to multiple providers:
+
+```bash
+npm install ai @openrouter/ai-sdk-provider
+```
+
+### Chain (prompt templates, output parsing)
+
+```bash
+npm install @langchain/core @langchain/textsplitters
+```
+
+### Agents (multi-agent orchestration)
+
+```bash
+npm install @langchain/langgraph @langchain/core
+```
+
+### Knowledge (document ingestion, search)
+
+```bash
+npm install @llamaindex/liteparse
+```
+
+### Database (typed queries, vector search)
+
+```bash
+npm install drizzle-orm postgres
+```
+
+### Monitor (tracing, evaluation)
+
+```bash
+npm install langfuse
+```
+
+### Workflow (background jobs, cron)
+
+```bash
+npm install inngest
+```
+
+### MCP (Model Context Protocol servers)
+
+```bash
+npm install @modelcontextprotocol/sdk zod
+```
+
+### Cache (Redis adapter)
+
+```bash
+npm install ioredis
+```
+
+### Storage (file uploads)
+
+```bash
+npm install @vercel/blob
+```
+
+## TypeScript Configuration
+
+AI Toolkit is ESM-only. Your `tsconfig.json` should include:
+
+```json
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "es2022"
+  }
+}
+```
+
+## Environment Variables
+
+Configure your AI provider credentials:
+
+```bash
+# .env
+GROQ_API_KEY=gsk_...
+# or
+OPENROUTER_API_KEY=sk-or-...
+# or
+OPENAI_API_KEY=sk-...
+```
+
+## Verify Installation
+
+```ts
+import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
+
+initToolkit({ name: 'test-app' });
+console.log('AI Toolkit is ready!');
+```

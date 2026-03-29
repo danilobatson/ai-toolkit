@@ -1,0 +1,56 @@
+---
+title: Architecture Decision Records
+description: Key technical decisions and their rationale
+---
+
+## ADR Index
+
+These decisions were made during Phase 1 development and document the reasoning behind key architectural choices.
+
+### ADR-001: Vercel AI SDK Over Raw Providers
+
+**Decision:** Use Vercel AI SDK as the AI abstraction layer instead of calling provider APIs directly.
+
+**Rationale:** AI SDK provides a unified interface across providers (OpenAI, Anthropic, Groq, etc.), handles streaming, structured output, and tool calling. This eliminates provider-specific code in the adapter layer.
+
+### ADR-002: Drizzle Over Prisma for pgvector
+
+**Decision:** Use Drizzle ORM instead of Prisma for database operations.
+
+**Rationale:** Drizzle has first-class pgvector support, generates no client binary, and allows raw SQL when needed. Prisma's pgvector support is experimental and the generated client adds ~10MB.
+
+### ADR-003: Regex PII Detection Over ML Models
+
+**Decision:** Use regex-based PII detection instead of ML models (like Presidio).
+
+**Rationale:** Regex detection is zero-dependency, Edge-compatible, and fast. ML models require large binaries and Python interop. For a TypeScript toolkit, regex is the pragmatic choice. Trade-off: higher false positive rate, especially for names (Title Case patterns).
+
+### ADR-004: Langfuse Over LangSmith for Monitoring
+
+**Decision:** Use Langfuse for AI observability instead of LangSmith.
+
+**Rationale:** Langfuse is open-source, self-hostable, and has a clean JS SDK. LangSmith is proprietary and tightly coupled to LangChain. Langfuse supports any LLM provider.
+
+### ADR-005: LangChain for Composition, Not Orchestration
+
+**Decision:** Use LangChain.js for prompt templates and output parsing, but NOT for agent orchestration (use LangGraph instead).
+
+**Rationale:** LangChain's agent framework is complex and opinionated. LangGraph provides a cleaner graph-based model for multi-agent orchestration. LangChain excels at composition primitives.
+
+### ADR-006: LiteParse for PDF, Custom Pipeline Over LlamaIndex
+
+**Decision:** Use `@llamaindex/liteparse` for PDF parsing with a custom ingestion pipeline instead of LlamaIndex's full framework.
+
+**Rationale:** LlamaIndex's full framework is heavy and opinionated. LiteParse provides just the PDF parsing we need, and our custom pipeline (parse → chunk → embed → store) is simpler and more flexible.
+
+### ADR-007: Inngest for Durability Over Custom Queue
+
+**Decision:** Use Inngest for durable workflow execution instead of building a custom job queue.
+
+**Rationale:** Inngest provides automatic retries, step functions, cron scheduling, and human-in-the-loop — all battle-tested. Building equivalent durability guarantees from scratch would take months.
+
+### ADR-008: LangGraph for Graph Orchestration
+
+**Decision:** Use LangGraph.js for multi-agent orchestration.
+
+**Rationale:** LangGraph's state graph model naturally maps to multi-agent workflows with conditional routing, cycles, and human-in-the-loop checkpoints.

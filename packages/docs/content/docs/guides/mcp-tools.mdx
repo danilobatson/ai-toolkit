@@ -1,0 +1,89 @@
+---
+title: MCP Tools
+description: Build and test Model Context Protocol servers
+---
+
+## Overview
+
+The Model Context Protocol (MCP) lets AI assistants call your tools and read your resources. The `mcp` module provides a builder pattern for creating MCP servers with Zod-validated inputs.
+
+## Building an MCP Server
+
+```ts
+import { McpServerBuilder } from '@jamaalbuilds/ai-toolkit/mcp';
+import { z } from 'zod';
+
+const server = new McpServerBuilder({
+  name: 'my-company-tools',
+  version: '1.0.0',
+});
+
+// Add a tool
+server.addTool({
+  name: 'search-docs',
+  description: 'Search internal documentation',
+  schema: z.object({
+    query: z.string().describe('Search query'),
+    limit: z.number().default(5).describe('Max results'),
+  }),
+  handler: async ({ query, limit }) => {
+    const results = await searchDocs(query, limit);
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify(results, null, 2),
+      }],
+    };
+  },
+});
+
+// Add a resource
+server.addResource({
+  uri: 'config://settings',
+  name: 'App Settings',
+  description: 'Current application configuration',
+  handler: async () => ({
+    content: [{ type: 'text', text: JSON.stringify(getSettings()) }],
+  }),
+});
+```
+
+## Testing Without a Server
+
+Use `McpTestHarness` to test tools and resources directly:
+
+```ts
+import { McpTestHarness } from '@jamaalbuilds/ai-toolkit/mcp';
+
+const harness = new McpTestHarness(server);
+
+// Test a tool
+const result = await harness.callTool('search-docs', { query: 'vacation policy' });
+expect(result.content[0].text).toContain('vacation');
+
+// Test a resource
+const config = await harness.readResource('config://settings');
+expect(config.content[0].type).toBe('text');
+```
+
+## Connecting to Claude Desktop
+
+Add your MCP server to Claude Desktop's configuration:
+
+```json
+{
+  "mcpServers": {
+    "my-tools": {
+      "command": "node",
+      "args": ["./dist/mcp-server.js"]
+    }
+  }
+}
+```
+
+## Best Practices
+
+- **Clear descriptions**: The AI uses tool descriptions to decide when to call them
+- **Zod schemas**: Describe every field with `.describe()` for better AI understanding
+- **Error handling**: Return error text in content, don't throw
+- **Test first**: Use `McpTestHarness` before deploying

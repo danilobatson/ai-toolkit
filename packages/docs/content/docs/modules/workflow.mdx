@@ -1,0 +1,155 @@
+---
+title: workflow
+description: Durable background jobs with retry, cron, human-in-the-loop, and AI steps
+---
+
+## Overview
+
+The `workflow` module wraps Inngest for durable AI workflows with automatic retries, cron scheduling, human-in-the-loop approval, and integrated AI steps with cost tracking.
+
+**Peer dependencies:** `inngest`
+
+```bash
+npm install inngest
+```
+
+## Quick Start
+
+```ts
+import { createWorkflow, defineJob } from '@jamaalbuilds/ai-toolkit/workflow';
+
+const workflow = await createWorkflow({ id: 'my-app' });
+
+const processJob = defineJob(workflow, {
+  id: 'process-data',
+  trigger: { event: 'app/data.uploaded' },
+}, async ({ event, step }) => {
+  const result = await step.run('transform', async () => {
+    return transformData(event.data);
+  });
+  return { status: 'complete', data: result };
+});
+```
+
+## API Reference
+
+### `createWorkflow(config)`
+
+Create a workflow client backed by Inngest.
+
+```ts
+async function createWorkflow(config: WorkflowConfig): Promise<WorkflowClient>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.id` | `string` | Application identifier |
+
+### `defineJob(workflow, config, handler)`
+
+Define a durable background job.
+
+```ts
+function defineJob(
+  workflow: WorkflowClient,
+  config: JobConfig,
+  handler: (ctx: JobContext) => Promise<unknown>,
+): WorkflowJob
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.id` | `string` | Unique job identifier |
+| `config.trigger` | `Trigger` | Event trigger or cron schedule |
+
+```ts
+// Event-triggered job
+const job = defineJob(workflow, {
+  id: 'process-upload',
+  trigger: { event: 'app/file.uploaded' },
+}, async ({ event, step }) => {
+  // Durable steps with automatic retry
+  const parsed = await step.run('parse', () => parseFile(event.data.url));
+  const analyzed = await step.run('analyze', () => analyze(parsed));
+  return analyzed;
+});
+
+// Cron job
+const dailyJob = defineJob(workflow, {
+  id: 'daily-report',
+  trigger: { cron: '0 9 * * *' },
+}, async ({ step }) => {
+  return await step.run('generate-report', () => buildReport());
+});
+```
+
+### `humanInTheLoop(step, options)`
+
+Pause a workflow and wait for human approval.
+
+```ts
+function humanInTheLoop(
+  step: WorkflowStep,
+  options: HITLOptions,
+): Promise<unknown | null>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `options.stepId` | `string` | Step identifier |
+| `options.event` | `string` | Event name to wait for |
+| `options.timeout` | `string` | Timeout duration (e.g., `'7d'`, `'1h'`) |
+
+```ts
+const approval = await humanInTheLoop(step, {
+  stepId: 'wait-approval',
+  event: 'app/data.approved',
+  timeout: '7d',
+});
+
+if (!approval) return { status: 'timed_out' };
+```
+
+### `aiStep(step, options)`
+
+Execute an AI generation step within a workflow with automatic cost tracking.
+
+```ts
+function aiStep(
+  step: WorkflowStep,
+  options: AIStepOptions,
+): Promise<AIStepResult>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `options.stepId` | `string` | Step identifier |
+| `options.prompt` | `string` | AI prompt |
+| `options.fallback` | `string` | Fallback text if AI fails |
+
+```ts
+const summary = await aiStep(step, {
+  stepId: 'summarize',
+  prompt: `Summarize: ${JSON.stringify(data)}`,
+  fallback: 'Summary unavailable',
+});
+console.log(summary.text);
+```
+
+### `serve(workflow, options?)`
+
+Create an HTTP handler for serving workflow functions.
+
+```ts
+function serve(workflow: WorkflowClient, options?: ServeOptions): unknown
+```
+
+## Types
+
+- `WorkflowClient` — client with defineJob, serve
+- `WorkflowJob` — defined job function
+- `JobContext` — event, step
+- `WorkflowStep` — durable step with run(), sleep(), waitForEvent()
+- `AIStepOptions` — stepId, prompt, fallback
+- `HITLOptions` — stepId, event, timeout
+- `Trigger` — event trigger or cron schedule

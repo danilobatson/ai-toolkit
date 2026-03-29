@@ -1,0 +1,65 @@
+---
+title: storage
+description: File upload with validation — Vercel Blob adapter
+---
+
+## Overview
+
+The `storage` module wraps Vercel Blob for file uploads with built-in validation (file size, MIME type), listing, and deletion.
+
+**Peer dependencies:** `@vercel/blob`
+
+```bash
+npm install @vercel/blob
+```
+
+## Quick Start
+
+```ts
+import { validateFile, uploadDocument } from '@jamaalbuilds/ai-toolkit/storage';
+
+const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+validateFile(file, { maxSizeBytes: 10_000_000, allowedTypes: ['application/pdf'] });
+
+const result = await uploadDocument(file, { access: 'public' });
+console.log(result.url);
+```
+
+## API Reference
+
+### `validateFile(file, options)`
+
+Validate a file before upload.
+
+```ts
+function validateFile(file: File, options: FileValidationOptions): void
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `options.maxSizeBytes` | `number` | Maximum file size |
+| `options.allowedTypes` | `string[]` | Allowed MIME types |
+
+Throws `StorageError` if validation fails.
+
+### `uploadDocument(file, options?)`
+
+Upload a file to Vercel Blob.
+
+```ts
+function uploadDocument(file: File, options?: UploadOptions): Promise<UploadResult>
+```
+
+### `deleteDocument(url)`
+
+Delete a file from storage.
+
+### `listDocuments(options?)`
+
+List uploaded files.
+
+## Types
+
+- `FileValidationOptions` — maxSizeBytes, allowedTypes
+- `UploadOptions` — access, prefix
+- `UploadResult` — url, pathname, size

@@ -1,0 +1,135 @@
+---
+title: agents
+description: Multi-agent orchestration — state graphs, conditional routing, and human-in-the-loop
+---
+
+## Overview
+
+The `agents` module wraps LangGraph.js for building stateful multi-agent systems with typed state, conditional routing, and human-in-the-loop patterns.
+
+**Peer dependencies:** `@langchain/langgraph`, `@langchain/core`
+
+```bash
+npm install @langchain/langgraph @langchain/core
+```
+
+## Quick Start
+
+```ts
+import { createAgent, createGraph, route } from '@jamaalbuilds/ai-toolkit/agents';
+
+const researcher = createAgent({
+  name: 'researcher',
+  systemPrompt: 'You research topics thoroughly.',
+  tools: [searchTool],
+});
+
+const writer = createAgent({
+  name: 'writer',
+  systemPrompt: 'You write clear, concise content.',
+});
+
+const graph = await createGraph({
+  agents: [researcher, writer],
+  edges: [
+    { from: '__start__', to: 'researcher' },
+    { from: 'researcher', to: 'writer' },
+    { from: 'writer', to: '__end__' },
+  ],
+});
+
+const result = await graph.invoke({
+  messages: [{ role: 'user', content: 'Write about AI agents' }],
+});
+```
+
+## API Reference
+
+### `createAgent(config)`
+
+Define an agent node with a name, system prompt, and optional tools.
+
+```ts
+function createAgent(config: AgentConfig): AgentNode
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.name` | `string` | Unique agent identifier |
+| `config.systemPrompt` | `string` | Instructions for this agent |
+| `config.tools` | `unknown[]` | Optional tools the agent can use |
+| `config.process` | `(state: GraphState) => Promise<GraphState>` | Custom processing function |
+
+```ts
+const agent = createAgent({
+  name: 'classifier',
+  systemPrompt: 'Classify the user intent.',
+  process: async (state) => ({
+    ...state,
+    metadata: { intent: 'question' },
+  }),
+});
+```
+
+### `createGraph(config)`
+
+Build a state graph from agents and edges. Returns a compiled graph ready for invocation.
+
+```ts
+async function createGraph(config: GraphConfig): Promise<GraphInstance>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.agents` | `AgentNode[]` | Array of agents (names must be unique) |
+| `config.edges` | `GraphEdge[]` | Connections between agents |
+| `config.state` | `object` | Optional initial state shape |
+
+```ts
+const graph = await createGraph({
+  agents: [researcher, writer],
+  edges: [
+    { from: '__start__', to: 'researcher' },
+    { from: 'researcher', to: route(
+      (state) => state.metadata?.done ? 'writer' : 'researcher',
+      ['researcher', 'writer'],
+    )},
+    { from: 'writer', to: '__end__' },
+  ],
+});
+
+const result = await graph.invoke({
+  messages: [{ role: 'user', content: 'Research and write about AI' }],
+});
+```
+
+### `route(condition, targets)`
+
+Create a conditional routing function for graph edges.
+
+```ts
+function route(condition: RouteCondition, targets: string[]): RouteResult
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `condition` | `(state: GraphState) => string` | Function returning the next agent name |
+| `targets` | `string[]` | All possible target names (for graph validation) |
+
+```ts
+const routing = route(
+  (state) => {
+    if (state.metadata?.needsReview) return 'reviewer';
+    return 'publisher';
+  },
+  ['reviewer', 'publisher'],
+);
+```
+
+## Types
+
+- `AgentNode` — agent definition with name, systemPrompt, tools, process
+- `GraphInstance` — compiled graph with `invoke()` method
+- `GraphState` — `{ messages: GraphMessage[], metadata?: Record<string, unknown> }`
+- `GraphEdge` — `{ from: string, to: string | RouteResult }`
+- `GraphMessage` — `{ role: string, content: string }`

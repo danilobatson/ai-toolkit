@@ -1,0 +1,15 @@
+{
+  "title": "AI Toolkit",
+  "pages": [
+    "---Getting Started---",
+    "index",
+    "installation",
+    "quick-start",
+    "---Modules---",
+    "modules",
+    "---Guides---",
+    "guides",
+    "---Architecture---",
+    "architecture"
+  ]
+}

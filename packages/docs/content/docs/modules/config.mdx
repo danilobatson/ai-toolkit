@@ -1,0 +1,57 @@
+---
+title: config
+description: Validate environment variables and typed configuration with Zod
+---
+
+## Overview
+
+The `config` module provides Zod-based environment validation and toolkit initialization. Every app starts with `initToolkit()`.
+
+**No peer dependencies required.**
+
+## Quick Start
+
+```ts
+import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
+
+initToolkit({
+  name: 'my-app',
+  aiProvider: 'groq',
+  aiModel: 'llama-3.3-70b-versatile',
+});
+```
+
+## API Reference
+
+### `initToolkit(config)`
+
+Initialize the toolkit with validated configuration.
+
+```ts
+function initToolkit(config: Partial<ToolkitConfig>): ToolkitInstances
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.name` | `string` | Application name |
+| `config.aiProvider` | `string` | AI provider name |
+| `config.aiModel` | `string` | AI model name |
+| `config.databaseUrl` | `string` | Database connection URL |
+| `config.logLevel` | `string` | Log level |
+
+### `parseConfig(env)`
+
+Parse and validate a raw config object against the toolkit schema.
+
+```ts
+function parseConfig(env: Record<string, unknown>): ToolkitConfig
+```
+
+### `toolkitConfigSchema`
+
+Zod schema for the full toolkit configuration. Use for custom validation.
+
+## Types
+
+- `ToolkitConfig` — full validated config object
+- `ToolkitInstances` — initialized service instances

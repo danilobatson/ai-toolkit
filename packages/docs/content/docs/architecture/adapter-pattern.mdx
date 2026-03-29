@@ -1,0 +1,62 @@
+---
+title: Adapter Pattern
+description: How the toolkit isolates third-party library changes
+---
+
+## Why Adapters?
+
+AI libraries change rapidly. LangChain, Vercel AI SDK, and others release breaking changes regularly. The adapter pattern isolates your application from these changes.
+
+## How It Works
+
+Each module has three layers:
+
+```
+types.ts      → Public interface (stable)
+[module].ts   → Adapter logic (translates between interface and library)
+adapters/     → Provider-specific implementations
+```
+
+### Example: AI Module
+
+**Public interface** (`types.ts`):
+```ts
+interface AIClient {
+  generate(prompt: string, options?: GenerateOptions): Promise<GenerateResult>;
+  stream(prompt: string, options?: StreamOptions): Promise<StreamResult>;
+  structured<T>(prompt: string, options: StructuredOptions<T>): Promise<StructuredResult<T>>;
+}
+```
+
+**Adapter** (`ai-client.ts`):
+```ts
+export function createAI(config?: AIConfig): AIClient {
+  // 1. Detect provider from env vars
+  // 2. Load provider SDK dynamically
+  // 3. Return AIClient that delegates to Vercel AI SDK
+  return {
+    generate: (prompt, options) => {
+      // Calls: import('ai').then(m => m.generateText({...}))
+      // Translates result to GenerateResult
+    },
+    // ...
+  };
+}
+```
+
+## Rules
+
+1. **Never expose raw library types** — always translate to toolkit types
+2. **Dynamic imports** — peer deps are loaded at runtime, not compile time
+3. **Graceful errors** — missing peer dep → clear error message with install command
+4. **Input validation** — Zod or type guards before calling the library
+
+## Adding a New Provider
+
+To add a new AI provider:
+
+1. Add the provider type to `AIProvider`
+2. Add detection logic (env var check)
+3. Add model loading in `provider.ts`
+4. Add default model mapping
+5. Tests pass without any external API calls

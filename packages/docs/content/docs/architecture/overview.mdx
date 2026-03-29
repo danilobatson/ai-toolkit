@@ -1,0 +1,90 @@
+---
+title: Architecture Overview
+description: How AI Toolkit wraps libraries behind a consistent adapter pattern
+---
+
+## Design Philosophy
+
+AI Toolkit follows three core principles:
+
+1. **One import per concern** — each module handles one domain
+2. **Adapter pattern** — every third-party library is wrapped behind the toolkit's own interface
+3. **Progressive complexity** — simple things are simple, complex things are possible
+
+## Module Architecture
+
+```
+Your App
+  └── @jamaalbuilds/ai-toolkit
+        ├── ai/          → Vercel AI SDK
+        ├── chain/       → LangChain.js
+        ├── agents/      → LangGraph.js
+        ├── knowledge/   → LlamaIndex.js
+        ├── database/    → Drizzle ORM
+        ├── monitor/     → Langfuse
+        ├── workflow/    → Inngest
+        ├── mcp/         → MCP SDK
+        ├── security/    → Custom (no deps)
+        ├── auth/        → Custom (no deps)
+        ├── cache/       → ioredis / in-memory
+        ├── storage/     → Vercel Blob
+        ├── config/      → Zod
+        ├── errors/      → Custom (no deps)
+        ├── health/      → Custom (no deps)
+        ├── testing/     → Custom (no deps)
+        └── data/        → Types only
+```
+
+## The Adapter Pattern
+
+Every module wraps its underlying library behind the toolkit's interface:
+
+```ts
+// You write this (stable, clean API):
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
+const ai = createAI();
+const result = await ai.generate('Hello');
+
+// Under the hood, it calls:
+// import { generateText } from 'ai';
+// generateText({ model: groq('llama-3.3-70b'), prompt: 'Hello' });
+```
+
+**Benefits:**
+- If Vercel AI SDK changes its API, only the adapter file changes
+- Your code stays the same
+- Switch providers without changing application code
+
+## Dependency Strategy
+
+- **Direct deps**: Libraries the toolkit wraps get pinned to exact versions
+- **Peer deps**: Libraries users likely already have use `>=` minimum versions
+- **Zero-dep modules**: security, auth, errors, health, testing have no external dependencies
+
+## Error Handling
+
+All errors extend `ToolkitError`:
+
+```ts
+class ToolkitError extends Error {
+  code: string;
+  context: Record<string, unknown>;
+}
+```
+
+Every module catches raw library errors and wraps them in `ToolkitError` with context, so you always get consistent error handling.
+
+## ESM Only
+
+AI Toolkit is ESM-only. No CommonJS `require()` support. This enables tree-shaking and modern import patterns.
+
+## Subpath Exports
+
+Each module is importable individually:
+
+```ts
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
+import { createChain } from '@jamaalbuilds/ai-toolkit/chain';
+```
+
+This keeps bundle size minimal — only the modules you import get included.

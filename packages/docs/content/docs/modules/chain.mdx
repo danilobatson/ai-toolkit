@@ -1,0 +1,174 @@
+---
+title: chain
+description: Multi-step AI reasoning — prompt templates, output parsing, RAG, and text splitting
+---
+
+## Overview
+
+The `chain` module wraps LangChain.js for multi-step AI reasoning with prompt templates, structured output parsing, retrieval-augmented generation (RAG), and text splitting. Falls back to built-in implementations when LangChain is not installed.
+
+**Peer dependencies:** `@langchain/core`, `@langchain/textsplitters`
+
+```bash
+npm install @langchain/core @langchain/textsplitters
+```
+
+## Quick Start
+
+```ts
+import { prompt, parse, createChain } from '@jamaalbuilds/ai-toolkit/chain';
+import { z } from 'zod';
+
+const p = prompt({
+  template: [
+    ['system', 'You extract structured data from text.'],
+    ['human', 'Extract info from: {text}'],
+  ],
+});
+
+const formatted = await p.format({ text: 'John is 30 years old' });
+```
+
+## API Reference
+
+### `prompt(config)`
+
+Create a prompt template with variable substitution.
+
+```ts
+function prompt(config: PromptConfig): PromptTemplate
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.template` | `string \| ChatMessage[]` | Template string or chat messages with `{variables}` |
+
+```ts
+// Simple string template
+const p = prompt({ template: 'Summarize: {text}' });
+const result = await p.format({ text: 'Long article...' });
+
+// Chat message template
+const p = prompt({
+  template: [
+    ['system', 'You are a helpful assistant.'],
+    ['human', '{question}'],
+  ],
+});
+```
+
+### `parse(config)`
+
+Create a structured output parser from a Zod schema.
+
+```ts
+function parse(config: ParseConfig): Parser
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.schema` | `ZodObject` | Zod schema for expected output |
+
+```ts
+const parser = parse({
+  schema: z.object({ name: z.string(), age: z.number() }),
+});
+
+const instructions = parser.getFormatInstructions(); // for the LLM
+const result = await parser.parse('{"name": "John", "age": 30}');
+```
+
+### `createChain(config)`
+
+Compose a multi-step chain from sequential functions.
+
+```ts
+function createChain(config: ChainConfig): Chain
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.name` | `string` | Chain identifier |
+| `config.steps` | `ChainStep[]` | Array of async functions executed in sequence |
+| `config.prompt` | `PromptTemplate` | Optional prompt template |
+
+```ts
+const chain = createChain({
+  name: 'extract',
+  steps: [
+    async (input) => formatPrompt(input),
+    async (prompt) => callLLM(prompt),
+    async (output) => parseOutput(output),
+  ],
+});
+
+const result = await chain.invoke({ text: 'John is 30' });
+```
+
+### `rag(config)`
+
+Create a retrieval-augmented generation chain.
+
+```ts
+function rag(config: RAGConfig): Promise<RAGResult>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.retriever` | `Retriever` | Function that returns relevant documents |
+| `config.promptTemplate` | `string` | Template with `{context}` and `{question}` placeholders |
+| `config.model` | `(prompt: string) => Promise<string>` | LLM function |
+| `config.query` | `string` | The user's question |
+
+```ts
+const result = await rag({
+  retriever: async (query) => searchDocs(query),
+  promptTemplate: 'Context:\n{context}\n\nQuestion: {question}\n\nAnswer:',
+  model: async (prompt) => callLLM(prompt),
+  query: 'What is the return policy?',
+});
+```
+
+### `createSplitter(config)`
+
+Create a text splitter for chunking documents.
+
+```ts
+function createSplitter(config: SplitterConfig): Splitter
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.chunkSize` | `number` | Maximum characters per chunk |
+| `config.chunkOverlap` | `number` | Overlap between chunks |
+
+```ts
+const splitter = createSplitter({ chunkSize: 500, chunkOverlap: 50 });
+const chunks = await splitter.split('Very long document text...');
+```
+
+### `createLanguageSplitter(config)`
+
+Create a code-aware splitter that respects language syntax boundaries.
+
+```ts
+function createLanguageSplitter(config: SplitterConfig & { language: SplitterLanguage }): Splitter
+```
+
+```ts
+const splitter = createLanguageSplitter({
+  language: 'typescript',
+  chunkSize: 1000,
+  chunkOverlap: 100,
+});
+```
+
+## Types
+
+- `Chain` — composable chain with `invoke()` method
+- `PromptTemplate` — template with `format()` method
+- `Parser` — parser with `parse()` and `getFormatInstructions()`
+- `Splitter` — splitter with `split()` and `splitDocuments()` methods
+- `RAGResult` — answer, sources, context
+- `ChatMessage` — `[role, content]` tuple
+- `SplitterLanguage` — `'typescript' | 'javascript' | 'python' | 'markdown' | ...`

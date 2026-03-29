@@ -1,0 +1,137 @@
+---
+title: knowledge
+description: Document ingestion, chunking, embedding, and semantic search
+---
+
+## Overview
+
+The `knowledge` module provides a complete pipeline for working with documents: parse PDFs, chunk text, embed with any provider, store in a vector database, and search semantically. Wraps `@llamaindex/liteparse` for PDF parsing and integrates with the `chain` module for text splitting.
+
+**Peer dependencies:** `@llamaindex/liteparse`
+
+```bash
+npm install @llamaindex/liteparse
+```
+
+## Quick Start
+
+```ts
+import { parseDocument, chunk } from '@jamaalbuilds/ai-toolkit/knowledge';
+
+const doc = await parseDocument('./report.pdf');
+const chunks = chunk(doc.text, { maxChunkSize: 512, overlap: 50 });
+```
+
+## API Reference
+
+### `parseDocument(source)`
+
+Parse a document (PDF, text) into structured text.
+
+```ts
+function parseDocument(source: string | Buffer): Promise<KnowledgeDocument>
+```
+
+```ts
+const doc = await parseDocument('./quarterly-report.pdf');
+console.log(doc.text);     // extracted text
+console.log(doc.metadata); // { source, pages, ... }
+```
+
+### `chunk(text, options?)`
+
+Split text into overlapping chunks for embedding.
+
+```ts
+function chunk(text: string, options?: ChunkOptions): DocumentChunk[]
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Text to split |
+| `options.maxChunkSize` | `number` | Maximum characters per chunk (default: 512) |
+| `options.overlap` | `number` | Character overlap between chunks (default: 50) |
+
+```ts
+const chunks = chunk(longText, { maxChunkSize: 500, overlap: 50 });
+// [{ text: '...', index: 0 }, { text: '...', index: 1 }, ...]
+```
+
+### `createKnowledge(config)`
+
+Create a knowledge client that combines embedding + vector store for end-to-end RAG.
+
+```ts
+function createKnowledge(config: KnowledgeConfig): KnowledgeClient
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.embedder` | `EmbedFunction` | `async (texts: string[]) => number[][]` |
+| `config.store` | `VectorStore` | Vector store with `upsert()` and `search()` |
+
+```ts
+const knowledge = createKnowledge({
+  embedder: async (texts) => embeddings.embed(texts),
+  store: myVectorStore,
+});
+```
+
+### `ingest(knowledge, source, options?)`
+
+Parse, chunk, embed, and store a document in one call.
+
+```ts
+function ingest(
+  knowledge: KnowledgeClient,
+  source: string | Buffer,
+  options?: IngestOptions,
+): Promise<IngestResult>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `options.metadata` | `Record<string, unknown>` | Metadata to attach to chunks |
+| `options.chunkSize` | `number` | Override chunk size |
+| `options.chunkOverlap` | `number` | Override chunk overlap |
+
+```ts
+const result = await ingest(knowledge, './report.pdf', {
+  metadata: { source: 'quarterly-report', year: 2024 },
+});
+console.log(`Ingested ${result.chunks} chunks`);
+```
+
+### `search(knowledge, query, options?)`
+
+Semantic search across ingested documents.
+
+```ts
+function search(
+  knowledge: KnowledgeClient,
+  query: string,
+  options?: SearchOptions,
+): Promise<SearchResult[]>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `options.limit` | `number` | Maximum results (default: 5) |
+| `options.threshold` | `number` | Minimum similarity score (0-1) |
+
+```ts
+const results = await search(knowledge, 'revenue growth Q3', { limit: 5 });
+for (const r of results) {
+  console.log(r.text, r.score);
+}
+```
+
+## Types
+
+- `KnowledgeClient` — client with `ingest()` and `search()` methods
+- `KnowledgeDocument` — parsed document with text and metadata
+- `DocumentChunk` — chunk with text, index, and metadata
+- `EmbedFunction` — `(texts: string[]) => Promise<number[][]>`
+- `VectorStore` — interface with `upsert()` and `search()`
+- `SearchResult` — text, score, metadata
+- `IngestResult` — chunks count, metadata

@@ -1,0 +1,9 @@
+{
+  "title": "Guides",
+  "pages": [
+    "rag-pipeline",
+    "mcp-tools",
+    "self-hosted",
+    "security-compliance"
+  ]
+}

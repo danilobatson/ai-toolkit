@@ -1,0 +1,60 @@
+---
+title: auth
+description: API key validation, RBAC, and multi-tenant context
+---
+
+## Overview
+
+The `auth` module provides API key authentication with timing-safe comparison, role-based access control, and multi-tenant context extraction from request headers.
+
+**No peer dependencies required.**
+
+## Quick Start
+
+```ts
+import { createApiKeyGuard, requireApiKey } from '@jamaalbuilds/ai-toolkit/auth';
+
+const guard = createApiKeyGuard({ keys: [process.env.API_KEY!] });
+const isValid = guard.validate(request.headers.get('x-api-key'));
+```
+
+## API Reference
+
+### `createApiKeyGuard(config)`
+
+Create an API key validator with timing-safe comparison.
+
+```ts
+function createApiKeyGuard(config: { keys: string[] }): { validate: (key: string | null) => boolean }
+```
+
+```ts
+const guard = createApiKeyGuard({
+  keys: [process.env.API_KEY!, process.env.ADMIN_KEY!],
+});
+
+if (!guard.validate(apiKey)) {
+  throw new AuthError('Invalid API key');
+}
+```
+
+### `requireApiKey(headers, keys)`
+
+Validate an API key from request headers. Throws `AuthError` if invalid.
+
+### `getUserId(headers)`, `getOrgId(headers)`
+
+Extract user and organization IDs from request headers.
+
+### `getTenantContext(headers)`
+
+Extract full tenant context from headers for multi-tenant apps.
+
+```ts
+const ctx = getTenantContext(request.headers);
+// { userId: 'usr_123', orgId: 'org_456' }
+```
+
+## Types
+
+- `TenantContext` — userId, orgId

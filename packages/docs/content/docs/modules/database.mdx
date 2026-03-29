@@ -1,0 +1,135 @@
+---
+title: database
+description: Typed queries, vector search, and migrations with Drizzle ORM
+---
+
+## Overview
+
+The `database` module provides a provider-agnostic Postgres client powered by Drizzle ORM with built-in vector search (pgvector), multi-tenant support, and SQL injection prevention.
+
+**Peer dependencies:** `drizzle-orm`, `postgres`
+
+```bash
+npm install drizzle-orm postgres
+```
+
+## Quick Start
+
+```ts
+import { createDatabase } from '@jamaalbuilds/ai-toolkit/database';
+
+const db = await createDatabase({
+  connectionString: process.env.DATABASE_URL!,
+});
+
+const users = await db.query('SELECT * FROM users WHERE active = true');
+```
+
+## API Reference
+
+### `createDatabase(config)`
+
+Create a database client with connection pooling and query helpers.
+
+```ts
+function createDatabase(config: DatabaseConfig): Promise<DatabaseClient>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.connectionString` | `string` | Postgres connection URL |
+| `config.provider` | `DatabaseProvider` | `'neon' \| 'supabase' \| 'local'` (auto-detected) |
+
+```ts
+const db = await createDatabase({
+  connectionString: process.env.DATABASE_URL!,
+});
+
+// Typed query
+const users = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
+
+// Single row
+const user = await db.queryOne('SELECT * FROM users WHERE id = $1', [userId]);
+
+// Multi-tenant
+const tenantRows = await db.withTenant(tenantId, 'SELECT * FROM data');
+
+// Cleanup
+await db.end();
+```
+
+### `vectorSearch(db, options)`
+
+Perform vector similarity search using pgvector.
+
+```ts
+function vectorSearch(db: DatabaseClient, options: VectorSearchOptions): Promise<VectorSearchResult[]>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `options.table` | `string` | Table name |
+| `options.column` | `string` | Vector column name |
+| `options.vector` | `number[]` | Query vector |
+| `options.limit` | `number` | Max results |
+| `options.metric` | `DistanceMetric` | `'cosine' \| 'l2' \| 'innerProduct'` |
+
+```ts
+import { vectorSearch } from '@jamaalbuilds/ai-toolkit/database';
+
+const results = await vectorSearch(db, {
+  table: 'documents',
+  column: 'embedding',
+  vector: queryEmbedding,
+  limit: 10,
+  metric: 'cosine',
+});
+```
+
+### `migrate(options)`
+
+Run database migrations.
+
+```ts
+function migrate(options: MigrateOptions): Promise<MigrateResult>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `options.connectionString` | `string` | Postgres connection URL |
+| `options.migrationsFolder` | `string` | Path to migrations directory |
+
+```ts
+import { migrate } from '@jamaalbuilds/ai-toolkit/database';
+
+await migrate({
+  connectionString: process.env.DATABASE_URL!,
+  migrationsFolder: './drizzle',
+});
+```
+
+### `detectProvider(url)`
+
+Auto-detect the database provider from the connection URL.
+
+```ts
+function detectProvider(url: string): DatabaseProvider
+```
+
+### `vectorSearchRaw(db, options)`
+
+Raw vector search returning unprocessed results.
+
+### `getVectorColumn(table, column)`
+
+Get a reference to a pgvector column for use in queries.
+
+## Types
+
+- `DatabaseClient` — client with query, queryOne, withTenant, end
+- `DatabaseConfig` — connectionString, provider
+- `DatabaseProvider` — `'neon' | 'supabase' | 'local'`
+- `VectorSearchOptions` — table, column, vector, limit, metric
+- `VectorSearchResult` — row data with similarity score
+- `DistanceMetric` — `'cosine' | 'l2' | 'innerProduct'`
+- `MigrateOptions` — connectionString, migrationsFolder

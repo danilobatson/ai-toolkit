@@ -1,0 +1,114 @@
+---
+title: mcp
+description: Build MCP servers with typed tools and resources
+---
+
+## Overview
+
+The `mcp` module wraps the Model Context Protocol SDK for building MCP servers with Zod-validated tools and resources. Includes a test harness for verification without a running server.
+
+**Peer dependencies:** `@modelcontextprotocol/sdk`, `zod`
+
+```bash
+npm install @modelcontextprotocol/sdk zod
+```
+
+## Quick Start
+
+```ts
+import { McpServerBuilder } from '@jamaalbuilds/ai-toolkit/mcp';
+import { z } from 'zod';
+
+const server = new McpServerBuilder({
+  name: 'my-tools',
+  version: '1.0.0',
+});
+
+server.addTool({
+  name: 'search',
+  description: 'Search the knowledge base',
+  schema: z.object({
+    query: z.string().describe('Search query'),
+    limit: z.number().optional().describe('Max results'),
+  }),
+  handler: async ({ query, limit }) => {
+    const results = await searchKnowledgeBase(query, limit);
+    return { content: [{ type: 'text', text: JSON.stringify(results) }] };
+  },
+});
+```
+
+## API Reference
+
+### `McpServerBuilder`
+
+Builder class for creating MCP servers.
+
+```ts
+new McpServerBuilder(config: McpServerConfig)
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.name` | `string` | Server name |
+| `config.version` | `string` | Server version |
+
+#### `.addTool(definition)`
+
+Register a tool with Zod schema validation.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `definition.name` | `string` | Tool name |
+| `definition.description` | `string` | Tool description |
+| `definition.schema` | `ZodObject` | Input schema |
+| `definition.handler` | `(input) => Promise<McpToolResponse>` | Tool handler |
+
+```ts
+server.addTool({
+  name: 'get-weather',
+  description: 'Get current weather for a location',
+  schema: z.object({
+    location: z.string(),
+    units: z.enum(['celsius', 'fahrenheit']).optional(),
+  }),
+  handler: async ({ location, units }) => ({
+    content: [{ type: 'text', text: `Weather in ${location}: 72F` }],
+  }),
+});
+```
+
+#### `.addResource(definition)`
+
+Register a resource that clients can read.
+
+```ts
+server.addResource({
+  uri: 'config://app-settings',
+  name: 'Application Settings',
+  description: 'Current application configuration',
+  handler: async () => ({
+    content: [{ type: 'text', text: JSON.stringify(config) }],
+  }),
+});
+```
+
+### `McpTestHarness`
+
+Test MCP servers without starting a transport.
+
+```ts
+const harness = new McpTestHarness(server);
+const result = await harness.callTool('search', { query: 'test' });
+const resource = await harness.readResource('config://app-settings');
+```
+
+## Types
+
+- `McpServerBuilder` — builder with addTool(), addResource()
+- `McpServerConfig` — name, version
+- `McpToolResponse` — content array of McpContent
+- `McpContent` — text content or image content
+- `ToolDefinition` — name, description, schema, handler
+- `ResourceDefinition` — uri, name, description, handler
+- `McpTestHarness` — test helper with callTool(), readResource()

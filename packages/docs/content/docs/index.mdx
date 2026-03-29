@@ -1,0 +1,64 @@
+---
+title: Getting Started
+description: Unified AI development toolkit for TypeScript
+---
+
+## What is AI Toolkit?
+
+`@jamaalbuilds/ai-toolkit` is a unified AI development toolkit for TypeScript that wraps the best AI libraries behind a consistent, beginner-friendly API.
+
+**One import. Clear names. Consistent API. Provider-agnostic. Auto-cleanup. Built-in security.**
+
+Instead of learning 7 different AI library APIs, you learn one:
+
+```ts
+import { createAI, generate } from '@jamaalbuilds/ai-toolkit/ai';
+import { createChain } from '@jamaalbuilds/ai-toolkit/chain';
+import { createMonitor } from '@jamaalbuilds/ai-toolkit/monitor';
+```
+
+## What's Inside
+
+| Module | Wraps | What It Does |
+| --- | --- | --- |
+| [`ai`](/docs/modules/ai) | Vercel AI SDK | Call AI models — generate, stream, structured output |
+| [`chain`](/docs/modules/chain) | LangChain.js | Multi-step reasoning — prompt templates, output parsing |
+| [`agents`](/docs/modules/agents) | LangGraph.js | Multi-agent orchestration — routing, state, HITL |
+| [`knowledge`](/docs/modules/knowledge) | LlamaIndex.js | Document ingestion, chunking, embedding, search |
+| [`database`](/docs/modules/database) | Drizzle ORM | Typed queries, vector search, migrations |
+| [`monitor`](/docs/modules/monitor) | Langfuse | Trace LLM calls, evaluate quality, cost tracking |
+| [`workflow`](/docs/modules/workflow) | Inngest | Durable background jobs — cron, retry, pause/resume |
+| [`mcp`](/docs/modules/mcp) | MCP SDK | Build MCP servers, define tools and resources |
+| [`security`](/docs/modules/security) | Custom | PII detection, audit logging, guardrails |
+| [`auth`](/docs/modules/auth) | Custom | API key validation, RBAC |
+| [`cache`](/docs/modules/cache) | Redis / in-memory | Get/set/invalidate with TTL |
+| [`storage`](/docs/modules/storage) | Vercel Blob | File upload with validation |
+| [`config`](/docs/modules/config) | Zod | Validate env vars, typed config |
+| [`errors`](/docs/modules/errors) | Custom | Typed errors, retry logic |
+| [`health`](/docs/modules/health) | Custom | Self-diagnostics, per-service status |
+| [`testing`](/docs/modules/testing) | Custom | Mock AI, MCP, DB, workflows — zero API calls |
+
+## Quick Example
+
+```ts
+import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
+import { createAI, generate } from '@jamaalbuilds/ai-toolkit/ai';
+
+// Initialize with your API keys
+initToolkit({
+  name: 'my-app',
+  aiProvider: 'groq',
+  aiModel: 'llama-3.3-70b-versatile',
+});
+
+// Create an AI client and generate
+const ai = createAI();
+const result = await generate(ai, 'Explain TypeScript generics in one sentence');
+console.log(result.text);
+```
+
+## Next Steps
+
+- [Installation](/docs/installation) — install the package and peer dependencies
+- [Quick Start](/docs/quick-start) — build your first AI feature in 5 minutes
+- [Architecture](/docs/architecture/overview) — understand the adapter pattern

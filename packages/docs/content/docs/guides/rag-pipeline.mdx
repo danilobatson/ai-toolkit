@@ -1,0 +1,117 @@
+---
+title: RAG Pipeline
+description: Build a complete retrieval-augmented generation pipeline
+---
+
+## Overview
+
+This guide walks through building a production RAG pipeline using the `knowledge`, `chain`, `ai`, and `database` modules together.
+
+## Architecture
+
+```
+Document → Parse → Chunk → Embed → Store → Query → Retrieve → Generate
+```
+
+## Step 1: Parse and Chunk Documents
+
+```ts
+import { parseDocument, chunk } from '@jamaalbuilds/ai-toolkit/knowledge';
+
+const doc = await parseDocument('./company-handbook.pdf');
+const chunks = chunk(doc.text, {
+  maxChunkSize: 512,
+  overlap: 50,
+});
+console.log(`Created ${chunks.length} chunks`);
+```
+
+## Step 2: Create Embeddings and Store
+
+```ts
+import { createKnowledge, ingest } from '@jamaalbuilds/ai-toolkit/knowledge';
+import { createDatabase, vectorSearch } from '@jamaalbuilds/ai-toolkit/database';
+
+const db = await createDatabase({
+  connectionString: process.env.DATABASE_URL!,
+});
+
+const knowledge = createKnowledge({
+  embedder: async (texts) => {
+    // Use your embedding provider
+    return texts.map(() => new Array(1536).fill(0)); // placeholder
+  },
+  store: {
+    async upsert(chunks) {
+      // Store in your vector DB
+    },
+    async search(vector, options) {
+      return vectorSearch(db, {
+        table: 'documents',
+        column: 'embedding',
+        vector,
+        limit: options?.limit ?? 5,
+        metric: 'cosine',
+      });
+    },
+  },
+});
+
+await ingest(knowledge, './handbook.pdf', {
+  metadata: { source: 'handbook', version: '2024' },
+});
+```
+
+## Step 3: Query with RAG
+
+```ts
+import { rag } from '@jamaalbuilds/ai-toolkit/chain';
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
+
+const ai = createAI();
+
+const result = await rag({
+  retriever: async (query) => {
+    const results = await knowledge.search(query, { limit: 5 });
+    return results.map((r) => ({ text: r.text, metadata: r.metadata }));
+  },
+  promptTemplate: `You are a helpful assistant. Answer based on the provided context.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:`,
+  model: async (prompt) => {
+    const result = await ai.generate(prompt);
+    return result.text;
+  },
+  query: 'What is the vacation policy?',
+});
+
+console.log(result.answer);
+```
+
+## Step 4: Add Monitoring
+
+```ts
+import { createMonitor, trace } from '@jamaalbuilds/ai-toolkit/monitor';
+
+const monitor = await createMonitor();
+
+const { result } = await trace(monitor, 'rag-query', async (span) => {
+  span.update({ input: query });
+  const answer = await ragPipeline(query);
+  span.update({ output: answer });
+  return answer;
+});
+```
+
+## Best Practices
+
+- **Chunk size**: 256-512 tokens works well for most use cases
+- **Overlap**: 10-20% overlap prevents losing context at boundaries
+- **Metadata**: Tag chunks with source, page, section for filtering
+- **Reranking**: Retrieve more candidates (20+) then rerank to top 5
+- **Monitoring**: Trace every query to evaluate retrieval quality

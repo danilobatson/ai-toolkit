@@ -1,0 +1,75 @@
+---
+title: cache
+description: Get/set/invalidate with TTL — Redis or in-memory adapters
+---
+
+## Overview
+
+The `cache` module provides a unified caching interface with two adapters: in-memory (default) and Redis. Both support TTL, key invalidation, and namespace prefixes.
+
+**Peer dependencies (Redis only):** `ioredis`
+
+```bash
+npm install ioredis  # only if using Redis
+```
+
+## Quick Start
+
+```ts
+import { createCache } from '@jamaalbuilds/ai-toolkit/cache';
+
+const cache = createCache(); // in-memory by default
+
+await cache.set('user:123', { name: 'John' }, { ttl: 3600 });
+const user = await cache.get('user:123');
+await cache.del('user:123');
+```
+
+## API Reference
+
+### `createCache(options?)`
+
+Create a cache client.
+
+```ts
+function createCache(options?: CacheOptions): CacheClient
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `options.adapter` | `CacheAdapter` | `MemoryCacheAdapter` or `RedisCacheAdapter` |
+| `options.prefix` | `string` | Key prefix namespace |
+
+```ts
+// In-memory (default)
+const cache = createCache();
+
+// Redis
+import { RedisCacheAdapter } from '@jamaalbuilds/ai-toolkit/cache';
+const cache = createCache({
+  adapter: new RedisCacheAdapter({ url: process.env.REDIS_URL }),
+});
+```
+
+### `cache.get(key)`, `cache.set(key, value, options?)`, `cache.del(key)`
+
+Standard cache operations.
+
+```ts
+await cache.set('key', { data: 'value' }, { ttl: 3600 }); // TTL in seconds
+const value = await cache.get('key');
+await cache.del('key');
+```
+
+### `MemoryCacheAdapter`
+
+In-memory adapter with automatic TTL expiration.
+
+### `RedisCacheAdapter`
+
+Redis adapter wrapping ioredis.
+
+## Types
+
+- `CacheClient` — client with get(), set(), del()
+- `CacheOptions` — adapter, prefix

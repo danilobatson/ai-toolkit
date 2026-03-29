@@ -1,0 +1,107 @@
+---
+title: Quick Start
+description: Build your first AI feature in 5 minutes
+---
+
+## 1. Initialize the Toolkit
+
+Every app starts with `initToolkit()`. This validates your environment and configures providers.
+
+```ts
+import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
+
+initToolkit({
+  name: 'my-ai-app',
+  aiProvider: 'groq',
+  aiModel: 'llama-3.3-70b-versatile',
+});
+```
+
+## 2. Generate Text
+
+```ts
+import { createAI, generate } from '@jamaalbuilds/ai-toolkit/ai';
+
+const ai = createAI();
+const result = await generate(ai, 'What is RAG in AI?');
+console.log(result.text);
+```
+
+## 3. Stream Responses
+
+```ts
+import { createAI, stream } from '@jamaalbuilds/ai-toolkit/ai';
+
+const ai = createAI();
+const response = await stream(ai, 'Write a haiku about TypeScript');
+
+for await (const chunk of response.textStream) {
+  process.stdout.write(chunk);
+}
+```
+
+## 4. Get Structured Output
+
+```ts
+import { createAI, structured } from '@jamaalbuilds/ai-toolkit/ai';
+import { z } from 'zod';
+
+const ai = createAI();
+const result = await structured(ai, 'Extract the person', {
+  schema: z.object({
+    name: z.string(),
+    age: z.number(),
+  }),
+  prompt: 'John is 30 years old and lives in NYC',
+});
+
+console.log(result.object); // { name: 'John', age: 30 }
+```
+
+## 5. Add Monitoring
+
+Track every LLM call with zero code changes:
+
+```ts
+import { createMonitor, trace } from '@jamaalbuilds/ai-toolkit/monitor';
+
+const monitor = await createMonitor({
+  publicKey: process.env.LANGFUSE_PUBLIC_KEY!,
+  secretKey: process.env.LANGFUSE_SECRET_KEY!,
+});
+
+const result = await trace(monitor, 'my-trace', async (span) => {
+  span.event('generating', { model: 'llama-3.3-70b' });
+  const response = await generate(ai, 'Hello world');
+  return response;
+});
+```
+
+## 6. Build a RAG Pipeline
+
+Combine modules for a complete retrieval-augmented generation pipeline:
+
+```ts
+import { parseDocument, chunk } from '@jamaalbuilds/ai-toolkit/knowledge';
+import { prompt, createChain } from '@jamaalbuilds/ai-toolkit/chain';
+
+// Parse and chunk a document
+const doc = await parseDocument('./guide.pdf');
+const chunks = chunk(doc.text, { maxChunkSize: 512, overlap: 50 });
+
+// Create a RAG chain
+const ragChain = createChain({
+  prompt: prompt('Answer based on context:\n{context}\n\nQuestion: {question}'),
+});
+
+const answer = await ragChain.invoke({
+  context: chunks[0].text,
+  question: 'What is the main topic?',
+});
+```
+
+## Next Steps
+
+- [Module Reference](/docs/modules/ai) — detailed API for each module
+- [RAG Pipeline Guide](/docs/guides/rag-pipeline) — full RAG tutorial
+- [Architecture](/docs/architecture/overview) — understand how the toolkit works

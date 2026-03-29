@@ -1,0 +1,58 @@
+---
+title: api
+description: HTTP client with retry, error wrapping, and rate limit detection
+---
+
+## Overview
+
+The `api` module provides a configurable HTTP client with automatic retries on 5xx errors, rate limit detection, and consistent error wrapping.
+
+**No peer dependencies required.**
+
+## Quick Start
+
+```ts
+import { createApiClient } from '@jamaalbuilds/ai-toolkit/api';
+
+const client = createApiClient({
+  baseUrl: 'https://api.example.com',
+  headers: { Authorization: `Bearer ${token}` },
+});
+
+const data = await client.request('/users', { method: 'GET' });
+```
+
+## API Reference
+
+### `createApiClient(config)`
+
+Create an HTTP client with retry and error handling.
+
+```ts
+function createApiClient(config: ApiClientConfig): ApiClient
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.baseUrl` | `string` | Base URL for all requests |
+| `config.headers` | `Record<string, string>` | Default headers |
+| `config.retries` | `number` | Max retry attempts (default: 3) |
+| `config.retryDelay` | `number` | Delay between retries in ms |
+
+```ts
+const client = createApiClient({
+  baseUrl: 'https://api.example.com',
+  retries: 3,
+  retryDelay: 1000,
+});
+
+const response = await client.request('/endpoint', {
+  method: 'POST',
+  body: { key: 'value' },
+});
+```
+
+## Types
+
+- `ApiClient` — client with request() method
+- `ApiClientConfig` — baseUrl, headers, retries, retryDelay

@@ -1,0 +1,103 @@
+---
+title: testing
+description: Mock AI, MCP, DB, workflows — zero API calls in tests
+---
+
+## Overview
+
+The `testing` module provides mock implementations for every toolkit module. Use them to write fast, deterministic tests with zero external API calls.
+
+**No peer dependencies required.**
+
+## Quick Start
+
+```ts
+import { mockAI, mockDatabase, mockMonitor } from '@jamaalbuilds/ai-toolkit/testing';
+
+const ai = mockAI({ response: 'Hello world' });
+const db = mockDatabase();
+const monitor = mockMonitor();
+```
+
+## API Reference
+
+### `mockAI(options?)`
+
+Mock the AI client.
+
+```ts
+function mockAI(options?: MockAIOptions): AIClient
+```
+
+```ts
+const ai = mockAI({ response: 'Test response' });
+const result = await ai.generate('any prompt');
+expect(result.text).toBe('Test response');
+expect(ai.generate.callCount).toBe(1);
+```
+
+### `mockChain(options?)`
+
+Mock the chain module.
+
+### `mockAgents(options?)`
+
+Mock the agents module.
+
+### `mockKnowledge(options?)`
+
+Mock the knowledge module.
+
+### `mockDatabase()`
+
+Mock the database client.
+
+```ts
+const db = mockDatabase();
+db.query.mockResolvedValue([{ id: 1, name: 'Test' }]);
+```
+
+### `mockMonitor(options?)`
+
+Mock the monitor client.
+
+### `mockWorkflow(options?)`
+
+Mock the workflow client.
+
+### `mockLLM(options?)` (legacy)
+
+Mock the legacy v4 LLM client.
+
+### `mockCache()`
+
+Mock the cache client.
+
+### `mockDb()` (legacy)
+
+Legacy database mock.
+
+## CallTracker
+
+All v5 mocks use a shared `CallTracker` pattern for call tracking:
+
+```ts
+const ai = mockAI({ response: 'Hello' });
+await ai.generate('test');
+await ai.generate('test 2');
+
+expect(ai.generate.callCount).toBe(2);
+expect(ai.generate.lastArgs).toEqual(['test 2']);
+expect(ai.generate.allArgs).toHaveLength(2);
+```
+
+## Types
+
+- `CallTracker` — callCount, lastArgs, allArgs
+- `MockAIOptions` — response
+- `MockChainOptions` — result
+- `MockAgentsOptions` — result
+- `MockKnowledgeOptions` — chunks, searchResults
+- `MockMonitorOptions` — traceId
+- `MockWorkflowOptions` — jobResult
+- `MockLLMOptions` — legacy mock config

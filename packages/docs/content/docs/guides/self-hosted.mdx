@@ -1,0 +1,113 @@
+---
+title: Self-Hosted Deployment
+description: Deploy AI Toolkit with your own infrastructure
+---
+
+## Overview
+
+AI Toolkit is designed to run anywhere — Vercel, AWS, GCP, or your own servers. This guide covers deploying with self-hosted infrastructure.
+
+## Database Setup
+
+### Neon (Recommended)
+
+```bash
+# Neon provides serverless Postgres with pgvector
+npm install postgres
+```
+
+```ts
+import { createDatabase } from '@jamaalbuilds/ai-toolkit/database';
+
+const db = await createDatabase({
+  connectionString: process.env.DATABASE_URL!, // neon://...
+});
+```
+
+### Supabase
+
+```ts
+const db = await createDatabase({
+  connectionString: process.env.SUPABASE_DB_URL!,
+});
+```
+
+### Local Docker
+
+```bash
+docker run -d --name pgvector \
+  -e POSTGRES_PASSWORD=password \
+  -p 5432:5432 \
+  pgvector/pgvector:pg16
+```
+
+```ts
+const db = await createDatabase({
+  connectionString: 'postgresql://postgres:password@localhost:5432/postgres',
+});
+```
+
+## AI Providers
+
+### Groq (Free Tier)
+
+```bash
+GROQ_API_KEY=gsk_... # Free at console.groq.com
+```
+
+### OpenRouter (Multi-Provider)
+
+```bash
+OPENROUTER_API_KEY=sk-or-... # Access to 100+ models
+```
+
+### Self-Hosted Models
+
+Use Ollama or vLLM with the OpenAI-compatible API:
+
+```ts
+const ai = createAI({
+  provider: 'openai',
+  model: 'llama-3.3-70b',
+  apiKey: 'not-needed',
+  // Point to your local server via OPENAI_BASE_URL env var
+});
+```
+
+## Monitoring
+
+### Self-Hosted Langfuse
+
+```bash
+docker compose up -d # See langfuse.com/docs/deployment/self-host
+```
+
+```ts
+const monitor = await createMonitor({
+  publicKey: 'pk-...',
+  secretKey: 'sk-...',
+  baseUrl: 'http://localhost:3000', // your Langfuse instance
+});
+```
+
+## Environment Variables
+
+```bash
+# Required
+DATABASE_URL=postgresql://...
+
+# AI Provider (pick one)
+GROQ_API_KEY=gsk_...
+OPENROUTER_API_KEY=sk-or-...
+OPENAI_API_KEY=sk-...
+
+# Monitoring (optional)
+LANGFUSE_PUBLIC_KEY=pk-...
+LANGFUSE_SECRET_KEY=sk-...
+
+# Cache (optional)
+REDIS_URL=redis://localhost:6379
+
+# Storage (optional)
+BLOB_READ_WRITE_TOKEN=vercel_blob_...
+```

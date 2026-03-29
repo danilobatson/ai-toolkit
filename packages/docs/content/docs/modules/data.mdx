@@ -1,0 +1,54 @@
+---
+title: data
+description: Shared API types — PaginatedResponse, ErrorResponse, and more
+---
+
+## Overview
+
+The `data` module exports shared TypeScript types used across the toolkit for consistent API responses.
+
+**No peer dependencies required. Types only — no runtime code.**
+
+## Types
+
+### `PaginatedResponse<T>`
+
+Standard paginated response shape.
+
+```ts
+interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+```
+
+### `ErrorResponse`
+
+Standard error response shape.
+
+```ts
+interface ErrorResponse {
+  error: string;
+  code: string;
+  details?: Record<string, unknown>;
+}
+```
+
+### `ApiResult<T>`
+
+Wrapper for API results that may succeed or fail.
+
+```ts
+type ApiResult<T> = { success: true; data: T } | { success: false; error: ErrorResponse };
+```
+
+### `HealthReport`
+
+Health check response type (also exported from `health` module).
+
+```ts
+import type { PaginatedResponse, ErrorResponse } from '@jamaalbuilds/ai-toolkit/data';
+```

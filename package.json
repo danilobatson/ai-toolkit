@@ -3,7 +3,8 @@
   "private": true,
   "workspaces": [
     "packages/toolkit",
-    "packages/cli"
+    "packages/cli",
+    "packages/docs"
   ],
   "scripts": {
     "build": "turbo build",

@@ -1,0 +1,139 @@
+---
+title: monitor
+description: AI observability with Langfuse tracing, evaluation, and cost tracking
+---
+
+## Overview
+
+The `monitor` module wraps Langfuse for AI observability. Trace every LLM call, evaluate quality, track costs, and export metrics.
+
+**Peer dependencies:** `langfuse`
+
+```bash
+npm install langfuse
+```
+
+## Quick Start
+
+```ts
+import { createMonitor, trace } from '@jamaalbuilds/ai-toolkit/monitor';
+
+const monitor = await createMonitor({
+  publicKey: process.env.LANGFUSE_PUBLIC_KEY!,
+  secretKey: process.env.LANGFUSE_SECRET_KEY!,
+});
+
+const result = await trace(monitor, 'my-query', async (span) => {
+  span.event('generating', { model: 'llama-3.3-70b' });
+  return await ai.generate('Hello world');
+});
+```
+
+## API Reference
+
+### `createMonitor(config?)`
+
+Create a monitor client. Reads from `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` env vars by default.
+
+```ts
+async function createMonitor(config?: MonitorConfig): Promise<MonitorClient>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `config.publicKey` | `string` | Langfuse public key |
+| `config.secretKey` | `string` | Langfuse secret key |
+| `config.baseUrl` | `string` | Custom Langfuse URL (self-hosted) |
+| `config.traceStore` | `TraceStoreConfig` | In-memory trace store config |
+
+### `trace(monitor, name, fn)`
+
+Create a traced operation with automatic timing and error scoring.
+
+```ts
+async function trace<T>(
+  monitor: MonitorClient,
+  name: string,
+  fn: (span: TraceSpan) => Promise<T>,
+): Promise<TraceResult<T>>
+```
+
+```ts
+const { result, traceId } = await trace(monitor, 'rag-pipeline', async (span) => {
+  span.update({ input: query, model: 'gpt-4o' });
+  const answer = await generate(ai, query);
+  span.update({ output: answer.text, usage: { promptTokens: 100, completionTokens: 50 } });
+  span.event('completed', { latency: 230 });
+  return answer;
+});
+```
+
+### `evaluate(monitor, options)`
+
+Score a trace for quality evaluation.
+
+```ts
+async function evaluate(monitor: MonitorClient, options: EvaluateOptions): Promise<void>
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `options.traceId` | `string` | Trace to evaluate |
+| `options.name` | `string` | Score name (e.g., 'relevance') |
+| `options.value` | `number` | Score value (0-1) |
+| `options.dataType` | `ScoreDataType` | `'NUMERIC' \| 'BOOLEAN' \| 'CATEGORICAL'` |
+
+```ts
+await evaluate(monitor, {
+  traceId: result.traceId,
+  name: 'relevance',
+  value: 0.95,
+});
+```
+
+### `getCostReport(monitor)`
+
+Get aggregated cost data across all traced operations.
+
+```ts
+function getCostReport(monitor: MonitorClient): CostReport
+```
+
+```ts
+const report = getCostReport(monitor);
+console.log(`Total: $${report.totalCost}`);
+for (const [model, data] of Object.entries(report.byModel)) {
+  console.log(`${model}: ${data.requests} requests, $${data.totalCost}`);
+}
+```
+
+### `getTraces(monitor)`, `getTrace(monitor, id)`
+
+Retrieve stored traces from the in-memory trace store.
+
+### `onTrace(monitor, callback)`
+
+Subscribe to new traces as they complete.
+
+### `exportMetrics(monitor)`
+
+Export metrics in a structured format for dashboards.
+
+### `createLogger(config?)`
+
+Create a structured logger.
+
+```ts
+import { createLogger } from '@jamaalbuilds/ai-toolkit/monitor';
+
+const logger = createLogger({ level: 'info', prefix: 'my-app' });
+logger.info('Server started', { port: 3000 });
+```
+
+## Types
+
+- `MonitorClient` — client with trace, evaluate, getCostReport
+- `TraceSpan` — span with update(), event() methods
+- `TraceResult<T>` — result, traceId
+- `CostReport` — totalCost, byModel, entries
+- `StoredTrace` — id, name, input, output, duration, scores

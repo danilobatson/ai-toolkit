@@ -1,0 +1,62 @@
+---
+title: errors
+description: Typed error classes with context, codes, and retry support
+---
+
+## Overview
+
+The `errors` module provides a hierarchy of typed error classes. All toolkit errors extend `ToolkitError`, which includes an error code, context object, and optional retry metadata.
+
+**No peer dependencies required.**
+
+## Quick Start
+
+```ts
+import { ToolkitError, ValidationError, LLMError } from '@jamaalbuilds/ai-toolkit/errors';
+
+try {
+  await riskyOperation();
+} catch (error) {
+  if (error instanceof LLMError) {
+    console.log(error.code);    // 'LLM_RATE_LIMITED'
+    console.log(error.context); // { provider: 'groq', retryable: true }
+  }
+}
+```
+
+## Error Classes
+
+### `ToolkitError`
+
+Base error class. All toolkit errors extend this.
+
+```ts
+class ToolkitError extends Error {
+  code: string;
+  context: Record<string, unknown>;
+}
+```
+
+### Specialized Errors
+
+| Error Class | Use Case |
+| --- | --- |
+| `ValidationError` | Invalid input, missing required fields |
+| `LLMError` | AI provider failures, rate limits |
+| `AuthError` | Authentication/authorization failures |
+| `CacheError` | Cache read/write failures |
+| `StorageError` | File upload/download failures |
+| `RateLimitError` | Rate limit exceeded |
+| `ApiClientError` | HTTP client errors |
+
+Each error class includes a `code` property for programmatic error handling:
+
+```ts
+try {
+  await ai.generate(prompt);
+} catch (error) {
+  if (error instanceof LLMError && error.code === 'LLM_RATE_LIMITED') {
+    // wait and retry
+  }
+}
+```

@@ -1,0 +1,23 @@
+{
+  "title": "Modules",
+  "pages": [
+    "ai",
+    "chain",
+    "agents",
+    "knowledge",
+    "database",
+    "monitor",
+    "workflow",
+    "mcp",
+    "security",
+    "auth",
+    "cache",
+    "storage",
+    "config",
+    "errors",
+    "health",
+    "testing",
+    "api",
+    "data"
+  ]
+}

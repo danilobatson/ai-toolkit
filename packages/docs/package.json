@@ -1,0 +1,29 @@
+{
+  "name": "@jamaalbuilds/ai-toolkit-docs",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "postinstall": "fumadocs-mdx"
+  },
+  "dependencies": {
+    "fumadocs-core": "16.7.7",
+    "fumadocs-mdx": "14.2.11",
+    "fumadocs-ui": "16.7.7",
+    "lucide-react": "0.515.0",
+    "next": "16.2.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.2.2",
+    "@types/node": "22.16.4",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "postcss": "8.5.8",
+    "tailwindcss": "4.2.2",
+    "typescript": "5.9.3"
+  }
+}

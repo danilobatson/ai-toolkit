@@ -1,0 +1,42 @@
+---
+title: health
+description: Self-diagnostics and per-service health checks
+---
+
+## Overview
+
+The `health` module provides configurable health checks for monitoring service status with recommendations.
+
+**No peer dependencies required.**
+
+## Quick Start
+
+```ts
+import { createHealthCheck } from '@jamaalbuilds/ai-toolkit/health';
+
+const health = createHealthCheck({
+  checks: [
+    { name: 'database', check: async () => { await db.query('SELECT 1'); } },
+    { name: 'cache', check: async () => { await cache.get('ping'); } },
+  ],
+});
+
+const report = await health.run();
+console.log(report.status); // 'healthy' | 'degraded' | 'unhealthy'
+```
+
+## API Reference
+
+### `createHealthCheck(config)`
+
+Create a health check runner.
+
+```ts
+function createHealthCheck(config: HealthCheckConfig): { run: () => Promise<HealthReport> }
+```
+
+### Types
+
+- `HealthCheckConfig` — checks array with name and check function
+- `HealthReport` — status, checks, timestamp
+- `HealthCheckResult` — name, status, latencyMs, error
