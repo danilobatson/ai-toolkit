@@ -21,14 +21,14 @@ import { createMonitor } from '@jamaalbuilds/ai-toolkit/monitor';
 
 | Module | Wraps | What It Does |
 | --- | --- | --- |
-| [`ai`](/docs/modules/ai) | Vercel AI SDK | Call AI models — generate, stream, structured output |
-| [`chain`](/docs/modules/chain) | LangChain.js | Multi-step reasoning — prompt templates, output parsing |
-| [`agents`](/docs/modules/agents) | LangGraph.js | Multi-agent orchestration — routing, state, HITL |
-| [`knowledge`](/docs/modules/knowledge) | LlamaIndex.js | Document ingestion, chunking, embedding, search |
-| [`database`](/docs/modules/database) | Drizzle ORM | Typed queries, vector search, migrations |
-| [`monitor`](/docs/modules/monitor) | Langfuse | Trace LLM calls, evaluate quality, cost tracking |
-| [`workflow`](/docs/modules/workflow) | Inngest | Durable background jobs — cron, retry, pause/resume |
-| [`mcp`](/docs/modules/mcp) | MCP SDK | Build MCP servers, define tools and resources |
+| [`ai`](/docs/modules/ai) | [Vercel AI SDK](https://sdk.vercel.ai) | Call AI models — generate, stream, structured output |
+| [`chain`](/docs/modules/chain) | [LangChain.js](https://js.langchain.com) | Multi-step reasoning — prompt templates, output parsing |
+| [`agents`](/docs/modules/agents) | [LangGraph.js](https://langchain-ai.github.io/langgraphjs/) | Multi-agent orchestration — routing, state, HITL |
+| [`knowledge`](/docs/modules/knowledge) | [LlamaIndex.js](https://ts.llamaindex.ai) | Document ingestion, chunking, embedding, search |
+| [`database`](/docs/modules/database) | [Drizzle ORM](https://orm.drizzle.team) | Typed queries, vector search, migrations |
+| [`monitor`](/docs/modules/monitor) | [Langfuse](https://langfuse.com) | Trace LLM calls, evaluate quality, cost tracking |
+| [`workflow`](/docs/modules/workflow) | [Inngest](https://inngest.com) | Durable background jobs — cron, retry, pause/resume |
+| [`mcp`](/docs/modules/mcp) | [MCP SDK](https://modelcontextprotocol.io) | Build MCP servers, define tools and resources |
 | [`security`](/docs/modules/security) | Custom | PII detection, audit logging, guardrails |
 | [`auth`](/docs/modules/auth) | Custom | API key validation, RBAC |
 | [`cache`](/docs/modules/cache) | Redis / in-memory | Get/set/invalidate with TTL |
@@ -56,6 +56,16 @@ const ai = createAI();
 const result = await generate(ai, 'Explain TypeScript generics in one sentence');
 console.log(result.text);
 ```
+
+## Show Your Support
+
+Add a badge to your project:
+
+```markdown
+[![Built with AI Toolkit](https://img.shields.io/badge/Built%20with-AI%20Toolkit-blue)](https://github.com/danilobatson/ai-toolkit)
+```
+
+[![Built with AI Toolkit](https://img.shields.io/badge/Built%20with-AI%20Toolkit-blue)](https://github.com/danilobatson/ai-toolkit)
 
 ## Next Steps
 

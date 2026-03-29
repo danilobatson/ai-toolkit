@@ -11,7 +11,7 @@ AI Toolkit is designed to run anywhere — Vercel, AWS, GCP, or your own servers
 
 ## Database Setup
 
-### Neon (Recommended)
+### [Neon](https://neon.tech) (Recommended)
 
 <InstallTabs packages={["postgres"]} />
 
@@ -23,7 +23,7 @@ const db = await createDatabase({
 });
 ```
 
-### Supabase
+### [Supabase](https://supabase.com)
 
 ```ts
 const db = await createDatabase({
@@ -48,13 +48,13 @@ const db = await createDatabase({
 
 ## AI Providers
 
-### Groq (Free Tier)
+### [Groq](https://groq.com) (Free Tier)
 
 ```bash
 GROQ_API_KEY=gsk_... # Free at console.groq.com
 ```
 
-### OpenRouter (Multi-Provider)
+### [OpenRouter](https://openrouter.ai) (Multi-Provider)
 
 ```bash
 OPENROUTER_API_KEY=sk-or-... # Access to 100+ models
@@ -75,7 +75,7 @@ const ai = createAI({
 
 ## Monitoring
 
-### Self-Hosted Langfuse
+### Self-Hosted [Langfuse](https://langfuse.com)
 
 ```bash
 docker compose up -d # See langfuse.com/docs/deployment/self-host

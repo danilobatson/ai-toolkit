@@ -3,7 +3,6 @@ import { DocsPage, DocsBody } from 'fumadocs-ui/layouts/docs/page';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { CopyPageDropdown } from '@/components/copy-page-dropdown';
-import { Feedback } from '@/components/feedback';
 import { BASE_URL } from '@/lib/constants';
 
 const GITHUB_REPO = 'https://github.com/danilobatson/ai-toolkit';
@@ -87,7 +86,6 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
             Contribute
           </a>
         </div>
-        <Feedback />
       </DocsBody>
     </DocsPage>
   );

@@ -7,7 +7,7 @@ import { InstallTabs } from '@/components/install-tabs';
 
 ## Overview
 
-The `monitor` module wraps Langfuse for AI observability. Trace every LLM call, evaluate quality, track costs, and export metrics.
+The `monitor` module wraps [Langfuse](https://langfuse.com) for AI observability. Trace every LLM call, evaluate quality, track costs, and export metrics.
 
 **Peer dependencies:** `langfuse`
 
@@ -15,7 +15,7 @@ The `monitor` module wraps Langfuse for AI observability. Trace every LLM call, 
 
 ## Quick Start
 
-```ts
+```ts title="monitor-example.ts"
 import { createMonitor, trace } from '@jamaalbuilds/ai-toolkit/monitor';
 
 const monitor = await createMonitor({

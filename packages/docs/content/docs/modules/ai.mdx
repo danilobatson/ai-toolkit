@@ -7,7 +7,7 @@ import { InstallTabs } from '@/components/install-tabs';
 
 ## Overview
 
-The `ai` module wraps Vercel AI SDK behind the toolkit's adapter pattern. It provides text generation, streaming, and structured output with automatic provider detection, fallback, cost tracking, and rate limiting.
+The `ai` module wraps [Vercel AI SDK](https://sdk.vercel.ai) behind the toolkit's adapter pattern. It provides text generation, streaming, and structured output with automatic provider detection, fallback, cost tracking, and rate limiting.
 
 **Peer dependencies:** `ai`, plus one provider SDK (`@ai-sdk/groq`, `@openrouter/ai-sdk-provider`, `@ai-sdk/anthropic`, or `@ai-sdk/openai`)
 
@@ -15,7 +15,7 @@ The `ai` module wraps Vercel AI SDK behind the toolkit's adapter pattern. It pro
 
 ## Quick Start
 
-```ts
+```ts title="ai-example.ts"
 import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 
 const ai = createAI(); // auto-detects from GROQ_API_KEY

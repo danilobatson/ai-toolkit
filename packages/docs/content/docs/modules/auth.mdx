@@ -11,7 +11,7 @@ The `auth` module provides API key authentication with timing-safe comparison, r
 
 ## Quick Start
 
-```ts
+```ts title="auth-example.ts"
 import { createApiKeyGuard, requireApiKey } from '@jamaalbuilds/ai-toolkit/auth';
 
 const guard = createApiKeyGuard({ keys: [process.env.API_KEY!] });

@@ -7,7 +7,7 @@ import { InstallTabs } from '@/components/install-tabs';
 
 ## Overview
 
-The `workflow` module wraps Inngest for durable AI workflows with automatic retries, cron scheduling, human-in-the-loop approval, and integrated AI steps with cost tracking.
+The `workflow` module wraps [Inngest](https://inngest.com) for durable AI workflows with automatic retries, cron scheduling, human-in-the-loop approval, and integrated AI steps with cost tracking.
 
 **Peer dependencies:** `inngest`
 
@@ -15,7 +15,7 @@ The `workflow` module wraps Inngest for durable AI workflows with automatic retr
 
 ## Quick Start
 
-```ts
+```ts title="workflow-example.ts"
 import { createWorkflow, defineJob } from '@jamaalbuilds/ai-toolkit/workflow';
 
 const workflow = await createWorkflow({ id: 'my-app' });

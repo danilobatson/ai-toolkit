@@ -15,7 +15,7 @@ The `storage` module wraps Vercel Blob for file uploads with built-in validation
 
 ## Quick Start
 
-```ts
+```ts title="storage-example.ts"
 import { validateFile, uploadDocument } from '@jamaalbuilds/ai-toolkit/storage';
 
 const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });

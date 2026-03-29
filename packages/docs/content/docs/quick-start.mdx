@@ -3,37 +3,81 @@ title: Quick Start
 description: Build your first AI feature in 5 minutes
 ---
 
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
 ## 1. Initialize the Toolkit
 
 Every app starts with `initToolkit()`. This validates your environment and configures providers.
 
-```ts
+<Tabs items={["Next.js", "Node.js", "Express"]}>
+  <Tab value="Next.js">
+```ts title="app/api/chat/route.ts"
 import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 
-initToolkit({
-  name: 'my-ai-app',
-  aiProvider: 'groq',
-  aiModel: 'llama-3.3-70b-versatile',
-});
+initToolkit({ name: 'my-nextjs-app' });
+
+const ai = createAI();
+
+export async function POST(req: Request) {
+  const { prompt } = await req.json();
+  const result = await ai.generate(prompt);
+  return Response.json({ text: result.text });
+}
 ```
+  </Tab>
+  <Tab value="Node.js">
+```ts title="index.ts"
+import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
+
+initToolkit({ name: 'my-node-app' });
+
+const ai = createAI();
+const result = await ai.generate('Explain TypeScript generics');
+console.log(result.text);
+```
+  </Tab>
+  <Tab value="Express">
+```ts title="server.ts"
+import express from 'express';
+import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
+
+initToolkit({ name: 'my-express-app' });
+
+const app = express();
+const ai = createAI();
+
+app.use(express.json());
+
+app.post('/api/chat', async (req, res) => {
+  const result = await ai.generate(req.body.prompt);
+  res.json({ text: result.text });
+});
+
+app.listen(3000, () => console.log('Server running on :3000'));
+```
+  </Tab>
+</Tabs>
 
 ## 2. Generate Text
 
-```ts
-import { createAI, generate } from '@jamaalbuilds/ai-toolkit/ai';
+```ts title="generate.ts"
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 
 const ai = createAI();
-const result = await generate(ai, 'What is RAG in AI?');
+const result = await ai.generate('What is RAG in AI?');
 console.log(result.text);
 ```
 
 ## 3. Stream Responses
 
-```ts
-import { createAI, stream } from '@jamaalbuilds/ai-toolkit/ai';
+```ts title="stream.ts"
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 
 const ai = createAI();
-const response = await stream(ai, 'Write a haiku about TypeScript');
+const response = await ai.stream('Write a haiku about TypeScript');
 
 for await (const chunk of response.textStream) {
   process.stdout.write(chunk);
@@ -42,12 +86,12 @@ for await (const chunk of response.textStream) {
 
 ## 4. Get Structured Output
 
-```ts
-import { createAI, structured } from '@jamaalbuilds/ai-toolkit/ai';
+```ts title="structured.ts"
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 import { z } from 'zod';
 
 const ai = createAI();
-const result = await structured(ai, 'Extract the person', {
+const result = await ai.structured('Extract the person', {
   schema: z.object({
     name: z.string(),
     age: z.number(),
@@ -62,7 +106,7 @@ console.log(result.object); // { name: 'John', age: 30 }
 
 Track every LLM call with zero code changes:
 
-```ts
+```ts title="monitor.ts"
 import { createMonitor, trace } from '@jamaalbuilds/ai-toolkit/monitor';
 
 const monitor = await createMonitor({
@@ -71,8 +115,8 @@ const monitor = await createMonitor({
 });
 
 const result = await trace(monitor, 'my-trace', async (span) => {
-  span.event('generating', { model: 'llama-3.3-70b' });
-  const response = await generate(ai, 'Hello world');
+  span.update({ input: 'Hello world' });
+  const response = await ai.generate('Hello world');
   return response;
 });
 ```
@@ -81,21 +125,24 @@ const result = await trace(monitor, 'my-trace', async (span) => {
 
 Combine modules for a complete retrieval-augmented generation pipeline:
 
-```ts
+```ts title="rag.ts"
 import { parseDocument, chunk } from '@jamaalbuilds/ai-toolkit/knowledge';
 import { prompt, createChain } from '@jamaalbuilds/ai-toolkit/chain';
 
 // Parse and chunk a document
 const doc = await parseDocument('./guide.pdf');
-const chunks = chunk(doc.text, { maxChunkSize: 512, overlap: 50 });
+const chunks = await chunk(doc.content, { chunkSize: 512, chunkOverlap: 50 });
 
 // Create a RAG chain
 const ragChain = createChain({
-  prompt: prompt('Answer based on context:\n{context}\n\nQuestion: {question}'),
+  steps: [
+    (input: { context: string; question: string }) =>
+      `Answer based on context:\n${input.context}\n\nQuestion: ${input.question}`,
+  ],
 });
 
 const answer = await ragChain.invoke({
-  context: chunks[0].text,
+  context: chunks[0].content,
   question: 'What is the main topic?',
 });
 ```

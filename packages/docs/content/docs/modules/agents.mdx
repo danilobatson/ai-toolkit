@@ -7,7 +7,7 @@ import { InstallTabs } from '@/components/install-tabs';
 
 ## Overview
 
-The `agents` module wraps LangGraph.js for building stateful multi-agent systems with typed state, conditional routing, and human-in-the-loop patterns.
+The `agents` module wraps [LangGraph.js](https://langchain-ai.github.io/langgraphjs/) for building stateful multi-agent systems with typed state, conditional routing, and human-in-the-loop patterns.
 
 **Peer dependencies:** `@langchain/langgraph`, `@langchain/core`
 
@@ -15,7 +15,7 @@ The `agents` module wraps LangGraph.js for building stateful multi-agent systems
 
 ## Quick Start
 
-```ts
+```ts title="agents-example.ts"
 import { createAgent, createGraph, route } from '@jamaalbuilds/ai-toolkit/agents';
 
 const researcher = createAgent({

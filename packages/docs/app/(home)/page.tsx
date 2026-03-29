@@ -46,14 +46,14 @@ const features = [
 ];
 
 const libraries = [
-  'Vercel AI SDK',
-  'LangChain',
-  'LangGraph',
-  'LlamaIndex',
-  'Langfuse',
-  'Inngest',
-  'Drizzle ORM',
-  'MCP SDK',
+  { name: 'Vercel AI SDK', url: 'https://sdk.vercel.ai' },
+  { name: 'LangChain', url: 'https://js.langchain.com' },
+  { name: 'LangGraph', url: 'https://langchain-ai.github.io/langgraphjs/' },
+  { name: 'LlamaIndex', url: 'https://ts.llamaindex.ai' },
+  { name: 'Langfuse', url: 'https://langfuse.com' },
+  { name: 'Inngest', url: 'https://inngest.com' },
+  { name: 'Drizzle ORM', url: 'https://orm.drizzle.team' },
+  { name: 'MCP SDK', url: 'https://modelcontextprotocol.io' },
 ];
 
 export default function HomePage() {
@@ -92,6 +92,23 @@ export default function HomePage() {
         <pre className="inline-block rounded-lg bg-fd-secondary px-4 py-2 text-sm">
           <code>yarn add @jamaalbuilds/ai-toolkit</code>
         </pre>
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <a href="https://www.npmjs.com/package/@jamaalbuilds/ai-toolkit" target="_blank" rel="noopener noreferrer">
+            <img alt="npm version" src="https://img.shields.io/npm/v/@jamaalbuilds/ai-toolkit?style=flat-square" />
+          </a>
+          <a href="https://www.npmjs.com/package/@jamaalbuilds/ai-toolkit" target="_blank" rel="noopener noreferrer">
+            <img alt="npm downloads" src="https://img.shields.io/npm/dw/@jamaalbuilds/ai-toolkit?style=flat-square" />
+          </a>
+          <a href="https://github.com/danilobatson/ai-toolkit" target="_blank" rel="noopener noreferrer">
+            <img alt="GitHub stars" src="https://img.shields.io/github/stars/danilobatson/ai-toolkit?style=flat-square" />
+          </a>
+          <a href="https://github.com/danilobatson/ai-toolkit/actions" target="_blank" rel="noopener noreferrer">
+            <img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/danilobatson/ai-toolkit/ci.yml?style=flat-square&label=build" />
+          </a>
+          <a href="https://github.com/danilobatson/ai-toolkit/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+            <img alt="License" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" />
+          </a>
+        </div>
       </section>
 
       {/* Feature Grid */}
@@ -117,12 +134,15 @@ export default function HomePage() {
         <p className="text-sm text-fd-muted-foreground mb-4">Built on</p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           {libraries.map((lib) => (
-            <span
-              key={lib}
-              className="rounded-full border border-fd-border px-3 py-1 text-xs text-fd-muted-foreground"
+            <a
+              key={lib.name}
+              href={lib.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-fd-border px-3 py-1 text-xs text-fd-muted-foreground transition-colors hover:border-fd-foreground/30 hover:text-fd-foreground"
             >
-              {lib}
-            </span>
+              {lib.name}
+            </a>
           ))}
         </div>
       </section>

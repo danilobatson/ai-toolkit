@@ -7,7 +7,7 @@ import { InstallTabs } from '@/components/install-tabs';
 
 ## Overview
 
-The `chain` module wraps LangChain.js for multi-step AI reasoning with prompt templates, structured output parsing, retrieval-augmented generation (RAG), and text splitting. Falls back to built-in implementations when LangChain is not installed.
+The `chain` module wraps [LangChain.js](https://js.langchain.com) for multi-step AI reasoning with prompt templates, structured output parsing, retrieval-augmented generation (RAG), and text splitting. Falls back to built-in implementations when LangChain is not installed.
 
 **Peer dependencies:** `@langchain/core`, `@langchain/textsplitters`
 
@@ -15,7 +15,7 @@ The `chain` module wraps LangChain.js for multi-step AI reasoning with prompt te
 
 ## Quick Start
 
-```ts
+```ts title="chain-example.ts"
 import { prompt, parse, createChain } from '@jamaalbuilds/ai-toolkit/chain';
 import { z } from 'zod';
 
