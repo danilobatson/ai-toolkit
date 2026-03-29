@@ -12,7 +12,7 @@ description: Unified AI development toolkit for TypeScript
 Instead of learning 7 different AI library APIs, you learn one:
 
 ```ts
-import { createAI, generate } from '@jamaalbuilds/ai-toolkit/ai';
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 import { createChain } from '@jamaalbuilds/ai-toolkit/chain';
 import { createMonitor } from '@jamaalbuilds/ai-toolkit/monitor';
 ```
@@ -42,7 +42,7 @@ import { createMonitor } from '@jamaalbuilds/ai-toolkit/monitor';
 
 ```ts
 import { initToolkit } from '@jamaalbuilds/ai-toolkit/config';
-import { createAI, generate } from '@jamaalbuilds/ai-toolkit/ai';
+import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 
 // Initialize with your API keys
 initToolkit({
@@ -53,8 +53,8 @@ initToolkit({
 
 // Create an AI client and generate
 const ai = createAI();
-const result = await generate(ai, 'Explain TypeScript generics in one sentence');
-console.log(result.text);
+const result = await ai.generate('Explain TypeScript generics in one sentence');
+// result.text contains the generated response
 ```
 
 ## Show Your Support

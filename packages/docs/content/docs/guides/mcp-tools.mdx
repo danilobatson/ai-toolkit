@@ -18,8 +18,8 @@ const server = new McpServerBuilder({
   version: '1.0.0',
 });
 
-// Add a tool
-server.addTool({
+// Define a tool
+server.defineTool({
   name: 'search-docs',
   description: 'Search internal documentation',
   schema: z.object({
@@ -37,8 +37,8 @@ server.addTool({
   },
 });
 
-// Add a resource
-server.addResource({
+// Define a resource
+server.defineResource({
   uri: 'config://settings',
   name: 'App Settings',
   description: 'Current application configuration',

@@ -58,7 +58,7 @@ import { createAI } from '@jamaalbuilds/ai-toolkit/ai';
 
 const ai = createAI(); // auto-detects provider from env vars
 const result = await ai.generate('Hello world');
-console.log(result.text);
+// result.text contains the generated response
 \`\`\`
 
 ## Resources

@@ -12,7 +12,7 @@ interface CopyPageDropdownProps {
   url: string;
 }
 
-type ActionId = 'copy' | 'chatgpt' | 'claude' | 'cursor' | 'vscode' | null;
+type ActionId = 'copy' | 'chatgpt' | 'claude' | null;
 
 export function CopyPageDropdown({ title, url }: CopyPageDropdownProps) {
   const [open, setOpen] = useState(false);
@@ -32,15 +32,6 @@ export function CopyPageDropdown({ title, url }: CopyPageDropdownProps) {
     flash('copy');
     setOpen(false);
   }, [title, url, flash]);
-
-  const handleCopyMcp = useCallback(
-    async (id: 'cursor' | 'vscode') => {
-      await navigator.clipboard.writeText('npx @jamaalbuilds/ai-toolkit-mcp');
-      flash(id);
-      setOpen(false);
-    },
-    [flash],
-  );
 
   const chatgptUrl = `https://chatgpt.com/?q=${encodeURIComponent(
     `I'm reading the AI Toolkit docs for "${title}". Here's the page: ${url}\n\nHelp me understand and use this module.`,
@@ -99,21 +90,6 @@ export function CopyPageDropdown({ title, url }: CopyPageDropdownProps) {
             setOpen(false);
           }}
           done={completed === 'claude'}
-        />
-        <div className="my-1 border-t border-fd-border" />
-        <DropdownItem
-          icon={<CursorIcon />}
-          label={completed === 'cursor' ? 'Copied!' : 'Connect to Cursor'}
-          subtitle="Install MCP Server on Cursor"
-          onClick={() => handleCopyMcp('cursor')}
-          done={completed === 'cursor'}
-        />
-        <DropdownItem
-          icon={<VSCodeIcon />}
-          label={completed === 'vscode' ? 'Copied!' : 'Connect to VS Code'}
-          subtitle="Install MCP Server on VS Code"
-          onClick={() => handleCopyMcp('vscode')}
-          done={completed === 'vscode'}
         />
       </PopoverContent>
     </Popover>
@@ -259,18 +235,3 @@ function AnthropicIcon() {
   );
 }
 
-function CursorIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 3l14 9-6 2-4 7z" />
-    </svg>
-  );
-}
-
-function VSCodeIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M17.583.063a1.5 1.5 0 0 0-1.032.392 1.5 1.5 0 0 0-.001 0L7.05 9.6 2.906 6.39a1 1 0 0 0-1.272.098L.242 7.88a1 1 0 0 0 0 1.414L3.727 12 .242 14.707a1 1 0 0 0 0 1.414l1.392 1.392a1 1 0 0 0 1.272.098L7.05 14.4l9.5 9.144a1.5 1.5 0 0 0 1.033.392A1.5 1.5 0 0 0 19.083 22.5V1.5A1.5 1.5 0 0 0 17.583.063zM17.083 5.2v13.6L9.118 12z" />
-    </svg>
-  );
-}

@@ -19,7 +19,7 @@ The `knowledge` module provides a complete pipeline for working with documents: 
 import { parseDocument, chunk } from '@jamaalbuilds/ai-toolkit/knowledge';
 
 const doc = await parseDocument('./report.pdf');
-const chunks = chunk(doc.text, { maxChunkSize: 512, overlap: 50 });
+const chunks = await chunk(doc.content, { chunkSize: 512, chunkOverlap: 50 });
 ```
 
 ## API Reference
@@ -34,8 +34,8 @@ function parseDocument(source: string | Buffer): Promise<KnowledgeDocument>
 
 ```ts
 const doc = await parseDocument('./quarterly-report.pdf');
-console.log(doc.text);     // extracted text
-console.log(doc.metadata); // { source, pages, ... }
+doc.content;  // extracted text
+doc.metadata; // { source, pages, ... }
 ```
 
 ### `chunk(text, options?)`
@@ -43,18 +43,18 @@ console.log(doc.metadata); // { source, pages, ... }
 Split text into overlapping chunks for embedding.
 
 ```ts
-function chunk(text: string, options?: ChunkOptions): DocumentChunk[]
+function chunk(text: string, options?: ChunkOptions): Promise<DocumentChunk[]>
 ```
 
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `text` | `string` | Text to split |
-| `options.maxChunkSize` | `number` | Maximum characters per chunk (default: 512) |
-| `options.overlap` | `number` | Character overlap between chunks (default: 50) |
+| `options.chunkSize` | `number` | Maximum characters per chunk (default: 1000) |
+| `options.chunkOverlap` | `number` | Character overlap between chunks (default: 200) |
 
 ```ts
-const chunks = chunk(longText, { maxChunkSize: 500, overlap: 50 });
-// [{ text: '...', index: 0 }, { text: '...', index: 1 }, ...]
+const chunks = await chunk(longText, { chunkSize: 500, chunkOverlap: 50 });
+// [{ content: '...', metadata: {...} }, { content: '...', metadata: {...} }, ...]
 ```
 
 ### `createKnowledge(config)`
@@ -99,7 +99,7 @@ function ingest(
 const result = await ingest(knowledge, './report.pdf', {
   metadata: { source: 'quarterly-report', year: 2024 },
 });
-console.log(`Ingested ${result.chunks} chunks`);
+// result.chunks — number of chunks stored
 ```
 
 ### `search(knowledge, query, options?)`
@@ -122,7 +122,8 @@ function search(
 ```ts
 const results = await search(knowledge, 'revenue growth Q3', { limit: 5 });
 for (const r of results) {
-  console.log(r.text, r.score);
+  r.chunk.content;  // matched text
+  r.similarity;     // similarity score (0-1)
 }
 ```
 

@@ -19,11 +19,11 @@ Document → Parse → Chunk → Embed → Store → Query → Retrieve → Gene
 import { parseDocument, chunk } from '@jamaalbuilds/ai-toolkit/knowledge';
 
 const doc = await parseDocument('./company-handbook.pdf');
-const chunks = chunk(doc.text, {
-  maxChunkSize: 512,
-  overlap: 50,
+const chunks = await chunk(doc.content, {
+  chunkSize: 512,
+  chunkOverlap: 50,
 });
-console.log(`Created ${chunks.length} chunks`);
+// chunks.length — number of chunks created
 ```
 
 ## Step 2: Create Embeddings and Store
@@ -73,7 +73,7 @@ const ai = createAI();
 const result = await rag({
   retriever: async (query) => {
     const results = await knowledge.search(query, { limit: 5 });
-    return results.map((r) => ({ text: r.text, metadata: r.metadata }));
+    return results.map((r) => ({ text: r.chunk.content, metadata: r.chunk.metadata }));
   },
   promptTemplate: `You are a helpful assistant. Answer based on the provided context.
 
@@ -90,7 +90,8 @@ Answer:`,
   query: 'What is the vacation policy?',
 });
 
-console.log(result.answer);
+// result.answer — the generated response
+// result.sources — the retrieved documents
 ```
 
 ## Step 4: Add Monitoring

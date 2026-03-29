@@ -24,7 +24,7 @@ const server = new McpServerBuilder({
   version: '1.0.0',
 });
 
-server.addTool({
+server.defineTool({
   name: 'search',
   description: 'Search the knowledge base',
   schema: z.object({
@@ -53,7 +53,7 @@ new McpServerBuilder(config: McpServerConfig)
 | `config.name` | `string` | Server name |
 | `config.version` | `string` | Server version |
 
-#### `.addTool(definition)`
+#### `.defineTool(definition)`
 
 Register a tool with Zod schema validation.
 
@@ -65,7 +65,7 @@ Register a tool with Zod schema validation.
 | `definition.handler` | `(input) => Promise<McpToolResponse>` | Tool handler |
 
 ```ts
-server.addTool({
+server.defineTool({
   name: 'get-weather',
   description: 'Get current weather for a location',
   schema: z.object({
@@ -78,12 +78,12 @@ server.addTool({
 });
 ```
 
-#### `.addResource(definition)`
+#### `.defineResource(definition)`
 
 Register a resource that clients can read.
 
 ```ts
-server.addResource({
+server.defineResource({
   uri: 'config://app-settings',
   name: 'Application Settings',
   description: 'Current application configuration',
@@ -105,7 +105,7 @@ const resource = await harness.readResource('config://app-settings');
 
 ## Types
 
-- `McpServerBuilder` — builder with addTool(), addResource()
+- `McpServerBuilder` — builder with defineTool(), defineResource()
 - `McpServerConfig` — name, version
 - `McpToolResponse` — content array of McpContent
 - `McpContent` — text content or image content

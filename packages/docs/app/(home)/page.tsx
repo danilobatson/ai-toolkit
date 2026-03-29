@@ -96,15 +96,6 @@ export default function HomePage() {
           <a href="https://www.npmjs.com/package/@jamaalbuilds/ai-toolkit" target="_blank" rel="noopener noreferrer">
             <img alt="npm version" src="https://img.shields.io/npm/v/@jamaalbuilds/ai-toolkit?style=flat-square" />
           </a>
-          <a href="https://www.npmjs.com/package/@jamaalbuilds/ai-toolkit" target="_blank" rel="noopener noreferrer">
-            <img alt="npm downloads" src="https://img.shields.io/npm/dw/@jamaalbuilds/ai-toolkit?style=flat-square" />
-          </a>
-          <a href="https://github.com/danilobatson/ai-toolkit" target="_blank" rel="noopener noreferrer">
-            <img alt="GitHub stars" src="https://img.shields.io/github/stars/danilobatson/ai-toolkit?style=flat-square" />
-          </a>
-          <a href="https://github.com/danilobatson/ai-toolkit/actions" target="_blank" rel="noopener noreferrer">
-            <img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/danilobatson/ai-toolkit/ci.yml?style=flat-square&label=build" />
-          </a>
           <a href="https://github.com/danilobatson/ai-toolkit/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
             <img alt="License" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" />
           </a>

@@ -42,7 +42,7 @@ docker run -d --name pgvector \
 
 ```ts
 const db = await createDatabase({
-  connectionString: 'postgresql://postgres:password@localhost:5432/postgres',
+  connectionString: process.env.DATABASE_URL!,
 });
 ```
 
@@ -85,7 +85,7 @@ docker compose up -d # See langfuse.com/docs/deployment/self-host
 const monitor = await createMonitor({
   publicKey: 'pk-...',
   secretKey: 'sk-...',
-  baseUrl: 'http://localhost:3000', // your Langfuse instance
+  baseUrl: process.env.LANGFUSE_BASE_URL!, // e.g. https://langfuse.your-domain.com
 });
 ```
 
@@ -105,7 +105,7 @@ LANGFUSE_PUBLIC_KEY=pk-...
 LANGFUSE_SECRET_KEY=sk-...
 
 # Cache (optional)
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://your-redis-host:6379
 
 # Storage (optional)
 BLOB_READ_WRITE_TOKEN=vercel_blob_...
