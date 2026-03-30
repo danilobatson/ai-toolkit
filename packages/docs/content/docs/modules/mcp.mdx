@@ -33,7 +33,7 @@ server.defineTool({
   },
   handler: async ({ query, limit }) => {
     const results = await searchKnowledgeBase(query, limit);
-    return { content: [{ type: 'text', text: JSON.stringify(results) }] };
+    return results;
   },
 });
 ```
@@ -62,7 +62,7 @@ Register a tool with Zod schema validation.
 | `definition.name` | `string` | Tool name |
 | `definition.description` | `string` | Tool description |
 | `definition.schema` | `ZodObject` | Input schema |
-| `definition.handler` | `(input) => Promise<McpToolResponse>` | Tool handler |
+| `definition.handler` | `(input) => Promise<unknown>` | Tool handler (return value auto-serialized to JSON) |
 
 ```ts
 server.defineTool({
@@ -72,9 +72,9 @@ server.defineTool({
     location: z.string(),
     units: z.enum(['celsius', 'fahrenheit']).optional(),
   },
-  handler: async ({ location, units }) => ({
-    content: [{ type: 'text', text: `Weather in ${location}: 72F` }],
-  }),
+  handler: async ({ location, units }) => {
+    return `Weather in ${location}: 72F`;
+  },
 });
 ```
 
@@ -87,9 +87,7 @@ server.defineResource({
   uri: 'config://app-settings',
   name: 'Application Settings',
   description: 'Current application configuration',
-  handler: async () => ({
-    content: [{ type: 'text', text: JSON.stringify(config) }],
-  }),
+  handler: async () => config,
 });
 ```
 

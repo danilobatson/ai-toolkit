@@ -28,12 +28,7 @@ server.defineTool({
   },
   handler: async ({ query, limit }) => {
     const results = await searchDocs(query, limit);
-    return {
-      content: [{
-        type: 'text',
-        text: JSON.stringify(results, null, 2),
-      }],
-    };
+    return results;
   },
 });
 
@@ -42,9 +37,7 @@ server.defineResource({
   uri: 'config://settings',
   name: 'App Settings',
   description: 'Current application configuration',
-  handler: async () => ({
-    content: [{ type: 'text', text: JSON.stringify(getSettings()) }],
-  }),
+  handler: async () => getSettings(),
 });
 ```
 
@@ -61,7 +54,7 @@ expect(result.content[0].text).toContain('vacation');
 
 // Test a resource
 const config = await harness.readResource('config://settings');
-expect(config.content[0].type).toBe('text');
+expect(config).toBeDefined();
 ```
 
 ## Connecting to Claude Desktop

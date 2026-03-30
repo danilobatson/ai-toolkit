@@ -96,11 +96,11 @@ console.log(structured.object); // { name: "...", age: ... }
 import { prompt, parse, createChain, rag, createSplitter, createLanguageSplitter } from '@jamaalbuilds/ai-toolkit/chain';
 
 // Prompt template
-const template = prompt({ template: 'Summarize: {text}', variables: ['text'] });
+const template = prompt({ template: 'Summarize: {text}', inputVariables: ['text'] });
 const filled = await template.format({ text: 'Long document...' });
 
 // Output parsing (JSON, list, regex)
-const parser = parse({ format: 'json', schema: z.object({ summary: z.string() }) });
+const parser = parse({ schema: z.object({ summary: z.string() }), name: 'summary' });
 
 // RAG pipeline — rag() returns a Chain, then invoke it
 const ragChain = rag({
@@ -245,7 +245,7 @@ const results = await vectorSearchRaw(db, {
 });
 
 // Raw vector search (untyped — for custom column selection)
-const raw = await vectorSearchRaw(db, { table: 'documents', column: 'embedding', queryVector: vec });
+const raw = await vectorSearchRaw(db, { table: 'documents', column: 'embedding', queryVector: [0.1, 0.2, 0.3] });
 
 // Get a pgvector column definition for Drizzle schemas
 const vectorCol = await getVectorColumn();
