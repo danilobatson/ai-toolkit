@@ -46,13 +46,17 @@ const knowledge = createKnowledge({
       // Store in your vector DB
     },
     async search(vector, options) {
-      return vectorSearchRaw(db, {
+      const rows = await vectorSearchRaw(db, {
         table: 'documents',
         column: 'embedding',
         queryVector: vector,
         limit: options?.limit ?? 5,
         metric: 'cosine',
       });
+      return rows.map((r) => ({
+        chunk: { content: r.data.content, metadata: r.data },
+        similarity: r.similarity,
+      }));
     },
   },
 });

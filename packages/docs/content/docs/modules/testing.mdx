@@ -87,7 +87,7 @@ await ai.generate('test');
 await ai.generate('test 2');
 
 expect(ai._tracker.callCount).toBe(2);
-expect(ai._tracker.lastArgs).toEqual(['test 2']);
+expect(ai._tracker.lastArgs).toEqual(['test 2', undefined]);
 expect(ai._tracker.allArgs).toHaveLength(2);
 ```
 
