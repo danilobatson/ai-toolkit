@@ -1,11 +1,33 @@
 # AI Toolkit — Session State
 > Last updated: 2026-03-29
-> Last session: Fix 7 Remaining Crashes in README and RAG Pipeline Guide
+> Last session: Fix Undefined vec Variable and 3 Non-Crash Inaccuracies
 
 ## Current Phase
 Phase 2 — Integration, polish, remaining modules.
 
 ## What Was Just Completed
+
+### Session 54: Fix Undefined vec Variable and 3 Non-Crash Inaccuracies
+1. **README.md (3 fixes):**
+   - `queryVector: vec` → `queryVector: [0.1, 0.2, 0.3]` (vec was undefined — crash)
+   - `variables: ['text']` → `inputVariables: ['text']` (PromptConfig uses `inputVariables`)
+   - `parse({ format: 'json', schema: ... })` → `parse({ schema: ..., name: 'summary' })` (ParseConfig has `schema` and `name`, no `format`)
+2. **mcp.mdx (4 fixes) + mcp-tools.mdx (3 fixes):**
+   - All tool handlers returned `{ content: [{ type: 'text', text: ... }] }` but `McpServerBuilder.defineTool()` wraps handler return values automatically (line 192-199 of server-builder.ts). Fixed all handlers to return raw data.
+   - Fixed handler type in API reference table: `Promise<McpToolResponse>` → `Promise<unknown>`
+   - Fixed `readResource` test assertion from `config.content[0].type` to `config` (readResource returns raw handler output)
+3. 720 tests passing, build clean, lint clean, 5/5 semantic checks
+
+Commit: `8ed8d38 fix(docs): fix undefined vec variable and 3 non-crash inaccuracies`
+
+### Session 53: Fix Last 2 Crashes in RAG Pipeline and Testing Docs
+1. **rag-pipeline.mdx (1 fix):**
+   - `store.search()` returned raw `vectorSearchRaw` results (`{ data, similarity }`) instead of `SearchResult[]` shape (`{ chunk: { content, metadata }, similarity }`). Added `.map()` to transform results.
+2. **testing.mdx (1 fix):**
+   - `_tracker.lastArgs` example showed `['test 2']` but source records `[prompt, opts]` — fixed to `['test 2', undefined]`.
+3. 720 tests passing, build clean, lint clean, 5/5 semantic checks
+
+Commit: `505d331 fix(docs): fix last 2 crashes in rag-pipeline and testing docs`
 
 ### Session 52: Fix 7 Remaining Crashes in README and RAG Pipeline Guide
 1. **README.md (5 fixes):**
