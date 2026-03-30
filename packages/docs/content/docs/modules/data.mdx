@@ -49,7 +49,7 @@ interface ErrorResponse {
 Wrapper for API results that may succeed or fail.
 
 ```ts
-type ApiResult<T> = { success: true; data: T } | { success: false; error: ErrorResponse };
+type ApiResult<T> = { success: true; data: T } | { success: false; error: ErrorResponse['error'] };
 ```
 
 ### `HealthReport`

@@ -1,11 +1,11 @@
 ---
 title: errors
-description: Typed error classes with context, codes, and retry support
+description: Typed error classes with codes, status codes, and retry support
 ---
 
 ## Overview
 
-The `errors` module provides a hierarchy of typed error classes. All toolkit errors extend `ToolkitError`, which includes an error code, context object, and optional retry metadata.
+The `errors` module provides a hierarchy of typed error classes. All toolkit errors extend `ToolkitError`, which includes an error code, HTTP status code, retryable flag, and optional cause.
 
 **No peer dependencies required.**
 
@@ -18,8 +18,9 @@ try {
   await riskyOperation();
 } catch (error) {
   if (error instanceof LLMError) {
-    console.log(error.code);    // 'LLM_RATE_LIMITED'
-    console.log(error.context); // { provider: 'groq', retryable: true }
+    console.log(error.code);       // 'LLM_RATE_LIMITED'
+    console.log(error.statusCode); // 429
+    console.log(error.retryable);  // true
   }
 }
 ```
@@ -33,7 +34,9 @@ Base error class. All toolkit errors extend this.
 ```ts
 class ToolkitError extends Error {
   code: string;
-  context: Record<string, unknown>;
+  statusCode: number;  // HTTP status code (default: 500)
+  retryable: boolean;  // whether operation can be retried (default: false)
+  cause?: Error;       // original error that caused this one
 }
 ```
 

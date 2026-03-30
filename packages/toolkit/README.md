@@ -47,20 +47,20 @@ import { createAgent } from '@jamaalbuilds/ai-toolkit/agents';
 
 | Module | What It Does | Wraps | Peer Deps |
 |--------|-------------|-------|-----------|
-| `ai` | Call AI models — generate, stream, structured output | Vercel AI SDK | `ai`, `@ai-sdk/groq`, `@openrouter/ai-sdk-provider` |
+| `ai` | Call AI models — generate, stream, structured output | Vercel AI SDK | `ai`, `@ai-sdk/groq`, `@openrouter/ai-sdk-provider`, `openai` (optional), `@anthropic-ai/sdk` (optional) |
 | `chain` | Multi-step reasoning — prompt templates, output parsing, RAG | LangChain.js | `@langchain/core`, `@langchain/textsplitters` |
 | `agents` | Multi-agent orchestration — routing, state, graphs | LangGraph.js | `@langchain/langgraph` |
 | `knowledge` | Document ingestion, chunking, embedding, semantic search | LlamaIndex.js | `@llamaindex/liteparse` |
 | `monitor` | Trace LLM calls, evaluate quality, cost tracking | Langfuse | `langfuse` |
 | `workflow` | Durable background jobs — cron, retry, pause/resume, HITL | Inngest | `inngest` |
-| `database` | Typed queries, vector search, migrations | Drizzle ORM | `drizzle-orm`, `postgres` |
+| `database` | Typed queries, vector search, migrations | Drizzle ORM | `drizzle-orm`, `postgres`, `@neondatabase/serverless` (optional) |
 | `mcp` | Build MCP servers, define tools & resources | MCP SDK | `@modelcontextprotocol/sdk` |
 | `security` | PII detection, audit logging, rate limiting, guardrails | Custom | — |
 | `auth` | API key validation, RBAC, multi-tenant context | Custom | — |
 | `cache` | Get/set/invalidate with TTL (Redis or in-memory) | Custom | `ioredis` |
 | `storage` | File upload with validation | Vercel Blob | `@vercel/blob` |
 | `config` | Validate env vars, typed config | Zod | — |
-| `errors` | Typed error hierarchy (8 subtypes) | Custom | — |
+| `errors` | Typed error hierarchy (7 subtypes) | Custom | — |
 | `health` | Self-diagnostics, per-service status | Custom | — |
 | `testing` | Mock AI, chains, agents, knowledge, workflows, DB — zero API calls | Custom | — |
 | `data` | Shared API types (PaginatedResponse, ErrorResponse) | — | — |
@@ -102,12 +102,13 @@ const filled = await template.format({ text: 'Long document...' });
 // Output parsing (JSON, list, regex)
 const parser = parse({ format: 'json', schema: z.object({ summary: z.string() }) });
 
-// RAG pipeline
-const result = await rag({
-  query: 'What is the refund policy?',
+// RAG pipeline — rag() returns a Chain, then invoke it
+const ragChain = rag({
   retriever: myRetriever,
-  model: myModel,
+  promptTemplate: 'Answer based on:\n{context}\n\nQuestion: {question}',
+  model: (prompt) => ai.generate(prompt).then((r) => r.text),
 });
+const result = await ragChain.invoke({ question: 'What is the refund policy?' });
 
 // Text splitting
 const splitter = createSplitter({ chunkSize: 500, chunkOverlap: 50 });
@@ -187,7 +188,7 @@ const unsub = onTrace(monitor, (t) => console.log(`${t.name}: ${t.durationMs}ms`
 const metrics = exportMetrics(monitor);
 
 // Structured logger
-const logger = createLogger({ level: 'info' });
+const logger = createLogger('my-service', { level: 'info' });
 logger.info('Pipeline complete', { traceId });
 ```
 
@@ -219,7 +220,8 @@ const emailJob = defineJob(workflow, {
   });
 });
 
-serve(workflow, { framework: 'next' });
+const handler = await serve({ client: workflow, functions: [emailJob] });
+// Export handler.GET, handler.POST, handler.PUT in your API route
 ```
 
 ## Database — Vector Search & Migrations
@@ -227,24 +229,25 @@ serve(workflow, { framework: 'next' });
 ```typescript
 import { createDatabase, vectorSearch, vectorSearchRaw, migrate, getVectorColumn } from '@jamaalbuilds/ai-toolkit/database';
 
-const db = createDatabase({ connectionString: process.env.DATABASE_URL });
+const db = await createDatabase({ connectionString: process.env.DATABASE_URL });
 
 // Vector similarity search (typed results)
 const results = await vectorSearch(db, {
   table: 'documents',
   column: 'embedding',
-  query: [0.1, 0.2, ...],
+  queryVector: [0.1, 0.2, ...],
   limit: 10,
 });
 
 // Raw vector search (untyped — for custom column selection)
-const raw = await vectorSearchRaw(db, { table: 'documents', column: 'embedding', query: vec });
+const raw = await vectorSearchRaw(db, { table: 'documents', column: 'embedding', queryVector: vec });
 
 // Get a pgvector column definition for Drizzle schemas
-const embeddingCol = getVectorColumn(1536, 'cosine');
+const vectorCol = await getVectorColumn();
+// Use in Drizzle schema: vectorCol('embedding', { dimensions: 1536 })
 
 // Run migrations
-await migrate(db, { migrationsFolder: './drizzle' });
+await migrate({ migrationsFolder: './drizzle' });
 ```
 
 ## Security — PII Detection, Guardrails, Rate Limiting

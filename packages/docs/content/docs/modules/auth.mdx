@@ -44,12 +44,12 @@ Validate an API key from request headers. Throws `AuthError` if invalid.
 
 Extract user and organization IDs from request headers.
 
-### `getTenantContext(headers)`
+### `getTenantContext(request)`
 
-Extract full tenant context from headers for multi-tenant apps.
+Extract full tenant context from request for multi-tenant apps.
 
 ```ts
-const ctx = getTenantContext(request.headers);
+const ctx = getTenantContext(request);
 // { userId: 'usr_123', orgId: 'org_456' }
 ```
 

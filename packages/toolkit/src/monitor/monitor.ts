@@ -311,7 +311,6 @@ export async function trace<T>(
 		storeTrace(monitor, buildStoredTrace(traceId, name, startTime, attrs, false));
 		return { result, traceId };
 	} catch (error) {
-		const durationMs = Date.now() - startTime;
 		const errorMessage = error instanceof Error ? error.message : String(error);
 		scoreOnError(monitor, traceId, errorMessage);
 		storeTrace(monitor, buildStoredTrace(traceId, name, startTime, attrs, true, errorMessage));

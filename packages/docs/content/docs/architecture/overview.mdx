@@ -68,11 +68,13 @@ All errors extend `ToolkitError`:
 ```ts
 class ToolkitError extends Error {
   code: string;
-  context: Record<string, unknown>;
+  statusCode: number;
+  retryable: boolean;
+  cause?: Error;
 }
 ```
 
-Every module catches raw library errors and wraps them in `ToolkitError` with context, so you always get consistent error handling.
+Every module catches raw library errors and wraps them in `ToolkitError` with code, status, and retry metadata, so you always get consistent error handling.
 
 ## ESM Only
 

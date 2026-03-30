@@ -38,7 +38,7 @@ createAI(config?: AIConfig): AIClient
 prompt(config: PromptConfig): PromptTemplate
 parse(config: ParseConfig): Parser
 createChain(config: ChainConfig): Chain
-rag(config: RAGConfig): Promise<RAGResult>
+rag(config: RAGConfig): Chain<{ question: string }, RAGResult>
 createSplitter(config?: SplitterConfig): Splitter
 createLanguageSplitter(language: SplitterLanguage, config?: SplitterConfig): Splitter
 ```
@@ -47,7 +47,7 @@ createLanguageSplitter(language: SplitterLanguage, config?: SplitterConfig): Spl
 ```ts
 createAgent(config: AgentConfig): AgentNode
 createGraph(config: GraphConfig): Promise<GraphInstance>
-route(condition: RouteCondition, targets: string[]): RouteResult
+route(condition: RouteCondition, destinations?: string[]): RouteResult
 ```
 
 ### knowledge
@@ -150,7 +150,7 @@ parseConfig(env?: Record<string, string | undefined>): ToolkitConfig
 
 ### errors
 ```ts
-class ToolkitError extends Error { code: string; context?: Record<string, unknown> }
+class ToolkitError extends Error { code: string; statusCode: number; retryable: boolean; cause?: Error }
 class ValidationError extends ToolkitError
 class AuthError extends ToolkitError
 class LLMError extends ToolkitError

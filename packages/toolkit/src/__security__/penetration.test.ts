@@ -239,7 +239,7 @@ describe("guardrail bypass attempts", () => {
 	});
 
 	it("handles very long input WITH blocked term at end", () => {
-		const longInput = "safe content ".repeat(10000) + "dangerous";
+		const longInput = `${"safe content ".repeat(10000)}dangerous`;
 		const result = blockedTerms.check(longInput);
 		expect(result.allowed).toBe(false);
 	});
