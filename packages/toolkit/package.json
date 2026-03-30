@@ -1,6 +1,7 @@
 {
   "name": "@jamaalbuilds/ai-toolkit",
-  "version": "0.3.2",
+  "version": "0.3.3",
+  "homepage": "https://ai-toolkit-docs.vercel.app",
   "description": "TypeScript SDK for building AI-powered full-stack applications. LLM client, MCP tools, caching, auth, observability, and more.",
   "author": "Danilo Batson <djbatson19@gmail.com>",
   "license": "MIT",

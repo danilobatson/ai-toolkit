@@ -4,6 +4,8 @@ Unified TypeScript SDK for building AI-powered applications. One import. Clear n
 
 Wraps Vercel AI SDK, LangChain.js, LangGraph.js, LlamaIndex.js, Langfuse, Inngest, MCP SDK, Drizzle ORM, and more behind a consistent, beginner-friendly API.
 
+📖 **[Documentation](https://ai-toolkit-docs.vercel.app)**
+
 ## Install
 
 ```bash

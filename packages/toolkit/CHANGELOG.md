@@ -5,6 +5,21 @@ All notable changes to `@jamaalbuilds/ai-toolkit` will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-03-29
+
+### Fixed
+- 110+ code examples verified crash-free across README and 30 docs pages
+- Fixed createAgent, createGraph, humanInTheLoop, aiStep param names
+- Fixed vectorSearch/vectorSearchRaw usage examples
+- Fixed guardrail test logic (true = violation)
+- Fixed MCP tool handler double-wrapping
+- Fixed prompt/parse config param names
+- Removed all lint warnings
+
+### Added
+- Documentation site with 30 pages, LLM resources, Mintlify-style copy dropdown
+- Homepage field in package.json
+
 ## [0.3.2] - 2026-03-28
 
 ### Changed

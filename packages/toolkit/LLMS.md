@@ -1,5 +1,7 @@
 # @jamaalbuilds/ai-toolkit
 
+> 📖 Full documentation: https://ai-toolkit-docs.vercel.app
+
 Unified TypeScript SDK for AI-powered applications. Wraps Vercel AI SDK, LangChain.js, LangGraph.js, LlamaIndex.js, Langfuse, Inngest, MCP SDK, and Drizzle ORM behind one consistent API.
 
 ## Modules
