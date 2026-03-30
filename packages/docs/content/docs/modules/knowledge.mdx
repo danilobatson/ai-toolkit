@@ -109,14 +109,15 @@ const result = await ingest(
 // result.chunks — number of chunks stored
 ```
 
-### `search(knowledge, query, options?)`
+### `search(query, embedder, store, options?)`
 
-Semantic search across ingested documents.
+Semantic search across ingested documents. Also available as `knowledge.search(query, options?)` on a `KnowledgeClient`.
 
 ```ts
 function search(
-  knowledge: KnowledgeClient,
   query: string,
+  embedder: EmbedFunction,
+  store: VectorStore,
   options?: SearchOptions,
 ): Promise<SearchResult[]>
 ```

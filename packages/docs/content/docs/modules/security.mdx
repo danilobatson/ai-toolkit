@@ -109,8 +109,8 @@ function checkOutput(response: string, rules: GuardrailRule[]): GuardrailResult
 
 ```ts
 const rules = [
-  { id: 'no-pii', description: 'No PII in output', test: (text) => detectPII(text).length === 0 },
-  { id: 'max-length', description: 'Under 10k chars', test: (text) => text.length < 10000 },
+  { id: 'no-pii', description: 'No PII in output', test: (text) => detectPII(text).length > 0 },
+  { id: 'max-length', description: 'Under 10k chars', test: (text) => text.length >= 10000 },
 ];
 
 const guardrails = createGuardrails(rules);

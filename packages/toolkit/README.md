@@ -123,11 +123,11 @@ const tsSplitter = createLanguageSplitter('typescript', { chunkSize: 1000 });
 ```typescript
 import { createAgent, createGraph, route } from '@jamaalbuilds/ai-toolkit/agents';
 
-const researcher = createAgent({ name: 'researcher', instructions: 'Research topics' });
-const writer = createAgent({ name: 'writer', instructions: 'Write content' });
+const researcher = createAgent({ name: 'researcher', systemPrompt: 'Research topics' });
+const writer = createAgent({ name: 'writer', systemPrompt: 'Write content' });
 
 const graph = await createGraph({
-  agents: { researcher, writer },
+  agents: [researcher, writer],
   edges: [{ from: 'researcher', to: 'writer' }],
 });
 
@@ -209,13 +209,14 @@ const emailJob = defineJob(workflow, {
 
   // Human-in-the-loop approval (pauses workflow until approved)
   const approval = await humanInTheLoop(step, {
-    prompt: 'Approve welcome email?',
+    stepId: 'approve',
+    event: 'approval/response',
     timeout: '24h',
   });
 
   // AI-powered step (calls LLM inside a durable step)
   const summary = await aiStep(step, {
-    name: 'summarize-signup',
+    stepId: 'summarize-signup',
     prompt: `Summarize signup for ${event.data.email}`,
   });
 });

@@ -57,7 +57,7 @@ const knowledge = createKnowledge({
   },
 });
 
-await ingest('./handbook.pdf', knowledge.embedder, knowledge.store, {
+await knowledge.ingest('./handbook.pdf', {
   metadata: { source: 'handbook', version: '2024' },
 });
 ```
