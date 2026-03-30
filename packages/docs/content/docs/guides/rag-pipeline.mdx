@@ -30,7 +30,7 @@ const chunks = await chunk(doc.content, {
 
 ```ts
 import { createKnowledge, ingest } from '@jamaalbuilds/ai-toolkit/knowledge';
-import { createDatabase, vectorSearch } from '@jamaalbuilds/ai-toolkit/database';
+import { createDatabase, vectorSearchRaw } from '@jamaalbuilds/ai-toolkit/database';
 
 const db = await createDatabase({
   connectionString: process.env.DATABASE_URL!,
@@ -46,7 +46,7 @@ const knowledge = createKnowledge({
       // Store in your vector DB
     },
     async search(vector, options) {
-      return vectorSearch(db, {
+      return vectorSearchRaw(db, {
         table: 'documents',
         column: 'embedding',
         queryVector: vector,
@@ -104,9 +104,10 @@ import { createMonitor, trace } from '@jamaalbuilds/ai-toolkit/monitor';
 
 const monitor = await createMonitor();
 
+const query = 'What is the vacation policy?';
 const { result } = await trace(monitor, 'rag-query', async (span) => {
   span.update({ input: query });
-  const answer = await ragPipeline(query);
+  const answer = await ragChain.invoke({ question: query });
   span.update({ output: answer });
   return answer;
 });

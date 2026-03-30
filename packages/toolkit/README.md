@@ -115,7 +115,7 @@ const splitter = createSplitter({ chunkSize: 500, chunkOverlap: 50 });
 const chunks = await splitter.split(longDocument);
 
 // Language-aware splitting (TypeScript, Python, Markdown, etc.)
-const tsSplitter = createLanguageSplitter('typescript', { chunkSize: 1000 });
+const tsSplitter = createLanguageSplitter('js', { chunkSize: 1000 });
 ```
 
 ## Agents — Multi-Agent Orchestration
@@ -128,7 +128,11 @@ const writer = createAgent({ name: 'writer', systemPrompt: 'Write content' });
 
 const graph = await createGraph({
   agents: [researcher, writer],
-  edges: [{ from: 'researcher', to: 'writer' }],
+  edges: [
+    { from: '__start__', to: 'researcher' },
+    { from: 'researcher', to: 'writer' },
+    { from: 'writer', to: '__end__' },
+  ],
 });
 
 const result = await graph.invoke({ messages: [{ role: 'user', content: 'Write about AI' }] });
@@ -232,11 +236,11 @@ import { createDatabase, vectorSearch, vectorSearchRaw, migrate, getVectorColumn
 
 const db = await createDatabase({ connectionString: process.env.DATABASE_URL });
 
-// Vector similarity search (typed results)
-const results = await vectorSearch(db, {
+// Vector similarity search (raw SQL — string table/column)
+const results = await vectorSearchRaw(db, {
   table: 'documents',
   column: 'embedding',
-  queryVector: [0.1, 0.2, ...],
+  queryVector: [0.1, 0.2, 0.3],
   limit: 10,
 });
 
@@ -296,8 +300,8 @@ import { mockAI, mockChain, mockAgents, mockKnowledge, mockWorkflow, mockDatabas
 
 test('AI pipeline', async () => {
   const ai = mockAI({ texts: ['Generated response'] });
-  const db = mockDatabase({ rows: [{ id: 1, content: 'doc' }] });
-  const knowledge = mockKnowledge({ searchResults: [{ content: 'relevant', score: 0.9 }] });
+  const db = mockDatabase([{ id: 1, content: 'doc' }]);
+  const knowledge = mockKnowledge({ searchResults: [{ chunk: { content: 'relevant', metadata: {} }, similarity: 0.9 }] });
 
   // Use in your code — identical interfaces, zero API calls
   const result = await ai.generate('test');
