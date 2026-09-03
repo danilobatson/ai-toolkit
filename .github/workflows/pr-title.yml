@@ -18,7 +18,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          types: feat,fix,test,chore,refactor,docs,ci
+          # ⛔ NEWLINE-separated, not comma. A comma string is parsed as ONE type
+          # literally named "feat,fix,...", so nothing matches and every PR fails.
+          # That shipped in #25 and broke every PR until #35.
+          types: |
+            feat
+            fix
+            test
+            chore
+            refactor
+            docs
+            ci
           requireScope: false
           subjectPattern: ^(?![A-Z]).+[^.]$
           subjectPatternError: |
