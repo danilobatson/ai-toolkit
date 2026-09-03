@@ -6,21 +6,23 @@
 
 <!-- Why is this change needed? Link to issue if applicable -->
 
+## Reviewer focus
+
+<!-- One sentence. Name ONE file, risk, or edge case to scrutinize. Not a list. -->
+
+## Key Decisions
+
+<!-- Max 3 bullets. Non-obvious choices only. -->
+
 ## Checklist
 
 - [ ] Tests added or updated (same commit as implementation)
-- [ ] No `any` in exported types (`unknown` + type guard if needed)
 - [ ] All exports have JSDoc with `@example` block
-- [ ] No raw `throw new Error()` — uses `ToolkitError`
-- [ ] No hardcoded provider URLs
-- [ ] No `process.exit()` in library code
-- [ ] No `^` in dependency versions (pin exact)
-- [ ] Input validation via Zod or type guard
-- [ ] `yarn test` — all passing
-- [ ] `yarn typecheck` — clean
-- [ ] `yarn lint` — no new warnings
-- [ ] Conventional commit messages used
+- [ ] Input validation via Zod schema or type guard
+
+CI enforces types, lint, tests, exact dependency pinning, and conventional commit
+format — you don't need to re-attest to those here.
 
 ## Test Plan
 
-<!-- How did you verify this works? -->
+<!-- Real, copy-pasteable commands. No placeholders. -->
