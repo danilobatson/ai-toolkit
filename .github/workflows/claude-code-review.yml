@@ -12,6 +12,13 @@ on:
 
 jobs:
   claude-review:
+    # Dependabot PRs cannot authenticate: GitHub withholds repository secrets from
+    # bot-triggered runs (they live in a separate Dependabot secrets store), so
+    # secrets.CLAUDE_CODE_OAUTH_TOKEN is empty and the action hard-fails on
+    # "Either ANTHROPIC_API_KEY, CLAUDE_CODE_OAUTH_TOKEN, or workload identity
+    # federation is required". Making it work means putting the token where
+    # bot-triggered code can read it — not worth it to review a lockfile bump.
+    if: github.actor != 'dependabot[bot]'
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
@@ -40,10 +47,6 @@ jobs:
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
           claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
-          # Dependabot opens PRs as a bot; without this the action hard-fails
-          # ("Workflow initiated by non-human actor"). Named explicitly — NOT '*',
-          # which the action's own docs warn lets external Apps invoke it on a public repo.
-          allowed_bots: 'dependabot[bot]'
           # ⚠️ track_progress was tried here and reverted. Observed: it flips
           # "Auto-detected mode" from agent to tag, and tag mode waits for an
           # @claude mention rather than auto-reviewing. NOT fully proven — both
