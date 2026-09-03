@@ -40,6 +40,21 @@ jobs:
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
           claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
+          # Dependabot opens PRs as a bot; without this the action hard-fails
+          # ("Workflow initiated by non-human actor"). Named explicitly — NOT '*',
+          # which the action's own docs warn lets external Apps invoke it on a public repo.
+          allowed_bots: 'dependabot[bot]'
+          # ⚠️ track_progress was tried here and reverted. Observed: it flips
+          # "Auto-detected mode" from agent to tag, and tag mode waits for an
+          # @claude mention rather than auto-reviewing. NOT fully proven — both
+          # test runs were also stopped by the action's workflow-validation guard
+          # (it refuses to run when a PR edits this file), so Claude never executed
+          # in either. If you retry it, verify AFTER merging to main.
+          #
+          # Open problem: a review that finds nothing posts nothing, so "reviewed,
+          # clean" and "never ran" look identical on the PR. Seen on #25 — a real
+          # review (4 turns, 15s) that left no trace outside the Actions log.
+          # use_sticky_comment is the untested candidate.
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 
