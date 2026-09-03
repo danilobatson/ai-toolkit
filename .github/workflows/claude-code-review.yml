@@ -12,13 +12,17 @@ on:
 
 jobs:
   claude-review:
-    # Dependabot PRs cannot authenticate: GitHub withholds repository secrets from
-    # bot-triggered runs (they live in a separate Dependabot secrets store), so
-    # secrets.CLAUDE_CODE_OAUTH_TOKEN is empty and the action hard-fails on
-    # "Either ANTHROPIC_API_KEY, CLAUDE_CODE_OAUTH_TOKEN, or workload identity
-    # federation is required". Making it work means putting the token where
-    # bot-triggered code can read it — not worth it to review a lockfile bump.
-    if: github.actor != 'dependabot[bot]'
+    # ⛔ Skip ALL bot-authored PRs, not just Dependabot. Two distinct failures,
+    # same root cause — a bot author cannot authenticate this action:
+    #   dependabot[bot]        → secrets withheld from bot-triggered runs, so
+    #                            CLAUDE_CODE_OAUTH_TOKEN is empty
+    #   anthropic-code-agent   → "App token exchange failed: 401 Unauthorized -
+    #                            User does not have write access" (PR #44)
+    # The first version of this guard named dependabot only and had to be widened
+    # when the second bot appeared. Match on author TYPE so the next one is covered.
+    # Review a bot's PR on demand instead: comment @claude on it — the mention fires
+    # as YOU, so secrets and write access resolve normally.
+    if: github.event.pull_request.user.type != 'Bot'
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
