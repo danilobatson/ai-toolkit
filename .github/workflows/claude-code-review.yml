@@ -44,9 +44,12 @@ jobs:
           # ("Workflow initiated by non-human actor"). Named explicitly — NOT '*',
           # which the action's own docs warn lets external Apps invoke it on a public repo.
           allowed_bots: 'dependabot[bot]'
-          # A review that posts nothing looks identical to a review that never ran.
-          # track_progress posts a tracking comment so the run is visible either way.
-          track_progress: true
+          # ⚠️ Do NOT add track_progress here. It forces TAG mode
+          # ("Auto-detected mode: tag for event: pull_request"), so the job stops
+          # waiting for an @claude mention and never auto-reviews. Verified on PR #26:
+          # the run finished in 1.8s with Claude never executing, vs 4 turns / 15s
+          # without it. Visibility of a clean review is still unsolved — the Actions
+          # log is currently the only evidence a review happened.
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 
