@@ -345,7 +345,7 @@ Phase 2 continues:
 | CONTRIBUTING.md | ✅ Full contributor guide |
 | SECURITY.md | ✅ Vulnerability reporting + features |
 | LICENSE | ✅ MIT |
-| Renovate | ✅ Pin strategy, weekly schedule |
+| Dependabot | ✅ Weekly npm + github-actions updates, security updates on |
 | Husky hooks | ✅ pre-commit (lint-staged), pre-push (test + build) |
 
 ## Published Versions

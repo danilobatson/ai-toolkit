@@ -151,7 +151,7 @@ test → build
 ### Versioning
 - Pin exact versions for direct and dev dependencies (no `^`, no `~`)
 - Peer dependencies use `>=` ranges (convention)
-- Renovate for automated dependency monitoring
+- Dependabot for automated dependency monitoring (`.github/dependabot.yml`)
 
 ### Adding Dependencies
 1. Check npm: version, last publish date, weekly downloads

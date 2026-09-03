@@ -1,0 +1,27 @@
+version: 2
+
+updates:
+  # yarn workspaces — root plus each package with its own manifest
+  - package-ecosystem: npm
+    directories:
+      - /
+      - /packages/toolkit
+      - /packages/cli
+      - /packages/docs
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+    # Peer deps we wrap are pinned deliberately (ADR-009); bumping them is a
+    # decision, not a chore. Security updates still come through regardless.
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies

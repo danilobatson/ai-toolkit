@@ -199,7 +199,7 @@ GitHub Actions: all above + coverage + Semgrep + bundle size + license check
 - Groq + OpenRouter for free AI in demos
 - Neon for default database (supports Supabase, AWS RDS, local Docker too)
 - GraphQL preferred over REST. MCP preferred over both.
-- Renovate for dependency monitoring
+- Dependabot for dependency monitoring
 
 ## Commit Rules
 - Use conventional commits: type(scope): description

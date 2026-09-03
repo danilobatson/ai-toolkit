@@ -1,0 +1,25 @@
+name: PR Title
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  conventional-commit:
+    runs-on: ubuntu-latest
+    steps:
+      # CONTRIBUTING.md requires conventional commits; nothing enforced it.
+      # Squash-merge uses the PR title as the commit subject, so checking the
+      # title is what actually keeps the convention true on main.
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: feat,fix,test,chore,refactor,docs,ci
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+[^.]$
+          subjectPatternError: |
+            "{subject}" must start lowercase and not end with a period.
