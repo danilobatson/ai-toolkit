@@ -48,7 +48,7 @@ The toolkit includes built-in security capabilities:
 
 ### Dependencies
 - All dependencies pinned to exact versions (no `^` ranges)
-- Renovate monitors for updates weekly
+- Dependabot opens weekly dependency PRs (`.github/dependabot.yml`) and security updates for known CVEs
 - License audit in CI (MIT, Apache-2.0, BSD, ISC only)
 - CodeQL analysis on every PR to `main`
 
