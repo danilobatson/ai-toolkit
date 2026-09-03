@@ -201,6 +201,20 @@ GitHub Actions: all above + coverage + Semgrep + bundle size + license check
 - GraphQL preferred over REST. MCP preferred over both.
 - Dependabot for dependency monitoring
 
+## Opening a Pull Request
+
+Applies to anyone opening a PR here, agents included.
+
+- **Fill `.github/PULL_REQUEST_TEMPLATE.md`.** GitHub only injects it when the body
+  is empty, so `gh pr create --body`, API calls and pre-filled `quick_pull` links
+  all bypass it silently. Copy the sections and fill them.
+- **Open it ready for review, not as a draft**, and don't prefix the title `[WIP]`.
+  Open it when it's ready instead.
+- **Title must be a conventional commit** — `type(scope): subject`, lowercase subject,
+  no trailing period. `.github/workflows/pr-title.yml` enforces this and a
+  non-conforming title fails CI. Types: feat, fix, test, chore, refactor, docs, ci.
+- **`Reviewer focus` is one sentence naming one thing to scrutinize.** Not a list.
+
 ## Commit Rules
 - Use conventional commits: type(scope): description
 - NEVER include Co-Authored-By trailers in commits
