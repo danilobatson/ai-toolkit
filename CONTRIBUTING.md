@@ -10,7 +10,7 @@ cd ai-toolkit
 yarn install
 ```
 
-**Requirements:** Node.js >= 20, Yarn 1.x
+**Requirements:** Node.js >= 22, Yarn 1.x
 
 ## Development
 
