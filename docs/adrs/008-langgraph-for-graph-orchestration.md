@@ -45,6 +45,3 @@ The agents module does NOT wrap:
 - @langchain/langgraph brings @langchain/core as a transitive peer dep (already in our deps)
 - No built-in checkpointing — graph state is ephemeral per invocation
 - Users wanting streaming, human-in-the-loop interrupts, or persistence need raw LangGraph access via `compiledGraph`
-
-## Interview Answer
-We use LangGraph.js for agent orchestration because it provides a battle-tested graph execution engine with typed state management and conditional routing — the same infrastructure used by Replit and Uber. Our wrapper reduces the API to three functions (createAgent, createGraph, route) while exposing the compiled graph for advanced use cases, keeping the boundary clean: the chain module handles sequential composition, while agents handles stateful multi-step workflows.

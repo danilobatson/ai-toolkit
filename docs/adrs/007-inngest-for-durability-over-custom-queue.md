@@ -41,6 +41,3 @@ Key design choices:
 - Requires Inngest dev server for local development (`npx inngest-cli@latest dev`)
 - Production requires Inngest Cloud account or self-hosted setup
 - Vendor coupling (mitigated by adapter pattern — swap to Temporal/BullMQ by changing adapter only)
-
-## Interview Answer (2 sentences)
-We chose Inngest over BullMQ or a custom queue because AI workflows need step-level durability with automatic retry and memoization — Inngest provides this natively with `step.run()` and `step.waitForEvent()` for human-in-the-loop, while BullMQ would require building all of that from scratch. The adapter pattern means we can swap to Temporal or another engine later without changing the developer-facing API.
