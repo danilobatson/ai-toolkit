@@ -49,7 +49,7 @@ import { createAgent } from '@jamaalbuilds/ai-toolkit/agents';
 
 | Module | What It Does | Wraps | Peer Deps |
 |--------|-------------|-------|-----------|
-| `ai` | Call AI models — generate, stream, structured output | Vercel AI SDK | `ai`, `@ai-sdk/groq`, `@openrouter/ai-sdk-provider`, `openai` (optional), `@anthropic-ai/sdk` (optional) |
+| `ai` | Call AI models — generate, stream, structured output | Vercel AI SDK | `ai`, `@ai-sdk/groq`, `@openrouter/ai-sdk-provider`, `@ai-sdk/anthropic` (optional), `@ai-sdk/openai` (optional) |
 | `chain` | Multi-step reasoning — prompt templates, output parsing, RAG | LangChain.js | `@langchain/core`, `@langchain/textsplitters` |
 | `agents` | Multi-agent orchestration — routing, state, graphs | LangGraph.js | `@langchain/langgraph` |
 | `knowledge` | Document ingestion, chunking, embedding, semantic search | LlamaIndex.js | `@llamaindex/liteparse` |

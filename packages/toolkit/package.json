@@ -116,7 +116,9 @@
     "vitest": "3.2.6"
   },
   "peerDependencies": {
+    "@ai-sdk/anthropic": "4.0.49",
     "@ai-sdk/groq": "3.0.31",
+    "@ai-sdk/openai": "4.0.58",
     "@anthropic-ai/sdk": ">=0.30.0",
     "@langchain/core": "1.1.36",
     "@langchain/langgraph": "1.2.6",
@@ -135,7 +137,13 @@
     "postgres": ">=3.4.0"
   },
   "peerDependenciesMeta": {
+    "@ai-sdk/anthropic": {
+      "optional": true
+    },
     "@ai-sdk/groq": {
+      "optional": true
+    },
+    "@ai-sdk/openai": {
       "optional": true
     },
     "@anthropic-ai/sdk": {
