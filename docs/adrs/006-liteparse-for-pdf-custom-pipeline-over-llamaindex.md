@@ -38,6 +38,3 @@ The knowledge module:
 - Users wanting LlamaIndex's advanced retrieval strategies (sub-question, tree summarize) must use LlamaIndex directly
 - No built-in OCR for scanned PDFs without LiteParse installed
 - EmbedFunction must be wired up manually (no auto-detection of embedding provider)
-
-## Interview Answer
-We chose `@llamaindex/liteparse` for PDF parsing but built our own ingestion pipeline instead of wrapping the full LlamaIndex framework. Since we already had modules for text splitting (chain), vector storage (database), and model calls (ai), adding LlamaIndex would have introduced duplicate abstractions and a heavy dependency — LiteParse gives us the parsing we need at a fraction of the cost, while our custom pipeline composes the modules we already own.
