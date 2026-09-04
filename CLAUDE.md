@@ -39,10 +39,10 @@ These are the PUBLIC names developers import. Map them to the underlying librari
 | `monitor`   | Langfuse                 | Trace every LLM call, evaluate quality, cost tracking      |
 | `workflow`  | Inngest                  | Durable background jobs — cron, retry, pause/resume        |
 | `mcp`       | MCP SDK                  | Build MCP servers, connect MCP clients                     |
-| `security`  | Custom                   | PII detection, audit logging, RBAC, guardrails             |
+| `security`  | Custom                   | PII detection, audit logging, rate limiting, guardrails    |
 | `database`  | Drizzle ORM + pgvector   | Typed queries, vector search, migrations                   |
 | `api`       | GraphQL Yoga + tRPC      | Type-safe APIs with subscriptions                          |
-| `auth`      | NextAuth.js / Clerk      | Sessions, RBAC, API keys, multi-tenant                     |
+| `auth`      | NextAuth.js / Clerk      | Sessions, API keys, multi-tenant                           |
 | `storage`   | Vercel Blob / S3         | File upload with validation                                |
 | `cache`     | Redis / in-memory        | Get/set/invalidate with TTL                                |
 | `config`    | Zod                      | Validate env vars, typed config                            |

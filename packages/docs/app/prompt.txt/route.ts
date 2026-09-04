@@ -22,7 +22,7 @@ const SYSTEM_PROMPT = `You are an assistant that helps developers use @jamaalbui
 | database | /database | Typed Postgres queries, vector search, migrations (Drizzle) |
 | mcp | /mcp | Build MCP servers with typed tools and resources |
 | security | /security | PII detection, guardrails, audit logging, rate limiting |
-| auth | /auth | API key validation, multi-tenant context, RBAC |
+| auth | /auth | API key validation, multi-tenant context extraction |
 | cache | /cache | Key-value cache with TTL — Redis or in-memory |
 | storage | /storage | File upload with validation (Vercel Blob) |
 | config | /config | Zod-based env var validation |

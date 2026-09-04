@@ -43,7 +43,7 @@ The toolkit includes built-in security capabilities:
 
 ### Auth (`auth` module)
 - Timing-safe API key comparison (prevents timing attacks)
-- RBAC with role-based access control
+- Multi-tenant context extraction (org/user IDs from headers)
 - API key guard middleware
 
 ### Dependencies

@@ -58,7 +58,7 @@ import { createAgent } from '@jamaalbuilds/ai-toolkit/agents';
 | `database` | Typed queries, vector search, migrations | Drizzle ORM | `drizzle-orm`, `postgres`, `@neondatabase/serverless` (optional) |
 | `mcp` | Build MCP servers, define tools & resources | MCP SDK | `@modelcontextprotocol/sdk` |
 | `security` | PII detection, audit logging, rate limiting, guardrails | Custom | — |
-| `auth` | API key validation, RBAC, multi-tenant context | Custom | — |
+| `auth` | API key validation, multi-tenant context | Custom | — |
 | `cache` | Get/set/invalidate with TTL (Redis or in-memory) | Custom | `ioredis` |
 | `storage` | File upload with validation | Vercel Blob | `@vercel/blob` |
 | `config` | Validate env vars, typed config | Zod | — |
@@ -350,7 +350,7 @@ try {
 
 Error types: `ToolkitError`, `LLMError`, `ValidationError`, `RateLimitError`, `AuthError`, `StorageError`, `CacheError`, `ApiClientError`.
 
-## Auth — API Key Validation & RBAC
+## Auth — API Key Validation & Multi-Tenant Context
 
 No peer deps required.
 
