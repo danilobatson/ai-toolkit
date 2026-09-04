@@ -61,6 +61,11 @@ describe("semantic checks", () => {
 		expect(matches).toHaveLength(0);
 	});
 
+	it("no literal specifier in await import() (ADR-009 rule 1)", () => {
+		const matches = grep("await import([\\\"']", SRC);
+		expect(matches).toHaveLength(0);
+	});
+
 	it("no ^ in dependency versions", () => {
 		const pkgFiles = [
 			join(ROOT, "package.json"),
@@ -120,6 +125,35 @@ describe("provider-URL pattern regression (grep() correctness)", () => {
 		withFixture('export const x = "https://blob.vercel-storage.com/foo";\n', (dir) => {
 			expect(grep(FIXED_PATTERN, dir)).toHaveLength(0);
 		});
+	});
+});
+
+describe("dynamic import indirection pattern (ADR-009 rule 1)", () => {
+	const LITERAL_IMPORT_PATTERN = "await import([\\\"']";
+
+	function withFixture(content: string, run: (dir: string) => void): void {
+		const dir = mkdtempSync(join(tmpdir(), "semantic-check-fixture-"));
+		try {
+			writeFileSync(join(dir, "fixture.ts"), content);
+			run(dir);
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+	}
+
+	it("flags a literal specifier passed directly to await import()", () => {
+		withFixture('export async function load() {\n  return await import("pkg");\n}\n', (dir) => {
+			expect(grep(LITERAL_IMPORT_PATTERN, dir)).toHaveLength(1);
+		});
+	});
+
+	it("does not flag a variable passed to await import()", () => {
+		withFixture(
+			'export async function load() {\n  const p = "pkg";\n  return await import(p);\n}\n',
+			(dir) => {
+				expect(grep(LITERAL_IMPORT_PATTERN, dir)).toHaveLength(0);
+			},
+		);
 	});
 });
 
