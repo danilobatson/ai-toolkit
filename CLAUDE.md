@@ -214,6 +214,18 @@ Applies to anyone opening a PR here, agents included.
   no trailing period. `.github/workflows/pr-title.yml` enforces this and a
   non-conforming title fails CI. Types: feat, fix, test, chore, refactor, docs, ci.
 - **`Reviewer focus` is one sentence naming one thing to scrutinize.** Not a list.
+- **Ceiling: 200 words.** The diff carries the detail; the description says what a
+  reviewer cannot get from the diff. Recent PRs ran 400-980 words, which is why this
+  is a number and not a preference.
+  - One sentence on what changed, one or two on why. Then stop.
+  - Cut anything the diff already says, reassurance, process narration, and notes on
+    what you did *not* do.
+  - **Delete a section rather than pad it.** Only `What` and `Why` are required.
+- **Tick every checklist box before you open the PR.** The checklist is the author's
+  record of work already done — it is NOT a to-do list for the reviewer to work
+  through. An item that does not apply is still ticked, with the reason inline:
+  `- [x] All exports have JSDoc — n/a, no public API added`. Boxes arriving unticked
+  read as work skipped.
 
 ## Commit Rules
 - Use conventional commits: type(scope): description

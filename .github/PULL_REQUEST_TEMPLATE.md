@@ -1,10 +1,13 @@
+<!-- Ceiling: 200 words. Delete any section you would otherwise pad.
+     Only What and Why are required. The diff carries the detail. -->
+
 ## What
 
-<!-- Brief description of the change -->
+<!-- One sentence. -->
 
 ## Why
 
-<!-- Why is this change needed? Link to issue if applicable -->
+<!-- One or two sentences, plus the issue link. -->
 
 ## Reviewer focus
 
@@ -15,6 +18,10 @@
 <!-- Max 3 bullets. Non-obvious choices only. -->
 
 ## Checklist
+
+<!-- Tick EVERY box before opening. This records work you already did; it is not a
+     to-do list for the reviewer. Doesn't apply? Tick it anyway and say why inline:
+     - [x] Input validation via Zod — n/a, no public API added -->
 
 - [ ] Tests added or updated (same commit as implementation)
 - [ ] All exports have JSDoc with `@example` block
