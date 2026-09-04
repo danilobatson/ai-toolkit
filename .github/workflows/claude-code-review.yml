@@ -12,22 +12,16 @@ on:
 
 jobs:
   claude-review:
-    # ⛔ Skip ALL bot-authored PRs, not just Dependabot. Two distinct failures,
-    # same root cause — a bot author cannot authenticate this action:
-    #   dependabot[bot]        → secrets withheld from bot-triggered runs, so
-    #                            CLAUDE_CODE_OAUTH_TOKEN is empty
-    #   anthropic-code-agent   → "App token exchange failed: 401 Unauthorized -
-    #                            User does not have write access" (PR #44)
-    # The first version of this guard named dependabot only and had to be widened
-    # when the second bot appeared. Match on author TYPE so the next one is covered.
-    # Review a bot's PR on demand instead: comment @claude on it — the mention fires
-    # as YOU, so secrets and write access resolve normally.
-    if: github.event.pull_request.user.type != 'Bot'
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Skip Dependabot only. Its runs are structurally unauthenticatable: GitHub
+    # withholds secrets from Dependabot-triggered workflows, so
+    # CLAUDE_CODE_OAUTH_TOKEN is empty no matter what this file says.
+    #
+    # ⛔ Do NOT widen this to `user.type != 'Bot'`. That is what it used to say, and
+    # it silently excluded every agent-authored PR — the mention path opens as
+    # claude[bot], the assign path as Claude — so the PRs most worth reviewing were
+    # the only ones never reviewed. Bot authorship is not the failure; missing
+    # secrets are, and only Dependabot has that problem by construction.
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
 
     runs-on: ubuntu-latest
     permissions:
