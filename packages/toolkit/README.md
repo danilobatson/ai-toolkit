@@ -92,6 +92,18 @@ const structured = await ai.structured('Extract the person', {
 console.log(structured.object); // { name: "...", age: ... }
 ```
 
+`createLLM` is also exported and still supported. It is the older client, kept
+so v4 code keeps working: it returns an `LLMClient` whose only method is
+`complete()`, with no streaming, structured output, or provider fallback.
+New code should use `createAI`.
+
+```typescript
+import { createLLM } from '@jamaalbuilds/ai-toolkit/ai';
+
+const llm = createLLM();
+const { content } = await llm.complete('Summarize this document.');
+```
+
 ## Chain — Prompt Templates, Parsing, RAG
 
 ```typescript
