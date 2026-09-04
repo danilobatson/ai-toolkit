@@ -39,6 +39,16 @@ export interface CacheClient {
 		value: T,
 		options?: CacheOptions,
 	): Promise<void>;
+	/**
+	 * Atomically increment a numeric counter and return the new value.
+	 * The TTL is applied only when the counter is created (first increment
+	 * in the window); later increments do not extend it.
+	 *
+	 * Required for correct concurrent rate limiting — a read-then-write
+	 * (`get` then `set`) is not atomic and lets concurrent callers race
+	 * past the same count.
+	 */
+	incr(key: string, options?: CacheOptions): Promise<number>;
 	invalidate(key: string): Promise<void>;
 	invalidatePrefix(prefix: string): Promise<void>;
 	disconnect(): Promise<void>;
@@ -86,6 +96,24 @@ export class MemoryCacheAdapter implements CacheClient {
 		});
 	}
 
+	async incr(key: string, options?: CacheOptions): Promise<number> {
+		// No `await` before the write below — the whole body runs to
+		// completion in one microtask, so concurrent callers can't
+		// interleave between the read and the write.
+		const ttl = options?.ttl ?? this.defaultTtl;
+		const now = Date.now();
+		const entry = this.store.get(key);
+		const isFresh = !entry || now > entry.expiresAt;
+		const count = isFresh ? 1 : (JSON.parse(entry.value) as number) + 1;
+
+		this.store.set(key, {
+			value: JSON.stringify(count),
+			expiresAt: isFresh ? now + ttl * 1000 : entry.expiresAt,
+		});
+
+		return count;
+	}
+
 	async invalidate(key: string): Promise<void> {
 		this.store.delete(key);
 	}
@@ -117,6 +145,11 @@ interface RedisLike {
 	): Promise<unknown>;
 	del(...keys: string[]): Promise<number>;
 	keys(pattern: string): Promise<string[]>;
+	eval(
+		script: string,
+		numKeys: number,
+		...args: Array<string | number>
+	): Promise<unknown>;
 	quit(): Promise<string>;
 }
 
@@ -195,6 +228,33 @@ export class RedisCacheAdapter implements CacheClient {
 		} catch (error) {
 			throw new CacheError(`Cache set failed for key: ${key}`, {
 				code: "CACHE_SET_FAILED",
+				cause: error instanceof Error ? error : undefined,
+			});
+		}
+	}
+
+	async incr(key: string, options?: CacheOptions): Promise<number> {
+		const ttl = options?.ttl ?? this.defaultTtl;
+		const redis = await this.getRedis();
+		try {
+			// INCR + EXPIRE run as a single Redis-side script, so the
+			// read-modify-write is atomic even across processes. EXPIRE only
+			// fires on the first increment so later increments don't extend
+			// the window.
+			const result = await redis.eval(
+				`local count = redis.call("INCR", KEYS[1])
+if count == 1 then
+  redis.call("EXPIRE", KEYS[1], ARGV[1])
+end
+return count`,
+				1,
+				key,
+				ttl,
+			);
+			return Number(result);
+		} catch (error) {
+			throw new CacheError(`Cache incr failed for key: ${key}`, {
+				code: "CACHE_INCR_FAILED",
 				cause: error instanceof Error ? error : undefined,
 			});
 		}

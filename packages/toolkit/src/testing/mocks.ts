@@ -78,6 +78,13 @@ export function mockCache(initial?: Record<string, unknown>): CacheClient & {
 			store.set(key, value);
 		},
 
+		async incr(key: string, options?: CacheOptions): Promise<number> {
+			calls.push({ method: "incr", args: [key, options] });
+			const next = ((store.get(key) as number) ?? 0) + 1;
+			store.set(key, next);
+			return next;
+		},
+
 		async invalidate(key: string): Promise<void> {
 			calls.push({ method: "invalidate", args: [key] });
 			store.delete(key);

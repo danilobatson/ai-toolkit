@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	mockDel,
+	mockEval,
 	mockGet,
 	mockKeys,
 	mockQuit,
@@ -160,6 +161,52 @@ describe("RedisCacheAdapter", () => {
 		} catch (err) {
 			expect(err).toBeInstanceOf(CacheError);
 			expect((err as CacheError).code).toBe("CACHE_INVALIDATE_PREFIX_FAILED");
+		}
+	});
+
+	it("BEHAVIOR — incr calls eval with an atomic INCR+EXPIRE script", async () => {
+		mockEval.mockResolvedValueOnce(1);
+
+		const cache = new RedisCacheAdapter("redis://localhost:6379");
+		const result = await cache.incr("ratelimit:user:1", { ttl: 60 });
+
+		expect(result).toBe(1);
+		expect(mockEval).toHaveBeenCalledWith(
+			expect.stringMatching(/INCR.*EXPIRE/s),
+			1,
+			"ratelimit:user:1",
+			60,
+		);
+	});
+
+	it("BEHAVIOR — incr uses default TTL when not specified", async () => {
+		mockEval.mockResolvedValueOnce(1);
+
+		const cache = new RedisCacheAdapter("redis://localhost:6379", {
+			defaultTtl: 600,
+		});
+		await cache.incr("key1");
+
+		expect(mockEval).toHaveBeenCalledWith(
+			expect.any(String),
+			1,
+			"key1",
+			600,
+		);
+	});
+
+	it("ENVIRONMENT — incr wraps Redis errors as CacheError", async () => {
+		mockEval.mockRejectedValueOnce(new Error("NOSCRIPT"));
+
+		const cache = new RedisCacheAdapter("redis://localhost:6379");
+
+		try {
+			await cache.incr("key1");
+			expect.unreachable("should have thrown");
+		} catch (err) {
+			expect(err).toBeInstanceOf(CacheError);
+			expect((err as CacheError).code).toBe("CACHE_INCR_FAILED");
+			expect((err as CacheError).message).toMatch(/key1/);
 		}
 	});
 
