@@ -32,13 +32,6 @@ coverage/
 # Docker
 *.log
 AUDIT_REPORT.md
-# Local Claude Code state stays ignored, but settings.json IS versioned: cloud
-# sessions read committed settings files, and that is the only documented way to
-# configure the tools available to an agent assigned to an issue.
-# Must be `.claude/*`, not `.claude/` — git cannot un-ignore a file inside an
-# ignored directory.
-.claude/*
-!.claude/settings.json
 AI_TOOLKIT_MASTERPLAN.md
 AI_TOOLKIT_PROMPTS.md
 SESSION_STATE.md
