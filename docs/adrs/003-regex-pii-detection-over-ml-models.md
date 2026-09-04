@@ -56,3 +56,4 @@ The primary use case is **preventing obvious PII leakage** (SSNs, emails, phones
 - Works in all JavaScript runtimes including Edge
 - Users needing ML-grade detection can compose: `detectPII()` for fast scanning + external NER for deep analysis
 - Future: if demand warrants, we can add an optional `@jamaalbuilds/ai-toolkit-pii-ml` package with ML-based detection behind the same `PIIFinding` interface
+- The accepted limitations above (spelled-out, unicode-lookalike, reversed, and base64-encoded SSNs; homoglyph bypasses of blocked terms) are pinned as tests in `packages/toolkit/src/__security__/penetration.test.ts`
