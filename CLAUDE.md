@@ -146,6 +146,20 @@ GitHub Actions (`ci.yml`) runs typecheck, lint, test:coverage, semantic-checks
 CodeQL for security scanning. See `docs/CODING_PROCESS_AND_STANDARDS.md` for
 the local Every Push / Scheduled / Pre-Commit / Pre-Push breakdown.
 
+## Verification
+
+- **Verify the artifact, not the source.** A check that passes against `src/`, or
+  under the test harness (vitest supplies a `require` the shipped ESM tarball does
+  not), does not prove the published `dist/` works. `yarn smoke:dist` is not
+  redundant with the test suite: it **calls** functions in `packages/toolkit/dist`,
+  because importing alone never reaches a `require()` inside a function body.
+- **Inverted acceptance criteria.** Some fixes are only correct if the check
+  **fails** first. Live example: the provider-URL pattern regression
+  (`grep()` correctness) describe block in
+  `packages/toolkit/src/__verification__/toolkit-agent.test.ts` asserts the buggy
+  pattern finds 0 matches and the fixed pattern finds 1 — write the failing case
+  before the fix, or the check proves nothing.
+
 ## Key Decisions
 
 - TypeScript only (no Python) — see ADR-002
