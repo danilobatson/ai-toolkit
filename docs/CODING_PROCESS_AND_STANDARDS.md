@@ -96,9 +96,13 @@ Additional levels when applicable:
 - Mock the error shape the source actually throws — never hand-build an error type/code that no source file produces. A test that manufactures its own error shape can pass while the real failure path is unreachable in production.
 
 ### Test Coverage Targets
-- Core modules: 80%+ line coverage
+- Core modules: 60%+ line coverage
 - Utility modules: 60%+ line coverage
 - Types-only modules: no tests needed
+
+Enforced in CI as a single package-wide aggregate across `packages/toolkit/src`
+(`packages/toolkit/vitest.config.ts`), not a per-module minimum — a new module
+at 0% coverage still passes as long as the package total clears 60%.
 
 ---
 
