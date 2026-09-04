@@ -84,10 +84,16 @@ These are the PUBLIC names developers import. Map them to the underlying librari
 11. **Same commit** — implementation and tests always in the same commit.
 
 ## Git Rules
-- NEVER add Co-Authored-By trailers to commits. NEVER.
+- **Commits are authored by Danilo Jamaal Batson, never by an agent.**
+  `git commit --author="Danilo Jamaal Batson <69876068+danilobatson@users.noreply.github.com>" -m "message"`
+  An agent-authored commit makes GitHub add `Co-authored-by: claude[bot]` on squash
+  merge, which is how that trailer reached 10 of 25 commits on `main`.
+- NEVER add Co-Authored-By trailers to commits. NEVER. Not for Claude, not for anyone.
+  ⚠️ `claude-code-action`'s own base prompt instructs agents to append one. Ignore it —
+  this rule wins, and `.github/workflows/claude.yml` restates it in the system prompt
+  because the base prompt is the stronger default.
 - Do not use --trailer flag
 - Do not append any lines after the commit message
-- Commit command: git commit -m "message" (nothing else)
 - Use conventional commits: type(scope): description
 
 ## Testing Rules

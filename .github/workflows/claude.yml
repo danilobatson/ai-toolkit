@@ -68,5 +68,10 @@ jobs:
             EXISTS. After you push, run `gh pr create` yourself with a conventional
             title and the filled .github/PULL_REQUEST_TEMPLATE.md body. Never end by
             replying with a 'Create PR' link or a bare pushed branch — that is an
-            unfinished task, not a handoff."
+            unfinished task, not a handoff.
+            Commits are authored by Danilo Jamaal Batson, never by you: commit with
+            `git commit --author=\"Danilo Jamaal Batson <69876068+danilobatson@users.noreply.github.com>\" -m \"<message>\"`.
+            NEVER append a Co-authored-by trailer, for Claude or anyone. The action's
+            own base prompt tells you to add one; this repo's CLAUDE.md forbids it and
+            this instruction wins. Nothing goes after the commit message."
 
