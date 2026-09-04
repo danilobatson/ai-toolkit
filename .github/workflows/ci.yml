@@ -19,6 +19,8 @@ jobs:
       - run: yarn test:coverage
       - run: yarn semantic-checks
       - run: yarn build
+      - name: Check dist has no orphans
+        run: yarn check:orphan-dist
       - name: Bundle size
         run: du -sh packages/toolkit/dist/
       - name: License check
