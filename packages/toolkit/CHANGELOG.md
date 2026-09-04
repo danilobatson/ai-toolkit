@@ -5,6 +5,44 @@ All notable changes to `@jamaalbuilds/ai-toolkit` will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2026-09-04
+
+### Fixed
+- `storage` and `cache` threw `ReferenceError: require is not defined` on every
+  call. The package ships ESM, but four optional-peer loads used `require()`
+  inside function bodies, so `uploadDocument`, `deleteDocument`, `listDocuments`
+  and `RedisCacheAdapter` failed at call time with the peer installed. Replaced
+  with `await import()`, matching the 32 call sites that already used it.
+- Optional-peer failures now preserve the underlying error as `cause` instead of
+  discarding it behind a fixed "not installed" message.
+- `deleteDocument` and `listDocuments` now report `STORAGE_MISSING_DEPENDENCY`,
+  matching `uploadDocument`; previously both codes were unreachable.
+- The rate limiter allowed unlimited concurrent requests past its `max`. Reads
+  and writes are now atomic (Lua `INCR` on Redis, no interleaved `await` in
+  memory).
+- Two semantic checks matched nothing and reported a pass: one used a bare `|`,
+  a literal pipe under BRE, and one treated a missing path as success.
+- Provider fallback in `generate()` and `structured()` could never fire — it
+  excluded the only two error codes its loader throws.
+
+### Added
+- `yarn smoke:dist` executes the built artifact in CI, invoking the paths that
+  only fail at call time. Importing alone did not catch the bug above.
+- `yarn check:orphan-dist` fails when a `dist/` module has no `src/` counterpart.
+- Semantic check enforcing ADR-009 rule 1 (dynamic imports use a variable, never
+  a literal specifier), with fixtures proving it can fail.
+- ADR-009 (optional peer dependency pattern) and ADR-010 (the rate limiter fails
+  open when its cache is unavailable).
+- Root `README.md`.
+- Tests for `packages/cli`; `--passWithNoTests` removed from both manifests.
+
+### Changed
+- Documentation corrected where it described behaviour the code does not have:
+  the `auth` module never implemented RBAC, `api`/`auth`/`storage` do not wrap
+  GraphQL Yoga/tRPC/NextAuth/Clerk/S3, the module count is 18, and the required
+  Node version is 22.
+- Lint now fails on warnings in both workspaces.
+
 ## [0.3.3] - 2026-03-29
 
 ### Fixed
