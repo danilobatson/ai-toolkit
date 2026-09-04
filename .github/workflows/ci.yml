@@ -12,7 +12,11 @@ on:
   pull_request:
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  # head_ref is set on pull_request and empty on push, where ref_name gives the
+  # branch — so both events resolve to the SAME key and share one group. Keying
+  # on pull_request.number || github.ref did not: the two events produced
+  # different keys and every branch ran CI twice instead of cancelling.
+  group: ci-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
