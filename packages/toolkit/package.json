@@ -102,7 +102,7 @@
     "dev": "tsc --watch",
     "lint": "biome check --error-on-warnings src/",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rm -rf dist .turbo"
   },
