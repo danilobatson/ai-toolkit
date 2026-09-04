@@ -4,12 +4,14 @@ CLI for scaffolding AI-powered full-stack applications.
 
 Part of [@jamaalbuilds/ai-toolkit](https://github.com/danilobatson/ai-toolkit).
 
+**Not published to npm yet.** Use it from a local checkout of this repo for now.
+
 ## Install
 
 ```bash
-yarn global add @jamaalbuilds/aitk
+yarn global add @jamaalbuilds/aitk  # does not work yet — not published
 # or
-npx @jamaalbuilds/aitk
+npx @jamaalbuilds/aitk              # does not work yet — not published
 ```
 
 ## Commands
