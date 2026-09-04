@@ -44,6 +44,3 @@ The chain module does NOT wrap:
 - Users familiar with LangChain's full API may expect more features in the chain module
 - Built-in fallback implementations are simpler than LangChain's (no streaming transforms, no callback managers)
 - Two optional peer deps to install for full LangChain integration
-
-## Interview Answer
-We use LangChain.js specifically for composition — prompt templates, output parsing, RAG chains, and text splitting — but not for agent orchestration, which lives in our separate agents module wrapping LangGraph.js. This keeps module boundaries clean: chain handles sequential reasoning, agents handles stateful multi-step workflows. All chain functions include built-in fallbacks, so the module works with zero dependencies for basic use, with @langchain/core as an optional peer dep for advanced features.

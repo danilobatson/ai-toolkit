@@ -33,6 +33,3 @@ Use Langfuse as the observability backend for the monitor module.
 - Built-in evaluators are less mature than LangSmith's
 - Self-hosting requires separate infrastructure (Postgres + clickhouse)
 - Noop fallback means users without Langfuse get local cost tracking only
-
-## Interview Answer
-We chose Langfuse over LangSmith because it's open-source, vendor-neutral (works with any LLM provider, not just LangChain), and has a free cloud tier — critical for a toolkit that needs to work out of the box without requiring billing setup. Our adapter pattern wraps Langfuse behind a MonitorClient interface, so if a team prefers LangSmith or pure OpenTelemetry, only the adapter file changes.
