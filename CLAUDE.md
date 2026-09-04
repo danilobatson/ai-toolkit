@@ -14,9 +14,9 @@ One import. Clear names. Consistent API. Provider-agnostic. Auto-cleanup. Built-
 ai-toolkit/
 ├── packages/
 │   ├── toolkit/          — @jamaalbuilds/ai-toolkit (npm package)
-│   ├── toolkit-python/   — DEPRECATED — removing in v5
+│   ├── docs/             — Fumadocs documentation site
 │   └── cli/              — @jamaalbuilds/aitk (npm CLI)
-├── docs/                 — Fumadocs documentation site (to be added)
+├── docs/                 — process docs, ADRs
 ├── scripts/              — Build and test scripts
 ├── turbo.json            — Turborepo config
 └── package.json          — Root workspace (yarn workspaces)
@@ -56,7 +56,6 @@ These are the PUBLIC names developers import. Map them to the underlying librari
 
 1. **Adapter pattern** — every third-party library wrapped behind toolkit's own interface.
    Never expose raw LangChain/LlamaIndex/etc APIs to the developer.
-   If the underlying library changes, only the adapter file changes.
 
 2. **Every export has JSDoc** with @example block.
 
@@ -66,7 +65,6 @@ These are the PUBLIC names developers import. Map them to the underlying librari
    Catch underlying library errors → wrap in ToolkitError with context.
 
 5. **Modules with subscriptions/connections MUST register cleanup** on process exit.
-   Use the cleanup manager (to be built) for automatic disposal.
 
 6. **No hardcoded provider URLs** — use config.getProviderUrl().
 
@@ -119,7 +117,6 @@ Additional rules:
 
 - Source: `packages/toolkit/src/[module]/index.ts`
 - Implementation: `packages/toolkit/src/[module]/[feature].ts`
-- Adapters: `packages/toolkit/src/[module]/adapters/[provider].ts`
 - Types: `packages/toolkit/src/[module]/types.ts`
 - Tests: `packages/toolkit/src/[module]/__tests__/[feature].test.ts`
 - Semantic checks: `packages/toolkit/src/__verification__/toolkit-agent.test.ts`
@@ -133,37 +130,6 @@ yarn lint              # biome check
 yarn typecheck         # tsc --noEmit
 yarn test:semantic     # run toolkit-agent semantic checks
 ```
-
-## Current State (v4 → v5 Migration)
-
-### What EXISTS and works:
-- config/ — Zod schema validation, initToolkit()
-- errors/ — ToolkitError, typed error classes
-- llm/ — multi-provider LLM client (needs Vercel AI SDK update)
-- mcp/ — server builder with Zod schemas (keep, update)
-- storage/ — Vercel Blob wrapper (keep)
-- neon/ — Neon-specific DB module (replace with generic database/)
-- auth/ — API key validation, RBAC (keep, update)
-- observability/ — logger (add Langfuse)
-- security/ — rate limiter (add PII detection, audit guard, guardrails)
-- cache/ — Redis + in-memory (keep)
-- api/ — HTTP client (replace with GraphQL Yoga + tRPC)
-- health/ — health check (keep, enhance with recommendations)
-- data/ — API types (keep)
-- testing/ — mocks (keep, expand)
-
-### What needs to be ADDED (v5 new modules):
-- chain/ — LangChain.js wrapper
-- agents/ — LangGraph.js wrapper
-- knowledge/ — LlamaIndex.js + pgvector wrapper
-- database/ — Drizzle + pgvector (replaces neon/)
-- realtime/ — Pusher / SSE wrapper
-- api/ — GraphQL Yoga + tRPC (replaces HTTP client)
-- monitor/ — Langfuse wrapper (absorbs observability/langfuse)
-
-### What needs to be REMOVED:
-- packages/toolkit-python/ — entire directory (v5 is TypeScript-only)
-- packages/toolkit/src/neon/ — replaced by database/ module
 
 ## Development Workflow
 
@@ -190,11 +156,10 @@ yarn test:semantic     # run toolkit-agent semantic checks
 
 ## CI Pipeline
 
-```
-Pre-commit: biome lint + tsc --noEmit
-Pre-push: yarn test --run + yarn build + semantic checks
-GitHub Actions: all above + coverage + Semgrep + bundle size + license check
-```
+GitHub Actions (`ci.yml`) runs typecheck, lint, test:coverage, semantic-checks
+(its own step), build, a bundle-size check, and a license check; `codeql.yml`
+runs CodeQL for security scanning. See `docs/CODING_PROCESS_AND_STANDARDS.md`
+for the local Every Push / Scheduled / Pre-Commit / Pre-Push breakdown.
 
 ## Key Decisions
 
