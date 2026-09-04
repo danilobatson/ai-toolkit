@@ -228,7 +228,8 @@ describe("guardrail bypass attempts", () => {
 		expect(result.allowed).toBe(false);
 	});
 
-	// Accepted limitation — ADR-003 (regex over ML PII detection).
+	// Accepted limitation of regex guardrails — NOT covered by ADR-003, which is
+	// scoped to PII detection. blockedTerms.check() is a separate feature with no ADR.
 	it("does NOT block unicode homoglyphs of blocked terms (known limitation)", () => {
 		// Replace 'a' with Cyrillic 'a' (U+0430) — visually identical
 		const result = blockedTerms.check("This is d\u0430ngerous content");
