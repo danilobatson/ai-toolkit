@@ -98,8 +98,26 @@ const checks = [
 		run: () => listDocuments({ prefix: "smoke-test" }),
 	},
 	{
-		name: "new RedisCacheAdapter()",
-		run: () => new RedisCacheAdapter("redis://localhost:6379"),
+		// Constructing is NOT enough: the constructor only stores the load
+		// promise and swallows its rejection, so `ioredis` is never touched
+		// until a method awaits it. A construct-only check passes even when
+		// the peer is missing — it cannot fail, which is the thing this
+		// script exists to catch.
+		name: "RedisCacheAdapter.get()",
+		run: async () => {
+			const adapter = new RedisCacheAdapter("redis://127.0.0.1:6379");
+			// Timing out means the peer loaded and we reached a real connection
+			// attempt, so surface it as an unrelated error, not a missing peer.
+			return Promise.race([
+				adapter.get("smoke-test"),
+				new Promise((_, reject) =>
+					setTimeout(
+						() => reject(new Error("connect timeout (peer loaded)")),
+						15000,
+					),
+				),
+			]);
+		},
 	},
 ];
 
@@ -134,3 +152,7 @@ if (failed) {
 console.log(
 	"\nSmoke test passed — every entry imports and the storage/cache paths reach their installed peers.",
 );
+
+// ioredis may hold an open socket after the connection attempt, which would
+// keep the event loop alive and hang the job after a passing run.
+process.exit(0);
