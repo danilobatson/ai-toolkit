@@ -64,7 +64,7 @@ export default function HomePage() {
       <section className="max-w-3xl text-center space-y-6 mb-20">
         <div className="inline-flex items-center gap-2 rounded-full border border-fd-border px-3 py-1 text-sm text-fd-muted-foreground mb-4">
           <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-          17 modules &middot; 720+ tests
+          18 modules &middot; 720+ tests
         </div>
         <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
           AI Toolkit
