@@ -411,19 +411,34 @@ describe("rate limiter abuse", () => {
 		expect(webAllowed.allowed).toBe(true);
 	});
 
-	it("rapid fire concurrent requests respect the limit", async () => {
+	it("sequential requests respect the limit exactly", async () => {
 		const cache = new MemoryCacheAdapter();
 		const limiter = createRateLimiter(cache, { max: 5, windowSeconds: 60 });
 
-		// Fire 10 requests as fast as possible
+		// Fire 10 requests sequentially — the limiter's count >= max guard
+		// deterministically allows exactly max.
+		const results = [];
+		for (let i = 0; i < 10; i++) {
+			results.push(await limiter.check("rapid:1"));
+		}
+
+		const allowed = results.filter((r) => r.allowed).length;
+		expect(allowed).toBe(5);
+	});
+
+	// Accepted limitation — tracked in issue #7 ("Rate limiter allows unlimited
+	// concurrent requests past its max"). The read-modify-write in check() is not
+	// atomic against the cache, so parallel callers race past the count >= max guard.
+	it("does NOT enforce the limit under concurrent requests (known limitation — issue #7)", async () => {
+		const cache = new MemoryCacheAdapter();
+		const limiter = createRateLimiter(cache, { max: 5, windowSeconds: 60 });
+
 		const results = await Promise.all(
 			Array.from({ length: 10 }, () => limiter.check("rapid:1")),
 		);
 
 		const allowed = results.filter((r) => r.allowed).length;
-		// At least max should be allowed, at most max (may be more due to race conditions
-		// in memory cache, but should be approximately correct)
-		expect(allowed).toBeGreaterThanOrEqual(1);
-		expect(allowed).toBeLessThanOrEqual(10);
+		// All 10 slip through because each read sees count < max before any write lands.
+		expect(allowed).toBe(10);
 	});
 });
