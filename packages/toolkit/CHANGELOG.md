@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a literal pipe under BRE, and one treated a missing path as success.
 - Provider fallback in `generate()` and `structured()` could never fire — it
   excluded the only two error codes its loader throws.
+- `maxTokens` was silently discarded on every `generate()`, `stream()` and
+  `structured()` call. AI SDK v5 renamed the option to `maxOutputTokens`; the
+  toolkit still passed `maxTokens`, so the SDK ignored it and no token cap was
+  applied. `maxTokens` remains the toolkit's public option name and is now
+  mapped at the SDK boundary.
 
 ### Added
 - `yarn smoke:dist` executes the built artifact in CI, invoking the paths that
