@@ -37,7 +37,7 @@ The agents module does NOT wrap:
 - Clean separation: chain = composition (ADR-005), agents = orchestration
 - `createAgent()` is synchronous and works without LangGraph installed (just creates a handler)
 - `createGraph()` only imports LangGraph when actually building a graph
-- Dynamic import with variable trick prevents TypeScript from resolving the peer dep at compile time
+- Dynamic import with variable trick prevents TypeScript from resolving the peer dep at compile time — see [ADR-009](./009-optional-peer-dependency-pattern.md) for the full pattern
 - Three-function API (createAgent, createGraph, route) is beginner-friendly vs raw LangGraph
 - Typed GraphState interface ensures agents share context predictably
 

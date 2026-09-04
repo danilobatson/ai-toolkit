@@ -47,7 +47,7 @@ export function createAI(config?: AIConfig): AIClient {
 ## Rules
 
 1. **Never expose raw library types** — always translate to toolkit types
-2. **Dynamic imports** — peer deps are loaded at runtime, not compile time
+2. **Dynamic imports** — peer deps are loaded at runtime, not compile time (see [ADR-009](/docs/architecture/adrs#adr-009-optional-peer-dependency-pattern) for the full pattern)
 3. **Graceful errors** — missing peer dep → clear error message with install command
 4. **Input validation** — Zod or type guards before calling the library
 
