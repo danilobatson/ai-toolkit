@@ -30,7 +30,7 @@ yarn semantic-checks   # run semantic verification
 - **No `any`** in public API — use `unknown` + type guards
 - **No raw `throw new Error()`** — use `ToolkitError` with context
 - **No `process.exit()`** in library code
-- **Pin exact dependency versions** — no `^` ranges
+- **Pin exact versions for direct and dev dependencies** — no `^` ranges (peer dependencies follow the two-tier policy in [ADR-009](./docs/adrs/009-optional-peer-dependency-pattern.md))
 
 ### Every Export Must Have
 1. JSDoc with `@example` block
