@@ -93,6 +93,7 @@ Additional levels when applicable:
 - No `readFileSync` on production source files (test behavior, not text)
 - Tests must fail if the implementation is deleted — no `expect(fn).toBeDefined()` alone
 - Tests and implementation in the same commit
+- Mock the error shape the source actually throws — never hand-build an error type/code that no source file produces. A test that manufactures its own error shape can pass while the real failure path is unreachable in production.
 
 ### Test Coverage Targets
 - Core modules: 80%+ line coverage

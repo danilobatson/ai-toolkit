@@ -170,6 +170,27 @@ function extractUsage(usage: unknown): TokenUsage {
 	return { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
 }
 
+// ─── SDK Error Wrapping ─────────────────────────────────────────────────────
+
+/**
+ * Wrap a raw AI SDK error (rate limit, timeout, outage) as a retryable
+ * LLMError so it can trigger provider fallback. Already-typed LLMErrors
+ * (e.g. from loadModel) pass through unchanged.
+ */
+function wrapSDKError(error: unknown, provider: string, model: string): LLMError {
+	if (error instanceof LLMError) return error;
+	return new LLMError(
+		error instanceof Error ? error.message : "AI SDK request failed",
+		{
+			provider,
+			model,
+			code: "LLM_PROVIDER_ERROR",
+			retryable: true,
+			cause: error instanceof Error ? error : undefined,
+		},
+	);
+}
+
 // ─── Shared Client Context ─────────────────────────────────────────────────
 
 interface AIClientContext {
@@ -204,8 +225,7 @@ async function executeWithFallback<T>(
 			ctx.fallbackProvider &&
 			ctx.fallbackModel &&
 			error instanceof LLMError &&
-			error.code !== "LLM_NO_KEY" &&
-			error.code !== "LLM_MISSING_DEPENDENCY"
+			error.retryable
 		) {
 			const fbModel = await loadModel(
 				ctx.fallbackProvider,
@@ -233,15 +253,20 @@ async function generateImpl(
 	const start = Date.now();
 
 	return executeWithFallback(ctx, async (model, provider, modelName) => {
-		const result = await sdk.generateText({
-			model,
-			prompt,
-			system: options?.system,
-			temperature: options?.temperature,
-			maxTokens: options?.maxTokens,
-			stopSequences: options?.stopSequences,
-			abortSignal: options?.abortSignal,
-		});
+		let result: Record<string, unknown>;
+		try {
+			result = await sdk.generateText({
+				model,
+				prompt,
+				system: options?.system,
+				temperature: options?.temperature,
+				maxTokens: options?.maxTokens,
+				stopSequences: options?.stopSequences,
+				abortSignal: options?.abortSignal,
+			});
+		} catch (error) {
+			throw wrapSDKError(error, provider, modelName);
+		}
 
 		const usage = extractUsage(result.usage);
 		recordUsage(ctx.rateLimitState, usage.totalTokens);
@@ -340,16 +365,21 @@ async function structuredImpl<T extends z.ZodType>(
 	const start = Date.now();
 
 	return executeWithFallback(ctx, async (model, provider, modelName) => {
-		const result = await sdk.generateObject({
-			model,
-			prompt,
-			schema: options.schema,
-			schemaName: options.schemaName,
-			schemaDescription: options.schemaDescription,
-			system: options.system,
-			temperature: options.temperature,
-			maxTokens: options.maxTokens,
-		});
+		let result: Record<string, unknown>;
+		try {
+			result = await sdk.generateObject({
+				model,
+				prompt,
+				schema: options.schema,
+				schemaName: options.schemaName,
+				schemaDescription: options.schemaDescription,
+				system: options.system,
+				temperature: options.temperature,
+				maxTokens: options.maxTokens,
+			});
+		} catch (error) {
+			throw wrapSDKError(error, provider, modelName);
+		}
 
 		const usage = extractUsage(result.usage);
 		recordUsage(ctx.rateLimitState, usage.totalTokens);
