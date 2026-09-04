@@ -26,6 +26,30 @@ import { StorageError } from "../errors/types.js";
 // Variable indirection prevents TS from resolving the peer dep
 const VERCEL_BLOB_PATH = "@vercel/blob";
 
+interface VercelBlobModule {
+	put(
+		pathname: string,
+		body: unknown,
+		options: Record<string, unknown>,
+	): Promise<Record<string, unknown>>;
+	del(url: string): Promise<void>;
+	list(options: Record<string, unknown>): Promise<{
+		blobs: Array<Record<string, unknown>>;
+		cursor?: string;
+	}>;
+}
+
+async function loadVercelBlob(): Promise<VercelBlobModule> {
+	try {
+		return (await import(VERCEL_BLOB_PATH)) as unknown as VercelBlobModule;
+	} catch {
+		throw new StorageError(
+			"Vercel Blob not installed. Run: yarn add @vercel/blob",
+			{ code: "STORAGE_MISSING_DEPENDENCY" },
+		);
+	}
+}
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface FileValidationOptions {
@@ -125,22 +149,7 @@ export async function uploadDocument(
 	file: Blob | Buffer | ReadableStream,
 	options?: UploadOptions & { filename?: string; contentType?: string },
 ): Promise<UploadResult> {
-	let put: (
-		pathname: string,
-		body: unknown,
-		options: Record<string, unknown>,
-	) => Promise<Record<string, unknown>>;
-
-	try {
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const blob = require(VERCEL_BLOB_PATH);
-		put = blob.put;
-	} catch {
-		throw new StorageError(
-			"Vercel Blob not installed. Run: yarn add @vercel/blob",
-			{ code: "STORAGE_MISSING_DEPENDENCY" },
-		);
-	}
+	const blob = await loadVercelBlob();
 
 	const folder = options?.folder ?? "uploads";
 	const filename = options?.filename ?? `${Date.now()}-document`;
@@ -148,7 +157,7 @@ export async function uploadDocument(
 	const access = options?.access ?? "private";
 
 	try {
-		const result = await put(pathname, file, {
+		const result = await blob.put(pathname, file, {
 			access,
 			contentType: options?.contentType,
 		});
@@ -184,17 +193,11 @@ export async function uploadDocument(
  * ```
  */
 export async function deleteDocument(url: string): Promise<void> {
+	const blob = await loadVercelBlob();
+
 	try {
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const blob = require(VERCEL_BLOB_PATH);
 		await blob.del(url);
 	} catch (error) {
-		if (
-			error instanceof Error &&
-			"code" in error &&
-			(error as { code: string }).code === "STORAGE_MISSING_DEPENDENCY"
-		)
-			throw error;
 		throw new StorageError(
 			`Delete failed: ${error instanceof Error ? error.message : "Unknown error"}`,
 			{
@@ -223,16 +226,16 @@ export async function listDocuments(options?: {
 	blobs: Array<{ url: string; pathname: string; size: number }>;
 	cursor?: string;
 }> {
+	const blob = await loadVercelBlob();
+
 	try {
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const blob = require(VERCEL_BLOB_PATH);
 		const result = await blob.list({
 			prefix: options?.prefix,
 			limit: options?.limit ?? 100,
 			cursor: options?.cursor,
 		});
 		return {
-			blobs: result.blobs.map((b: Record<string, unknown>) => ({
+			blobs: result.blobs.map((b) => ({
 				url: String(b.url),
 				pathname: String(b.pathname),
 				size: typeof b.size === "number" ? b.size : 0,
