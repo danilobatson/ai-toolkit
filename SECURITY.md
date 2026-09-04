@@ -47,7 +47,7 @@ The toolkit includes built-in security capabilities:
 - API key guard middleware
 
 ### Dependencies
-- All dependencies pinned to exact versions (no `^` ranges)
+- Direct and dev dependencies pinned to exact versions (no `^` ranges); peer dependencies for libraries a consumer likely already has (e.g. `openai`, `ioredis`) use `>=` minimums — see [ADR-009](./docs/adrs/009-optional-peer-dependency-pattern.md)
 - Dependabot opens weekly dependency PRs (`.github/dependabot.yml`) and security updates for known CVEs
 - License audit in CI (MIT, Apache-2.0, BSD, ISC only)
 - CodeQL analysis on every PR to `main`
