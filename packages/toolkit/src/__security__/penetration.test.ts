@@ -415,15 +415,13 @@ describe("rate limiter abuse", () => {
 		const cache = new MemoryCacheAdapter();
 		const limiter = createRateLimiter(cache, { max: 5, windowSeconds: 60 });
 
-		// Fire 10 requests as fast as possible
+		// Fire 10 requests as fast as possible — the limiter's atomic incr
+		// must enforce the limit exactly, not just approximately.
 		const results = await Promise.all(
 			Array.from({ length: 10 }, () => limiter.check("rapid:1")),
 		);
 
 		const allowed = results.filter((r) => r.allowed).length;
-		// At least max should be allowed, at most max (may be more due to race conditions
-		// in memory cache, but should be approximately correct)
-		expect(allowed).toBeGreaterThanOrEqual(1);
-		expect(allowed).toBeLessThanOrEqual(10);
+		expect(allowed).toBe(5);
 	});
 });

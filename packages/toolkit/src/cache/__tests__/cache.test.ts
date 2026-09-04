@@ -56,4 +56,50 @@ describe("MemoryCacheAdapter", () => {
 		expect(await cache.get("user:2")).toBeNull();
 		expect(await cache.get("post:1")).toBe("c");
 	});
+
+	describe("incr", () => {
+		it("BEHAVIOR — starts at 1 and increments sequentially", async () => {
+			const cache = new MemoryCacheAdapter();
+			expect(await cache.incr("counter")).toBe(1);
+			expect(await cache.incr("counter")).toBe(2);
+			expect(await cache.incr("counter")).toBe(3);
+		});
+
+		it("BEHAVIOR — ten concurrent increments produce exactly 1..10, no lost updates", async () => {
+			const cache = new MemoryCacheAdapter();
+			const results = await Promise.all(
+				Array.from({ length: 10 }, () => cache.incr("concurrent")),
+			);
+			expect(results.sort((a, b) => a - b)).toEqual([
+				1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+			]);
+		});
+
+		it("ENVIRONMENT — resets to 1 after TTL expires", async () => {
+			vi.useFakeTimers();
+			try {
+				const cache = new MemoryCacheAdapter();
+				await cache.incr("expiring", { ttl: 1 });
+				vi.advanceTimersByTime(1500);
+				expect(await cache.incr("expiring", { ttl: 1 })).toBe(1);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it("CONTRACT — later increments do not extend the original TTL", async () => {
+			vi.useFakeTimers();
+			try {
+				const cache = new MemoryCacheAdapter();
+				await cache.incr("fixed-window", { ttl: 10 });
+				vi.advanceTimersByTime(5000);
+				await cache.incr("fixed-window", { ttl: 10 });
+				vi.advanceTimersByTime(5500);
+				// Original 10s window has elapsed — counter should have reset.
+				expect(await cache.incr("fixed-window", { ttl: 10 })).toBe(1);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+	});
 });

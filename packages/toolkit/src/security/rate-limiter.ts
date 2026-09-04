@@ -87,10 +87,12 @@ export function createRateLimiter(
 			const now = Date.now();
 
 			try {
-				const current = await cache.get<number>(key);
-				const count = current ?? 0;
+				// Atomic increment — a read-then-write (get + set) lets
+				// concurrent callers all read the same count before any of
+				// them writes, so the limit isn't enforced under concurrency.
+				const count = await cache.incr(key, { ttl: windowSeconds });
 
-				if (count >= max) {
+				if (count > max) {
 					return {
 						allowed: false,
 						remaining: 0,
@@ -99,11 +101,9 @@ export function createRateLimiter(
 					};
 				}
 
-				await cache.set(key, count + 1, { ttl: windowSeconds });
-
 				return {
 					allowed: true,
-					remaining: max - count - 1,
+					remaining: max - count,
 					limit: max,
 					resetAt: now + windowSeconds * 1000,
 				};

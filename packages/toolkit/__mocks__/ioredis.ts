@@ -4,6 +4,7 @@ export const mockGet = vi.fn();
 export const mockSet = vi.fn();
 export const mockDel = vi.fn();
 export const mockKeys = vi.fn();
+export const mockEval = vi.fn();
 export const mockQuit = vi.fn();
 
 export default vi.fn().mockImplementation(() => ({
@@ -11,5 +12,6 @@ export default vi.fn().mockImplementation(() => ({
 	set: mockSet,
 	del: mockDel,
 	keys: mockKeys,
+	eval: mockEval,
 	quit: mockQuit,
 }));
