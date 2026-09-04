@@ -58,10 +58,12 @@ jobs:
           # (it refuses to run when a PR edits this file), so Claude never executed
           # in either. If you retry it, verify AFTER merging to main.
           #
-          # Open problem: a review that finds nothing posts nothing, so "reviewed,
-          # clean" and "never ran" look identical on the PR. Seen on #25 — a real
-          # review (4 turns, 15s) that left no trace outside the Actions log.
-          # use_sticky_comment is the untested candidate.
+          # ⛔ An earlier version of this comment claimed a clean review posts
+          # nothing. That was wrong. Per the docs, --comment posts an inline
+          # comment per finding OR one summary comment when it finds none.
+          # The real reason a PR can get no comment: Claude skips drafts, closed
+          # PRs, PRs it judges trivial or automated, and PRs it has already
+          # commented on. #25 was judged trivial — correct behaviour, not a gap.
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 
