@@ -50,8 +50,13 @@ jobs:
           # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
           # prompt: 'Update the pull request description to include a summary of changes.'
 
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr *)'
+          # Write permissions alone do NOT let it open a PR — the tool allowlist is
+          # the real gate. On issue #13 it pushed a branch, then reported:
+          #   "gh, yarn, npx and curl all required interactive approval that isn't
+          #    available here ... gh pr create would need to be added to this
+          #    workflow's allowed tools."
+          # gh pr/issue: open and comment on its own work.
+          # yarn:        run the checks CONTRIBUTING requires before a PR — it could
+          #              not run tests or lint on #13 and had to say so in the body.
+          claude_args: '--allowed-tools "Bash(gh pr:*),Bash(gh issue:*),Bash(yarn:*)"'
 
