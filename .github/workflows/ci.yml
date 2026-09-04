@@ -1,13 +1,19 @@
 name: CI
 
-# `push` fires only for main. Every branch is covered by `pull_request` instead,
-# because a push made with GITHUB_TOKEN does not trigger `push` workflows — so
-# agent-opened PRs ran zero CI under the old `branches: ['**']`. PR #57's smoke
-# test never executed once. `pull_request` is not suppressed that way.
+# BOTH triggers are required; neither alone covers every author.
+#   push          the assign-agent and humans. Their PRs need manual approval to
+#                 run pull_request workflows, but their pushes run unblocked.
+#   pull_request  the @claude mention path, whose pushes use GITHUB_TOKEN and so
+#                 trigger no push workflows at all.
+# The concurrency group collapses the duplicate run when both fire.
 on:
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   quality:
