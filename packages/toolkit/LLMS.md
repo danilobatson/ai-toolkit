@@ -17,7 +17,7 @@ Unified TypeScript SDK for AI-powered applications. Wraps Vercel AI SDK, LangCha
 | `database` | Provider-agnostic Postgres — typed queries via Drizzle, vector search, migrations |
 | `mcp` | Model Context Protocol — build MCP servers, define tools and resources |
 | `security` | PII detection, audit logging, rate limiting, input/output guardrails |
-| `auth` | API key validation, multi-tenant context extraction, RBAC |
+| `auth` | API key validation, multi-tenant context extraction |
 | `cache` | Key-value cache with TTL — auto-detects Redis or falls back to in-memory |
 | `storage` | File upload with validation — wraps Vercel Blob |
 | `config` | Validate environment variables at startup using Zod schemas |

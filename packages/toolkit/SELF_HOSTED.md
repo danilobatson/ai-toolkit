@@ -149,7 +149,7 @@ if (findings.length > 0) {
 
 - Audit logging captures all data access and AI operations
 - Rate limiting prevents abuse patterns
-- RBAC via the `auth` module restricts access by role/tenant
+- The `auth` module validates API keys (timing-safe comparison) and extracts multi-tenant context
 - All operations are traceable through Langfuse spans
 
 ## Air-Gapped Deployment
