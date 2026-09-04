@@ -3,7 +3,7 @@
 Unified TypeScript SDK for AI-powered applications. Wraps Vercel AI SDK, LangChain.js, LangGraph.js, LlamaIndex.js, Langfuse, Inngest, MCP SDK, and Drizzle ORM behind one consistent API.
 
 Package: `@jamaalbuilds/ai-toolkit`
-Runtime: Node.js 18+, ESM-only
+Runtime: Node.js 22+, ESM-only
 Package manager: yarn (recommended)
 
 ## Install

@@ -19,7 +19,7 @@ npx @jamaalbuilds/aitk              # does not work yet — not published
 ### `aitk doctor`
 
 Validates your development environment:
-- Node.js >=18, yarn, Python >=3.12, uv, Docker, Git
+- Node.js >=20, yarn, Python >=3.12, uv, Docker, Git
 - Checks for API keys (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)
 
 ### `aitk init <project-name>`

@@ -5,7 +5,7 @@ const SYSTEM_PROMPT = `You are an assistant that helps developers use @jamaalbui
 ## Key Facts
 
 - Package: @jamaalbuilds/ai-toolkit (npm)
-- Runtime: Node.js 18+, ESM-only
+- Runtime: Node.js 22+, ESM-only
 - Package manager: Always use yarn, not npm
 - All peer dependencies are optional — install only what you use
 
