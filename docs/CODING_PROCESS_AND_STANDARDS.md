@@ -257,6 +257,8 @@ Every change should be checked for:
 - Rate limit all endpoints
 - Constant-time comparison for authentication tokens
 - Never expose internal error details to clients
+- The toolkit's rate limiter fails open on cache failure — it is not a hard
+  abuse or cost control on its own. See [ADR-010](./adrs/010-rate-limiter-fails-open.md).
 
 ### AI-Specific Security
 - PII detection before sending data to cloud AI providers

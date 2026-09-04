@@ -40,6 +40,7 @@ The toolkit includes built-in security capabilities:
 ### Rate Limiting (`security` module)
 - In-memory and Redis-backed rate limiting
 - Configurable windows and limits per key
+- Fails open when the backing cache is unavailable — not a hard abuse or cost control on its own; see [ADR-010](./docs/adrs/010-rate-limiter-fails-open.md)
 
 ### Auth (`auth` module)
 - Timing-safe API key comparison (prevents timing attacks)
