@@ -19,9 +19,16 @@ jobs:
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pull-requests: read
-      issues: read
+      # write so @claude can push a branch AND open the PR itself. Read-only got
+      # us a branch plus a "Create PR" link (issue #33) — the last manual step.
+      # ⚠️ Public repo. This is safe only because the action itself gates on the
+      # TRIGGERING ACTOR's write access — a bot author was rejected on #44 with
+      # "App token exchange failed: 401 - User does not have write access".
+      # A drive-by commenter cannot drive it. Do not remove that assumption
+      # without re-checking it.
+      contents: write
+      pull-requests: write
+      issues: write
       id-token: write
       actions: read # Required for Claude to read CI results on PRs
     steps:
