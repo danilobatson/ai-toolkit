@@ -37,6 +37,17 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # track_progress creates the tracking comment that
+          # mcp__github_comment__update_claude_comment writes to — WITHOUT it the
+          # job has no way to post anything except an inline comment on a diff
+          # line, so a clean review is silent. Adding Bash(gh pr comment:*) did
+          # not fix that: verified on #72, tool allowed and instruction present,
+          # never invoked. The plugin's --comment flow just ends its turn.
+          track_progress: true
+          # Lets the reviewer read CI status and a failing job's log via the
+          # mcp__github_ci__* tools instead of reviewing the diff blind.
+          additional_permissions: |
+            actions: read
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           # The trailing instruction is deliberate. A clean review posts NOTHING,
@@ -63,12 +74,12 @@ jobs:
           claude_args: >-
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*)"
 
-          # ⚠️ track_progress was tried here and reverted. Observed: it flips
-          # "Auto-detected mode" from agent to tag, and tag mode waits for an
-          # @claude mention rather than auto-reviewing. NOT fully proven — both
-          # test runs were also stopped by the action's workflow-validation guard
-          # (it refuses to run when a PR edits this file), so Claude never executed
-          # in either. If you retry it, verify AFTER merging to main.
+          # ⚠️ track_progress was tried once before and reverted on the theory
+          # that it flips the mode from agent to tag (which waits for an @claude
+          # mention). That was never actually observed — both test runs were
+          # stopped by the workflow-validation guard, so Claude never executed.
+          # Re-enabled above and being verified from main this time. If reviews
+          # stop firing on their own, this is the first thing to suspect.
           #
           # ⛔ This comment has now been wrong in both directions. Settled by
           # observation on #68: claude-review ran 1m49s, step conclusion success,
