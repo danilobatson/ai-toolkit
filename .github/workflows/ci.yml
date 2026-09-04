@@ -1,21 +1,19 @@
 name: CI
 
-# BOTH triggers are required; neither alone covers every author.
-#   push          the assign-agent and humans. Their PRs need manual approval to
-#                 run pull_request workflows, but their pushes run unblocked.
-#   pull_request  the @claude mention path, whose pushes use GITHUB_TOKEN and so
-#                 trigger no push workflows at all.
-# The concurrency group collapses the duplicate run when both fire.
+# push fires for main only; every branch is covered by pull_request.
+#
+# ⛔ Do NOT add `push: branches: ['**']` back. It was tried so the assign-agent's
+# PRs would run without manual approval. The result: both events fired per
+# branch, the concurrency group cancelled one, and a CANCELLED run renders as a
+# red `fail` in PR checks — verified on #67 and #68. A red X on every PR is worse
+# than the approval click it was meant to avoid. The mention path is the default
+# and its pull_request runs need no approval.
 on:
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
 
 concurrency:
-  # head_ref is set on pull_request and empty on push, where ref_name gives the
-  # branch — so both events resolve to the SAME key and share one group. Keying
-  # on pull_request.number || github.ref did not: the two events produced
-  # different keys and every branch ran CI twice instead of cancelling.
   group: ci-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
