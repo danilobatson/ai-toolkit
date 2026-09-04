@@ -411,19 +411,39 @@ describe("rate limiter abuse", () => {
 		expect(webAllowed.allowed).toBe(true);
 	});
 
-	it("rapid fire concurrent requests respect the limit", async () => {
+	it("sequential requests past the max are blocked", async () => {
 		const cache = new MemoryCacheAdapter();
 		const limiter = createRateLimiter(cache, { max: 5, windowSeconds: 60 });
 
-		// Fire 10 requests as fast as possible
+		// Fire 10 requests sequentially — check()'s `count >= max` guard means
+		// exactly `max` are allowed and the remainder are blocked.
+		const results: boolean[] = [];
+		for (let i = 0; i < 10; i++) {
+			const result = await limiter.check("sequential:1");
+			results.push(result.allowed);
+		}
+
+		const allowed = results.filter(Boolean).length;
+		expect(allowed).toBe(5);
+	});
+
+	// Accepted limitation — tracked in issue #7 ("Rate limiter allows unlimited
+	// concurrent requests past its max"). check() reads then writes the counter
+	// without an atomic increment, so concurrent callers all observe the same
+	// pre-increment value and every request is admitted.
+	it("does NOT bound concurrent requests to max (known limitation — issue #7)", async () => {
+		const cache = new MemoryCacheAdapter();
+		const limiter = createRateLimiter(cache, { max: 5, windowSeconds: 60 });
+
+		// Fire 10 requests concurrently against a limiter with max: 5.
 		const results = await Promise.all(
 			Array.from({ length: 10 }, () => limiter.check("rapid:1")),
 		);
 
 		const allowed = results.filter((r) => r.allowed).length;
-		// At least max should be allowed, at most max (may be more due to race conditions
-		// in memory cache, but should be approximately correct)
-		expect(allowed).toBeGreaterThanOrEqual(1);
-		expect(allowed).toBeLessThanOrEqual(10);
+		// Documents the race: all 10 slip through because the get/set pair
+		// in check() is not atomic. Fixing this requires an atomic INCR
+		// (Redis) or a mutex (in-memory).
+		expect(allowed).toBe(10);
 	});
 });
