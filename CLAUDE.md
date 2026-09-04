@@ -68,20 +68,18 @@ These are the PUBLIC names developers import. Map them to the underlying librari
 5. **Modules with subscriptions/connections MUST register cleanup** on process exit.
    Use the cleanup manager (to be built) for automatic disposal.
 
-6. **No hardcoded provider URLs** — use config.getProviderUrl().
+6. **No process.exit** in library code — throw ToolkitError instead.
 
-7. **No process.exit** in library code — throw ToolkitError instead.
+7. **No `any`** in public API. Use `unknown` + type guards if type is truly unknown.
 
-8. **No `any`** in public API. Use `unknown` + type guards if type is truly unknown.
-
-9. **No `^` in dependency versions** — pin exact versions for stability.
+8. **No `^` in dependency versions** — pin exact versions for stability.
    **Peer dep strategy:** Libraries we wrap directly get exact pins (tested version).
    Libraries users likely already have (`ioredis`, `openai`, `@vercel/blob`, etc.)
    use `>=` minimum — we only need a minimum API surface and must not force downgrades.
 
-10. **Tests use mock providers** — zero external API calls in tests.
+9. **Tests use mock providers** — zero external API calls in tests.
 
-11. **Same commit** — implementation and tests always in the same commit.
+10. **Same commit** — implementation and tests always in the same commit.
 
 ## Git Rules
 - **Commits are authored by Danilo Jamaal Batson, never by an agent.**
@@ -106,7 +104,7 @@ These are the PUBLIC names developers import. Map them to the underlying librari
 4. ENVIRONMENT — invalid/missing/null inputs handled
 5. PATTERN — matches conventions across modules
 6. CONTRACT — API contract honored
-7. PROVIDER FALLBACK — graceful degradation when primary fails
+7. PROVIDER FALLBACK — graceful degradation. Required wherever fallback is reachable (today only `stream()` — see #8)
 8. CLEANUP — resources released properly
 
 Additional rules:
@@ -131,7 +129,7 @@ yarn test              # run all tests
 yarn build             # compile TypeScript
 yarn lint              # biome check
 yarn typecheck         # tsc --noEmit
-yarn test:semantic     # run toolkit-agent semantic checks
+yarn semantic-checks   # run toolkit-agent semantic checks
 ```
 
 ## Current State (v4 → v5 Migration)

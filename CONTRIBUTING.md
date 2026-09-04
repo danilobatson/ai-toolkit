@@ -29,7 +29,6 @@ yarn semantic-checks   # run semantic verification
 - **Adapter pattern** — wrap all third-party libraries behind toolkit interfaces
 - **No `any`** in public API — use `unknown` + type guards
 - **No raw `throw new Error()`** — use `ToolkitError` with context
-- **No hardcoded provider URLs** — use `config.getProviderUrl()`
 - **No `process.exit()`** in library code
 - **Pin exact dependency versions** — no `^` ranges
 
@@ -46,7 +45,7 @@ Tests use a tiered framework:
 4. **ENVIRONMENT** — invalid/missing/null inputs handled
 5. **PATTERN** — matches conventions across modules
 6. **CONTRACT** — API contract honored
-7. **PROVIDER FALLBACK** — graceful degradation
+7. **PROVIDER FALLBACK** — graceful degradation. Required wherever fallback is reachable (today only `stream()` — see #8)
 8. **CLEANUP** — resources released properly
 
 Additional rules:
@@ -87,18 +86,3 @@ One concern per commit. Tests ship with their implementation.
 4. Open a PR using the provided template
 5. Fill out the checklist completely
 
-## Claude Code Contributors
-
-If you're using Claude Code to contribute, the following skills are available:
-
-| Skill | Purpose |
-|---|---|
-| `/preflight` | Run at session start — checks repo state |
-| `/writer` | Implement a module or feature end-to-end |
-| `/discovery` | Deep exploration before building |
-| `/spike` | Research a library before committing |
-| `/semantic-checks` | Run pattern-based verification |
-| `/report` | Generate session report |
-| `/session-state` | Update session state for continuity |
-
-Always run `/preflight` first. Always run `/report` last.
