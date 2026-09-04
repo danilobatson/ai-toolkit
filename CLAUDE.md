@@ -28,29 +28,10 @@ ai-toolkit/
 
 ## Module Naming Convention (v5)
 
-These are the PUBLIC names developers import. Map them to the underlying libraries:
-
-| Import Name | Wraps                    | What It Does                                               |
-| ----------- | ------------------------ | ---------------------------------------------------------- |
-| `ai`        | Vercel AI SDK            | Call AI models — generate, stream, structured output       |
-| `chain`     | LangChain.js             | Multi-step AI reasoning — prompt templates, output parsing |
-| `agents`    | LangGraph.js             | Multi-agent orchestration — AI routing, state, HITL        |
-| `knowledge` | LlamaIndex.js + pgvector | Document ingestion, chunking, embedding, semantic search   |
-| `monitor`   | Langfuse                 | Trace every LLM call, evaluate quality, cost tracking      |
-| `workflow`  | Inngest                  | Durable background jobs — cron, retry, pause/resume        |
-| `mcp`       | MCP SDK                  | Build MCP servers, connect MCP clients                     |
-| `security`  | Custom                   | PII detection, audit logging, rate limiting, guardrails    |
-| `database`  | Drizzle ORM + pgvector   | Typed queries, vector search, migrations                   |
-| `api`       | GraphQL Yoga + tRPC      | Type-safe APIs with subscriptions                          |
-| `auth`      | NextAuth.js / Clerk      | Sessions, API keys, multi-tenant                           |
-| `storage`   | Vercel Blob / S3         | File upload with validation                                |
-| `cache`     | Redis / in-memory        | Get/set/invalidate with TTL                                |
-| `config`    | Zod                      | Validate env vars, typed config                            |
-| `errors`    | Custom                   | Typed errors, retry logic                                  |
-| `health`    | Custom                   | Self-diagnostics, per-service status                       |
-| `testing`   | Custom                   | Mock AI, MCP, DB, workflows — zero API calls               |
-| `data`      | —                        | Shared API types (PaginatedResponse, ErrorResponse)        |
-| `observability` | Re-exports from monitor | Deprecated — use `monitor` instead                     |
+These are the PUBLIC names developers import. For the module-to-library mapping
+(what each module wraps, what it does, and its peer deps), see the table in
+`packages/toolkit/README.md` — that table is the single source of truth and is
+not duplicated here.
 
 ## Architecture Rules
 
@@ -78,6 +59,9 @@ These are the PUBLIC names developers import. Map them to the underlying librari
 9. **Tests use mock providers** — zero external API calls in tests.
 
 10. **Same commit** — implementation and tests always in the same commit.
+
+11. **The module-to-library table lives in `packages/toolkit/README.md` and nowhere
+    else.** Adding or re-scoping a module updates that one table only.
 
 ## Git Rules
 - **Commits are authored by Danilo Jamaal Batson, never by an agent.**
