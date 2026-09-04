@@ -30,6 +30,11 @@ jobs:
       - run: yarn test:coverage
       - run: yarn semantic-checks
       - run: yarn build
+      - name: Smoke-test published artifact
+        # @vercel/blob and ioredis are optional peers (see packages/toolkit/package.json
+        # devDependencies) so this executes the same require() paths a real consumer
+        # who installed them would hit — importing alone doesn't reach them.
+        run: yarn smoke:dist
       - name: Check dist has no orphans
         run: yarn check:orphan-dist
       - name: Bundle size

@@ -128,6 +128,11 @@ typecheck → lint → test → build
 ```
 All must pass. No exceptions.
 
+The published artifact gets executed in CI, not just compiled — a smoke-test
+step after `build` imports every `exports` entry and invokes the paths that
+only fail at call time (e.g. peer-dependency `require()` calls), so a build
+that merely compiles clean can't pass as a build that actually runs.
+
 ### Scheduled (Daily Cron)
 ```
 test → build
