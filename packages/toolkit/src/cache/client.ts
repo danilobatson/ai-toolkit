@@ -98,44 +98,54 @@ export class MemoryCacheAdapter implements CacheClient {
  * Redis cache adapter for production.
  * Requires ioredis as a peer dependency.
  */
+interface RedisLike {
+	get(key: string): Promise<string | null>;
+	set(key: string, value: string, mode: string, ttl: number): Promise<unknown>;
+	del(...keys: string[]): Promise<number>;
+	keys(pattern: string): Promise<string[]>;
+	quit(): Promise<string>;
+}
+
 export class RedisCacheAdapter implements CacheClient {
-	private redis: {
-		get(key: string): Promise<string | null>;
-		set(
-			key: string,
-			value: string,
-			mode: string,
-			ttl: number,
-		): Promise<unknown>;
-		del(...keys: string[]): Promise<number>;
-		keys(pattern: string): Promise<string[]>;
-		quit(): Promise<string>;
-	};
+	private redisUrl: string;
 	private defaultTtl: number;
+	private redisPromise: Promise<RedisLike> | null = null;
 
 	constructor(redisUrl: string, options?: { defaultTtl?: number }) {
+		this.redisUrl = redisUrl;
 		this.defaultTtl = options?.defaultTtl ?? 300;
-		try {
-			// ioredis is a peer dependency — fail clearly if missing
-			// Variable indirection prevents TS from resolving the peer dep
-			const ioredisPath = "ioredis";
-			// eslint-disable-next-line @typescript-eslint/no-require-imports
-			const Redis = require(ioredisPath);
-			this.redis = new Redis(redisUrl, {
-				maxRetriesPerRequest: 3,
-				lazyConnect: true,
-			});
-		} catch {
-			throw new CacheError(
-				"Redis cache requires ioredis. Install it: yarn add ioredis",
-				{ code: "CACHE_MISSING_DEPENDENCY" },
-			);
+	}
+
+	// ioredis is a peer dependency — loaded lazily on first use since
+	// await import() cannot run inside a synchronous constructor.
+	private loadRedis(): Promise<RedisLike> {
+		if (!this.redisPromise) {
+			this.redisPromise = (async () => {
+				try {
+					// Variable indirection prevents TS from resolving the peer dep
+					const moduleName = "ioredis";
+					const mod = (await import(moduleName)) as {
+						default: new (url: string, opts: Record<string, unknown>) => RedisLike;
+					};
+					return new mod.default(this.redisUrl, {
+						maxRetriesPerRequest: 3,
+						lazyConnect: true,
+					});
+				} catch {
+					throw new CacheError(
+						"Redis cache requires ioredis. Install it: yarn add ioredis",
+						{ code: "CACHE_MISSING_DEPENDENCY" },
+					);
+				}
+			})();
 		}
+		return this.redisPromise;
 	}
 
 	async get<T = unknown>(key: string): Promise<T | null> {
+		const redis = await this.loadRedis();
 		try {
-			const value = await this.redis.get(key);
+			const value = await redis.get(key);
 			if (!value) return null;
 			return JSON.parse(value) as T;
 		} catch (error) {
@@ -151,9 +161,10 @@ export class RedisCacheAdapter implements CacheClient {
 		value: T,
 		options?: CacheOptions,
 	): Promise<void> {
+		const redis = await this.loadRedis();
 		const ttl = options?.ttl ?? this.defaultTtl;
 		try {
-			await this.redis.set(key, JSON.stringify(value), "EX", ttl);
+			await redis.set(key, JSON.stringify(value), "EX", ttl);
 		} catch (error) {
 			throw new CacheError(`Cache set failed for key: ${key}`, {
 				code: "CACHE_SET_FAILED",
@@ -163,8 +174,9 @@ export class RedisCacheAdapter implements CacheClient {
 	}
 
 	async invalidate(key: string): Promise<void> {
+		const redis = await this.loadRedis();
 		try {
-			await this.redis.del(key);
+			await redis.del(key);
 		} catch (error) {
 			throw new CacheError(`Cache invalidate failed for key: ${key}`, {
 				code: "CACHE_INVALIDATE_FAILED",
@@ -174,10 +186,11 @@ export class RedisCacheAdapter implements CacheClient {
 	}
 
 	async invalidatePrefix(prefix: string): Promise<void> {
+		const redis = await this.loadRedis();
 		try {
-			const keys = await this.redis.keys(`${prefix}*`);
+			const keys = await redis.keys(`${prefix}*`);
 			if (keys.length > 0) {
-				await this.redis.del(...keys);
+				await redis.del(...keys);
 			}
 		} catch (error) {
 			throw new CacheError(`Cache invalidatePrefix failed for: ${prefix}`, {
@@ -188,7 +201,8 @@ export class RedisCacheAdapter implements CacheClient {
 	}
 
 	async disconnect(): Promise<void> {
-		await this.redis.quit();
+		const redis = await this.loadRedis();
+		await redis.quit();
 	}
 }
 

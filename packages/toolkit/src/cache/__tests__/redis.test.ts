@@ -1,17 +1,6 @@
-import Module from "node:module";
-import {
-	afterAll,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-	vi,
-} from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CacheError } from "../../errors/types.js";
 
-// Mock ioredis via Module._load since cache/client.ts uses require() (CJS)
-// and vi.mock doesn't intercept native require() in ESM mode.
 const mockGet = vi.fn();
 const mockSet = vi.fn();
 const mockDel = vi.fn();
@@ -26,21 +15,9 @@ const MockRedis = vi.fn().mockImplementation(() => ({
 	quit: mockQuit,
 }));
 
-const originalLoad = Module._load;
-
-beforeAll(() => {
-	// @ts-expect-error — overriding internal API for test mocking
-	Module._load = function (request: string, parent: unknown, isMain: boolean) {
-		if (request === "ioredis") {
-			return MockRedis;
-		}
-		return originalLoad.call(this, request, parent, isMain);
-	};
-});
-
-afterAll(() => {
-	Module._load = originalLoad;
-});
+vi.mock("ioredis", () => ({
+	default: MockRedis,
+}));
 
 beforeEach(() => {
 	vi.clearAllMocks();
