@@ -24,6 +24,8 @@ Unified TypeScript SDK for AI-powered applications. Wraps Vercel AI SDK, LangCha
 | `errors` | Typed error hierarchy — ToolkitError base with 7 subtypes |
 | `health` | Health check endpoint — per-service status (healthy/degraded/unhealthy) |
 | `testing` | Mock factories for all modules — zero external API calls in tests |
+| `data` | Shared API types — PaginatedResponse, ErrorResponse, HealthReport |
+| `api` | HTTP client with retry |
 
 ## Key Exports
 
