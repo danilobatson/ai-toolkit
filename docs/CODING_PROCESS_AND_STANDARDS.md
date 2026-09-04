@@ -152,6 +152,7 @@ test → build
 - Pin exact versions for direct and dev dependencies (no `^`, no `~`)
 - Peer dependencies use `>=` ranges (convention)
 - Dependabot for automated dependency monitoring (`.github/dependabot.yml`)
+- Optional peers load with `await import()`, never `require()` — the package ships as ESM, where `require` is undefined
 
 ### Adding Dependencies
 1. Check npm: version, last publish date, weekly downloads
