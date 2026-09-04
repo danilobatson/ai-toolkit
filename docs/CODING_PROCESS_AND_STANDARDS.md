@@ -167,6 +167,9 @@ test → build
 - Check for HIPAA/compliance compatibility if handling sensitive data
 - Always have a fallback plan if a dependency becomes unmaintained
 
+### Loading Optional Peers
+- Load optional peer dependencies with `await import()`, never `require()` — the package is ESM and `require` is not defined at runtime
+
 ---
 
 ## 7. Code Review Checklist
