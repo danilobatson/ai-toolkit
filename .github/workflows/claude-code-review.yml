@@ -12,16 +12,24 @@ on:
 
 jobs:
   claude-review:
-    # Skip Dependabot only. Its runs are structurally unauthenticatable: GitHub
-    # withholds secrets from Dependabot-triggered workflows, so
-    # CLAUDE_CODE_OAUTH_TOKEN is empty no matter what this file says.
+    # Skip the two authors this action structurally CANNOT review. It
+    # authenticates as the triggering actor, so a PR author without write access
+    # fails the app-token exchange — a check that can never pass, on every PR.
+    #   dependabot[bot]  GitHub withholds secrets from its runs; token is empty.
+    #   Claude           the assign-an-agent bot. Verified on #60:
+    #                    "App token exchange failed: 401 - User does not have
+    #                     write access", 3 attempts, then red.
     #
-    # ⛔ Do NOT widen this to `user.type != 'Bot'`. That is what it used to say, and
-    # it silently excluded every agent-authored PR — the mention path opens as
-    # claude[bot], the assign path as Claude — so the PRs most worth reviewing were
-    # the only ones never reviewed. Bot authorship is not the failure; missing
-    # secrets are, and only Dependabot has that problem by construction.
-    if: github.event.pull_request.user.login != 'dependabot[bot]'
+    # claude[bot] — the @claude MENTION path — is NOT skipped and works: #57 was
+    # reviewed in 47s. The difference is which identity opens the PR.
+    #
+    # ⛔ Do NOT collapse this back to `user.type != 'Bot'`. That excluded every
+    # agent PR including the mention path, so the PRs most worth reviewing were
+    # the only ones never reviewed.
+    # To review an assign-path PR, comment @claude on it — that fires as you.
+    if: >-
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'Claude'
 
     runs-on: ubuntu-latest
     permissions:
