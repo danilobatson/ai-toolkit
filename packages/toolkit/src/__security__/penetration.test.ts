@@ -35,6 +35,7 @@ function stubDatabase(): DatabaseClient {
 
 describe("PII bypass attempts", () => {
 	describe("obfuscated SSN formats", () => {
+		// Accepted limitation — ADR-003 (regex over ML PII detection).
 		it("does NOT detect spelled-out SSN (known limitation — regex only)", () => {
 			// "one two three - four five - six seven eight nine"
 			// Regex-based PII detection intentionally does not parse English words.
@@ -46,6 +47,7 @@ describe("PII bypass attempts", () => {
 			expect(ssns).toHaveLength(0);
 		});
 
+		// Accepted limitation — ADR-003 (regex over ML PII detection).
 		it("does NOT detect unicode lookalike SSN (known limitation)", () => {
 			// Full-width digit ４ (U+FF14) mixed with ASCII digits
 			const findings = detectPII("123-\uFF145-6789");
@@ -53,6 +55,7 @@ describe("PII bypass attempts", () => {
 			expect(ssns).toHaveLength(0);
 		});
 
+		// Accepted limitation — ADR-003 (regex over ML PII detection).
 		it("does NOT detect reversed SSN (known limitation)", () => {
 			const findings = detectPII("9876-54-321");
 			const ssns = findings.filter((f) => f.type === "SSN");
@@ -74,6 +77,7 @@ describe("PII bypass attempts", () => {
 			expect(sanitized).not.toContain("123-45-6789");
 		});
 
+		// Accepted limitation — ADR-003 (regex over ML PII detection).
 		it("does NOT detect base64-encoded SSN (known limitation)", () => {
 			// "123-45-6789" base64-encoded is "MTIzLTQ1LTY3ODk="
 			const encoded = Buffer.from("123-45-6789").toString("base64");
@@ -224,6 +228,7 @@ describe("guardrail bypass attempts", () => {
 		expect(result.allowed).toBe(false);
 	});
 
+	// Accepted limitation — ADR-003 (regex over ML PII detection).
 	it("does NOT block unicode homoglyphs of blocked terms (known limitation)", () => {
 		// Replace 'a' with Cyrillic 'a' (U+0430) — visually identical
 		const result = blockedTerms.check("This is d\u0430ngerous content");
