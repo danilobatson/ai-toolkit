@@ -12,25 +12,13 @@ on:
 
 jobs:
   claude-review:
-    # Skip the two authors this action structurally CANNOT review. It
-    # authenticates as the triggering actor, so a PR author without write access
-    # fails the app-token exchange — a check that can never pass, on every PR.
-    #   dependabot[bot]  GitHub withholds secrets from its runs; token is empty.
-    #   Claude           the assign-an-agent bot. Verified on #60:
-    #                    "App token exchange failed: 401 - User does not have
-    #                     write access", 3 attempts, then red.
+    # Skip Dependabot: GitHub withholds secrets from its runs, so the app-token
+    # exchange has nothing to exchange and the job can only ever fail.
     #
-    # claude[bot] — the @claude MENTION path — is NOT skipped and works: #57 was
-    # reviewed in 47s. The difference is which identity opens the PR.
-    #
-    # ⛔ Do NOT collapse this back to `user.type != 'Bot'`. That excluded every
-    # agent PR including the mention path, so the PRs most worth reviewing were
-    # the only ones never reviewed.
-    # To review an assign-path PR, comment @claude on it — that fires as you.
-    if: >-
-      github.event.pull_request.user.login != 'dependabot[bot]' &&
-      github.event.pull_request.user.login != 'Claude'
-
+    # ⛔ Do NOT widen this to `user.type != 'Bot'`. That excluded every
+    # agent-opened PR — the mention path opens as claude[bot] — so the PRs most
+    # worth reviewing were the only ones never reviewed.
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -65,7 +53,6 @@ jobs:
           # "Workflow initiated by non-human actor: claude (type: Bot)" (#63).
           # Earlier successes were misleading — #57 reviewed off a human rebase
           # push and #61 was human-authored, so the actor was human both times.
-          # The job-level `if:` above still excludes the authors that cannot auth.
           allowed_bots: 'claude'
           claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
           # ⚠️ track_progress was tried here and reverted. Observed: it flips
