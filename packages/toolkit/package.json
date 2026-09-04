@@ -98,7 +98,7 @@
     "SELF_HOSTED.md"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "dev": "tsc --watch",
     "lint": "biome check src/",
     "typecheck": "tsc --noEmit",
