@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import { LLMError, ValidationError } from "../../errors/types.js";
 import { createAI } from "../ai-client.js";
 
@@ -183,18 +184,23 @@ describe("executeWithFallback (via generate)", () => {
 		expect(result.usedFallback).toBe(false);
 	});
 
-	it("PROVIDER FALLBACK — falls back when primary generate fails", async () => {
+	it("PROVIDER FALLBACK — falls back when primary generate fails with a realistic raw AI SDK error", async () => {
 		mockLoadModel
 			.mockResolvedValueOnce({ modelId: "primary" })
 			.mockResolvedValueOnce({ modelId: "fallback" });
 
+		// Realistic shape of an error the Vercel AI SDK itself throws (e.g. a
+		// Groq 429) — NOT a hand-built LLMError. Production never produces
+		// LLMError from a raw SDK call, so this is what generateText actually
+		// rejects with.
+		const rawSDKError = Object.assign(new Error("Rate limit exceeded"), {
+			name: "AI_APICallError",
+			statusCode: 429,
+			isRetryable: true,
+		});
+
 		mockGenerateText
-			.mockRejectedValueOnce(
-				new LLMError("Provider error", {
-					provider: "groq",
-					code: "LLM_PROVIDER_ERROR",
-				}),
-			)
+			.mockRejectedValueOnce(rawSDKError)
 			.mockResolvedValueOnce({
 				text: "fallback response",
 				usage: { promptTokens: 10, completionTokens: 20 },
@@ -248,15 +254,54 @@ describe("executeWithFallback (via generate)", () => {
 		mockLoadModel.mockResolvedValueOnce({ modelId: "primary" });
 		mockGetDefaultFallback.mockReturnValue(undefined);
 
-		mockGenerateText.mockRejectedValueOnce(
-			new LLMError("Server error", {
-				provider: "groq",
-				code: "LLM_PROVIDER_ERROR",
-			}),
-		);
+		mockGenerateText.mockRejectedValueOnce(new Error("Server error"));
 
 		const ai = createAI({ provider: "groq" });
 		await expect(ai.generate("test")).rejects.toThrow(/server error/i);
+	});
+});
+
+describe("executeWithFallback (via structured)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockDetectProvider.mockReturnValue("groq");
+		mockGetDefaultModel.mockReturnValue("llama-3.3-70b-versatile");
+		mockGetDefaultFallback.mockReturnValue("openrouter");
+		mockLoadModel.mockResolvedValue({ modelId: "test-model" });
+		mockEstimateCost.mockReturnValue({
+			inputCost: 0,
+			outputCost: 0,
+			totalCost: 0,
+		});
+	});
+
+	it("PROVIDER FALLBACK — falls back when primary generateObject fails with a realistic raw AI SDK error", async () => {
+		mockLoadModel
+			.mockResolvedValueOnce({ modelId: "primary" })
+			.mockResolvedValueOnce({ modelId: "fallback" });
+
+		const rawSDKError = Object.assign(new Error("Service unavailable"), {
+			name: "AI_APICallError",
+			statusCode: 503,
+			isRetryable: true,
+		});
+
+		mockGenerateObject
+			.mockRejectedValueOnce(rawSDKError)
+			.mockResolvedValueOnce({
+				object: { name: "fallback" },
+				usage: { promptTokens: 10, completionTokens: 20 },
+			});
+
+		const ai = createAI({
+			provider: "groq",
+			fallbackProvider: "openrouter",
+			fallbackModel: "meta-llama/llama-3-70b",
+		});
+		const result = await ai.structured("test", { schema: z.object({ name: z.string() }) });
+
+		expect(result.object).toEqual({ name: "fallback" });
+		expect(result.usedFallback).toBe(true);
 	});
 });
 
