@@ -1,16 +1,21 @@
 name: Release
 
-# Publishes packages/toolkit to npm when a v* tag is pushed.
-# packages/cli is deliberately NOT published — see packages/cli/README.md.
+# Publishes packages/toolkit to npm. packages/cli is deliberately NOT published.
+#
+# ⏳ NPM_TOKEN EXPIRES. It was created 2026-09-04 as a 90-day automation token,
+#    so it lapses around 2026-12-03. When this workflow starts failing at the
+#    Publish step with 401 / ENEEDAUTH / E403, an expired token is the first
+#    thing to check — mint a new one at npmjs.com/settings/~/tokens and replace
+#    the NPM_TOKEN repo secret. Nothing else in the repo depends on it.
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: 'Pack and run every gate, but do not publish'
+      publish:
+        description: 'Actually publish to npm (leave unchecked to run every gate and stop)'
         type: boolean
-        default: true
+        default: false
 
 jobs:
   publish:
@@ -21,16 +26,21 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # ⛔ Do NOT add `registry-url:` here. It writes an .npmrc containing the
+      # literal ${NODE_AUTH_TOKEN}, and yarn v1 tries to expand that during
+      # `yarn install` before the variable exists:
+      #   error Failed to replace env in config: ${NODE_AUTH_TOKEN}
+      # The token is written straight to .npmrc at publish time instead.
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: yarn
-          registry-url: https://registry.npmjs.org
 
       - run: yarn install --frozen-lockfile
 
-      # ⛔ The tag is the only thing a human types, so it is the thing most
-      # likely to be wrong. Without this you can push v0.3.5 and publish 0.3.4.
+      # The tag is the only thing a human types, so it is the thing most likely
+      # to be wrong. Without this, pushing v0.3.5 publishes whatever version the
+      # manifest says — and an npm version is burned permanently once used.
       - name: Tag must match the package version
         if: startsWith(github.ref, 'refs/tags/')
         run: |
@@ -40,22 +50,20 @@ jobs:
           [ "$TAG" = "$PKG" ] || { echo "::error::tag $GITHUB_REF_NAME does not match package version $PKG"; exit 1; }
 
       # The same gate CI runs. Publishing is the one place where skipping it is
-      # unrecoverable: an unpublish window is 72 hours and the version is burned.
+      # unrecoverable, and smoke:dist is the check that would have caught the
+      # require()-in-ESM bug that shipped in 0.3.3.
       - run: yarn typecheck
       - run: yarn lint
       - run: yarn test
       - run: yarn semantic-checks
       - run: yarn build
       - run: yarn check:orphan-dist
-      # Executes dist/ and invokes the paths that only fail at call time. This is
-      # the check that would have caught the require()-in-ESM bug in 0.3.3.
       - run: yarn smoke:dist
 
       - name: Verify the tarball contents
         working-directory: packages/toolkit
         run: |
           npm pack --dry-run
-          # dist/ must be in the tarball, and nothing from a deleted src/ dir.
           npm pack --dry-run --json | node -e "
             const f=JSON.parse(require('fs').readFileSync(0,'utf8'))[0].files.map(x=>x.path);
             const dist=f.filter(p=>p.startsWith('dist/'));
@@ -64,12 +72,21 @@ jobs:
           "
 
       - name: Publish
-        if: startsWith(github.ref, 'refs/tags/') && inputs.dry_run != true
+        if: startsWith(github.ref, 'refs/tags/') || inputs.publish
         working-directory: packages/toolkit
-        run: npm publish --access public --provenance
+        run: |
+          if [ -z "${NPM_TOKEN}" ]; then
+            echo "::error::NPM_TOKEN secret is not set. Add it at Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          npm publish --access public --provenance || {
+            echo "::error::Publish failed. If this is 401/403/ENEEDAUTH, the NPM_TOKEN has most likely expired — see the note at the top of this file."
+            exit 1
+          }
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Dry run only — not published
-        if: inputs.dry_run == true
-        run: echo "Every gate passed. Re-run with dry_run unchecked, or push a v* tag, to publish."
+      - name: Gate-only run — nothing published
+        if: "!startsWith(github.ref, 'refs/tags/') && !inputs.publish"
+        run: echo "Every gate passed and the tarball looks right. Re-run with 'publish' checked, or push a v* tag, to publish for real."
