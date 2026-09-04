@@ -98,29 +98,39 @@ export class MemoryCacheAdapter implements CacheClient {
  * Redis cache adapter for production.
  * Requires ioredis as a peer dependency.
  */
+interface RedisLike {
+	get(key: string): Promise<string | null>;
+	set(
+		key: string,
+		value: string,
+		mode: string,
+		ttl: number,
+	): Promise<unknown>;
+	del(...keys: string[]): Promise<number>;
+	keys(pattern: string): Promise<string[]>;
+	quit(): Promise<string>;
+}
+
 export class RedisCacheAdapter implements CacheClient {
-	private redis: {
-		get(key: string): Promise<string | null>;
-		set(
-			key: string,
-			value: string,
-			mode: string,
-			ttl: number,
-		): Promise<unknown>;
-		del(...keys: string[]): Promise<number>;
-		keys(pattern: string): Promise<string[]>;
-		quit(): Promise<string>;
-	};
+	private redis: RedisLike | undefined;
+	private ready: Promise<void>;
 	private defaultTtl: number;
 
 	constructor(redisUrl: string, options?: { defaultTtl?: number }) {
 		this.defaultTtl = options?.defaultTtl ?? 300;
+		this.ready = this.connect(redisUrl);
+		// Avoid unhandled rejection noise if the adapter is constructed but
+		// never used before the missing-dependency failure is reported.
+		this.ready.catch(() => {});
+	}
+
+	private async connect(redisUrl: string): Promise<void> {
 		try {
 			// ioredis is a peer dependency — fail clearly if missing
 			// Variable indirection prevents TS from resolving the peer dep
 			const ioredisPath = "ioredis";
-			// eslint-disable-next-line @typescript-eslint/no-require-imports
-			const Redis = require(ioredisPath);
+			const mod = await import(ioredisPath);
+			const Redis = mod.default ?? mod;
 			this.redis = new Redis(redisUrl, {
 				maxRetriesPerRequest: 3,
 				lazyConnect: true,
@@ -133,9 +143,15 @@ export class RedisCacheAdapter implements CacheClient {
 		}
 	}
 
+	private async getRedis(): Promise<RedisLike> {
+		await this.ready;
+		return this.redis as RedisLike;
+	}
+
 	async get<T = unknown>(key: string): Promise<T | null> {
+		const redis = await this.getRedis();
 		try {
-			const value = await this.redis.get(key);
+			const value = await redis.get(key);
 			if (!value) return null;
 			return JSON.parse(value) as T;
 		} catch (error) {
@@ -152,8 +168,9 @@ export class RedisCacheAdapter implements CacheClient {
 		options?: CacheOptions,
 	): Promise<void> {
 		const ttl = options?.ttl ?? this.defaultTtl;
+		const redis = await this.getRedis();
 		try {
-			await this.redis.set(key, JSON.stringify(value), "EX", ttl);
+			await redis.set(key, JSON.stringify(value), "EX", ttl);
 		} catch (error) {
 			throw new CacheError(`Cache set failed for key: ${key}`, {
 				code: "CACHE_SET_FAILED",
@@ -163,8 +180,9 @@ export class RedisCacheAdapter implements CacheClient {
 	}
 
 	async invalidate(key: string): Promise<void> {
+		const redis = await this.getRedis();
 		try {
-			await this.redis.del(key);
+			await redis.del(key);
 		} catch (error) {
 			throw new CacheError(`Cache invalidate failed for key: ${key}`, {
 				code: "CACHE_INVALIDATE_FAILED",
@@ -174,10 +192,11 @@ export class RedisCacheAdapter implements CacheClient {
 	}
 
 	async invalidatePrefix(prefix: string): Promise<void> {
+		const redis = await this.getRedis();
 		try {
-			const keys = await this.redis.keys(`${prefix}*`);
+			const keys = await redis.keys(`${prefix}*`);
 			if (keys.length > 0) {
-				await this.redis.del(...keys);
+				await redis.del(...keys);
 			}
 		} catch (error) {
 			throw new CacheError(`Cache invalidatePrefix failed for: ${prefix}`, {
@@ -188,7 +207,8 @@ export class RedisCacheAdapter implements CacheClient {
 	}
 
 	async disconnect(): Promise<void> {
-		await this.redis.quit();
+		const redis = await this.getRedis();
+		await redis.quit();
 	}
 }
 

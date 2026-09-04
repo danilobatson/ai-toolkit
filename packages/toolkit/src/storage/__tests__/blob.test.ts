@@ -1,36 +1,15 @@
-import Module from "node:module";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-	afterAll,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-	vi,
-} from "vitest";
+	del as mockDel,
+	list as mockList,
+	put as mockPut,
+} from "../../../__mocks__/@vercel/blob.js";
 import { StorageError } from "../../errors/types.js";
 
-// Mock @vercel/blob via Module._load since blob.ts uses require() (CJS)
-// and vi.mock doesn't intercept native require() in ESM mode.
-const mockPut = vi.fn();
-const mockDel = vi.fn();
-const mockList = vi.fn();
-
-const originalLoad = Module._load;
-
-beforeAll(() => {
-	// @ts-expect-error — overriding internal API for test mocking
-	Module._load = function (request: string, parent: unknown, isMain: boolean) {
-		if (request === "@vercel/blob") {
-			return { put: mockPut, del: mockDel, list: mockList };
-		}
-		return originalLoad.call(this, request, parent, isMain);
-	};
-});
-
-afterAll(() => {
-	Module._load = originalLoad;
-});
+// Uses packages/toolkit/__mocks__/@vercel/blob.ts — @vercel/blob is an
+// optional peer dependency and may not be installed, so it can't be
+// resolved for mocking.
+vi.mock("@vercel/blob");
 
 beforeEach(() => {
 	vi.clearAllMocks();
