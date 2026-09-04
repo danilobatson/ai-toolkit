@@ -58,7 +58,9 @@ const result = await ai.generate('Hello');
 ## Dependency Strategy
 
 - **Direct deps**: Libraries the toolkit wraps get pinned to exact versions
-- **Peer deps**: Libraries users likely already have use `>=` minimum versions
+- **Peer deps**: exact pins for libraries the toolkit wraps directly and tests
+  against, `>=` minimum versions for libraries users likely already have — see
+  [ADR-009](/docs/architecture/adrs#adr-009-optional-peer-dependency-pattern)
 - **Zero-dep modules**: security, auth, errors, health, testing have no external dependencies
 
 ## Error Handling

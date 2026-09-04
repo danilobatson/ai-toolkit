@@ -54,3 +54,9 @@ These decisions were made during Phase 1 development and document the reasoning 
 **Decision:** Use [LangGraph.js](https://langchain-ai.github.io/langgraphjs/) for multi-agent orchestration.
 
 **Rationale:** LangGraph's state graph model naturally maps to multi-agent workflows with conditional routing, cycles, and human-in-the-loop checkpoints.
+
+### ADR-009: Optional Peer Dependency Pattern
+
+**Decision:** Every optional peer dependency is loaded with a dynamic `import()` whose specifier is a variable or property, never a string literal, and versioned as either an exact pin (libraries the toolkit wraps and tests against) or a `>=` minimum (libraries the consumer likely already has).
+
+**Rationale:** A non-literal specifier keeps TypeScript from resolving the peer at compile time, so consumers only install what the modules they use actually need. `chain/splitter.ts` and `knowledge/operations.ts` fall back to a zero-dependency built-in splitter when the peer is absent; every other module throws a `ToolkitError` with an install command and the original error preserved as `cause`.

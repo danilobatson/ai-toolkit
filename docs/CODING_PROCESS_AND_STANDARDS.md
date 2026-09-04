@@ -156,7 +156,10 @@ test → build
 
 ### Versioning
 - Pin exact versions for direct and dev dependencies (no `^`, no `~`)
-- Peer dependencies use `>=` ranges (convention)
+- Peer dependencies: exact pins for libraries the toolkit wraps directly and tests
+  against; `>=` minimums for libraries the consumer likely already has, so a
+  minimum API surface is enough. See
+  [ADR-009](./adrs/009-optional-peer-dependency-pattern.md).
 - Dependabot for automated dependency monitoring (`.github/dependabot.yml`)
 
 ### Adding Dependencies
