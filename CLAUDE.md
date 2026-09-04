@@ -205,6 +205,18 @@ GitHub Actions: all above + coverage + Semgrep + bundle size + license check
 
 Applies to anyone opening a PR here, agents included.
 
+- **Finish with a PR that actually exists.** Never hand back a "Create PR" link or
+  stop at a pushed branch — the PR is the deliverable, not the branch.
+  - **No PR for your branch yet** → open it yourself: `gh pr create`.
+  - **A draft PR already exists** (it was opened for you when the issue was assigned,
+    titled `[WIP] ...`) → **adopt it, don't leave it.** That shell is created before
+    you start work, so its title and body are placeholders:
+    - `gh pr edit <n> --title "type(scope): subject"` — the `[WIP]` title fails the
+      `conventional-commit` check every time.
+    - `gh pr edit <n> --body-file <file>` — replace the quoted issue text with the
+      filled template.
+    - `gh pr ready <n>` — take it out of draft.
+
 - **Fill `.github/PULL_REQUEST_TEMPLATE.md`.** GitHub only injects it when the body
   is empty, so `gh pr create --body`, API calls and pre-filled `quick_pull` links
   all bypass it silently. Copy the sections and fill them.
