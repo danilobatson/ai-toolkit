@@ -32,7 +32,7 @@ DISCOVER → PLAN → READ → IMPLEMENT → TEST → VERIFY → REVIEW → SHIP
 ### TypeScript
 - `strict: true` always
 - No `any` in exported types — use `unknown` + type guards
-- No non-null assertions (`!`) — check for null explicitly
+- No non-null assertions (`!`) — check for null explicitly (Biome `warn`, fatal in CI via `--error-on-warnings`)
 - `import type` for type-only imports
 - Named exports only — no default exports
 - Explicit return types on public functions
