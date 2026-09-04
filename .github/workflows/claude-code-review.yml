@@ -51,7 +51,16 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
+          # The trailing instruction is deliberate. A clean review posts NOTHING,
+          # so "reviewed and found nothing" and "never ran" look identical from
+          # the PR — verified on #68: 1m49s of real work, zero comments.
+          prompt: >-
+            /code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+
+            Always finish by posting exactly one summary comment with your verdict,
+            even when you find nothing worth flagging. Say what you checked and that
+            it came back clean. A silent pass is indistinguishable from a run that
+            never happened.
           # Without this the action refuses a bot-opened PR outright:
           # "Workflow initiated by non-human actor: claude (type: Bot)" (#63).
           # Earlier successes were misleading — #57 reviewed off a human rebase
@@ -66,12 +75,13 @@ jobs:
           # (it refuses to run when a PR edits this file), so Claude never executed
           # in either. If you retry it, verify AFTER merging to main.
           #
-          # ⛔ An earlier version of this comment claimed a clean review posts
-          # nothing. That was wrong. Per the docs, --comment posts an inline
-          # comment per finding OR one summary comment when it finds none.
-          # The real reason a PR can get no comment: Claude skips drafts, closed
-          # PRs, PRs it judges trivial or automated, and PRs it has already
-          # commented on. #25 was judged trivial — correct behaviour, not a gap.
+          # ⛔ This comment has now been wrong in both directions. Settled by
+          # observation on #68: claude-review ran 1m49s, step conclusion success,
+          # no validation skip, no auth error — and posted ZERO comments. So a
+          # clean review IS silent; --comment does not emit a summary on its own.
+          # Hence the explicit instruction in `prompt:` above.
+          # Claude also skips drafts, closed PRs, and PRs it judges trivial
+          # (#25) — those are separate reasons for silence and remain correct.
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 
