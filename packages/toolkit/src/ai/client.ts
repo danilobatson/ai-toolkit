@@ -7,7 +7,7 @@
  *
  * @example
  * ```ts
- * import { createLLM } from '@jamaalbuilds/ai-toolkit/llm';
+ * import { createLLM } from '@jamaalbuilds/ai-toolkit/ai';
  *
  * const llm = createLLM();  // auto-detects from env vars
  * const response = await llm.complete('Summarize this document.', {
@@ -146,7 +146,7 @@ const PROVIDER_DEFAULTS: Record<string, { model: string; envKey: string }> = {
  *
  * @example
  * ```ts
- * import { createLLM } from '@jamaalbuilds/ai-toolkit/llm';
+ * import { createLLM } from '@jamaalbuilds/ai-toolkit/ai';
  *
  * const llm = createLLM(); // auto-detects provider
  * const { content } = await llm.complete('Summarize this document.');
