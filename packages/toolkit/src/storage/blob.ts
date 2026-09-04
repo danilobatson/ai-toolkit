@@ -26,6 +26,15 @@ import { StorageError } from "../errors/types.js";
 // Variable indirection prevents TS from resolving the peer dep
 const VERCEL_BLOB_PATH = "@vercel/blob";
 
+// Node's ESM resolver (and CJS require, for the rare transpiled consumer)
+// tags an unresolvable specifier with one of these codes. Any other error
+// means the module exists but failed to load — a different problem with a
+// different fix.
+function isMissingModuleError(error: unknown): boolean {
+	const code = (error as NodeJS.ErrnoException | undefined)?.code;
+	return code === "ERR_MODULE_NOT_FOUND" || code === "MODULE_NOT_FOUND";
+}
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface FileValidationOptions {
@@ -134,10 +143,22 @@ export async function uploadDocument(
 	try {
 		const blob = await import(VERCEL_BLOB_PATH);
 		put = blob.put;
-	} catch {
+	} catch (error) {
+		if (isMissingModuleError(error)) {
+			throw new StorageError(
+				"Vercel Blob not installed. Run: yarn add @vercel/blob",
+				{
+					code: "STORAGE_MISSING_DEPENDENCY",
+					cause: error instanceof Error ? error : undefined,
+				},
+			);
+		}
 		throw new StorageError(
-			"Vercel Blob not installed. Run: yarn add @vercel/blob",
-			{ code: "STORAGE_MISSING_DEPENDENCY" },
+			`Failed to load @vercel/blob: ${error instanceof Error ? error.message : "Unknown error"}`,
+			{
+				code: "STORAGE_LOAD_FAILED",
+				cause: error instanceof Error ? error : undefined,
+			},
 		);
 	}
 

@@ -1,5 +1,14 @@
 import { CacheError } from "../errors/types.js";
 
+// Node's ESM resolver (and CJS require, for the rare transpiled consumer)
+// tags an unresolvable specifier with one of these codes. Any other error
+// means the module exists but failed to load — a different problem with a
+// different fix.
+function isMissingModuleError(error: unknown): boolean {
+	const code = (error as NodeJS.ErrnoException | undefined)?.code;
+	return code === "ERR_MODULE_NOT_FOUND" || code === "MODULE_NOT_FOUND";
+}
+
 /**
  * Options for cache operations.
  *
@@ -135,10 +144,22 @@ export class RedisCacheAdapter implements CacheClient {
 				maxRetriesPerRequest: 3,
 				lazyConnect: true,
 			});
-		} catch {
+		} catch (error) {
+			if (isMissingModuleError(error)) {
+				throw new CacheError(
+					"Redis cache requires ioredis. Install it: yarn add ioredis",
+					{
+						code: "CACHE_MISSING_DEPENDENCY",
+						cause: error instanceof Error ? error : undefined,
+					},
+				);
+			}
 			throw new CacheError(
-				"Redis cache requires ioredis. Install it: yarn add ioredis",
-				{ code: "CACHE_MISSING_DEPENDENCY" },
+				`Failed to load ioredis: ${error instanceof Error ? error.message : "Unknown error"}`,
+				{
+					code: "CACHE_LOAD_FAILED",
+					cause: error instanceof Error ? error : undefined,
+				},
 			);
 		}
 	}
