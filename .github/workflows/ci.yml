@@ -1,8 +1,13 @@
 name: CI
 
+# `push` fires only for main. Every branch is covered by `pull_request` instead,
+# because a push made with GITHUB_TOKEN does not trigger `push` workflows — so
+# agent-opened PRs ran zero CI under the old `branches: ['**']`. PR #57's smoke
+# test never executed once. `pull_request` is not suppressed that way.
 on:
   push:
-    branches: ['**']
+    branches: [main]
+  pull_request:
 
 jobs:
   quality:
