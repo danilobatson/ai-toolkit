@@ -44,6 +44,8 @@ jobs:
           # not fix that: verified on #72, tool allowed and instruction present,
           # never invoked. The plugin's --comment flow just ends its turn.
           track_progress: true
+          # Same report-in-step-summary benefit for the reviewer.
+          display_report: true
           # Lets the reviewer read CI status and a failing job's log via the
           # mcp__github_ci__* tools instead of reviewing the diff blind.
           additional_permissions: |

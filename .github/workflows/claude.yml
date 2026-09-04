@@ -43,6 +43,20 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
+          # Git identity for commits the agent makes. Defaults to claude[bot],
+          # which is why merged commits read "claude[bot]" as author and why
+          # GitHub added Co-authored-by: claude[bot] on squash. Setting the owner
+          # here is the supported fix — --author in the system prompt only
+          # affects commits it makes by hand, not the action's own git ops.
+          bot_id: '69876068'
+          bot_name: 'danilobatson'
+
+          # One comment per run instead of a new one each time.
+          use_sticky_comment: true
+          # Puts the run report in the GitHub Step Summary, so "did it work"
+          # is answerable from the Actions tab without reading the raw log.
+          display_report: true
+
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
             actions: read
