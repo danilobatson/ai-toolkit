@@ -97,6 +97,8 @@ function recordUsage(state: RateLimitState, tokens: number): void {
 // ─── AI SDK Dynamic Imports ─────────────────────────────────────────────────
 
 interface AISDKFunctions {
+	// opts field names must match the installed `ai` package's API (e.g. maxOutputTokens,
+	// not maxTokens, since AI SDK v5) — not checked by tsc because opts is Record<string, unknown>.
 	generateText: (
 		opts: Record<string, unknown>,
 	) => Promise<Record<string, unknown>>;
@@ -260,7 +262,7 @@ async function generateImpl(
 				prompt,
 				system: options?.system,
 				temperature: options?.temperature,
-				maxTokens: options?.maxTokens,
+				maxOutputTokens: options?.maxTokens,
 				stopSequences: options?.stopSequences,
 				abortSignal: options?.abortSignal,
 			});
@@ -323,7 +325,7 @@ async function streamImpl(
 		prompt,
 		system: options?.system,
 		temperature: options?.temperature,
-		maxTokens: options?.maxTokens,
+		maxOutputTokens: options?.maxTokens,
 		stopSequences: options?.stopSequences,
 		abortSignal: options?.abortSignal,
 	});
@@ -375,7 +377,7 @@ async function structuredImpl<T extends z.ZodType>(
 				schemaDescription: options.schemaDescription,
 				system: options.system,
 				temperature: options.temperature,
-				maxTokens: options.maxTokens,
+				maxOutputTokens: options.maxTokens,
 			});
 		} catch (error) {
 			throw wrapSDKError(error, provider, modelName);
