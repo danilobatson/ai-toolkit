@@ -111,6 +111,8 @@ yarn build             # compile TypeScript
 yarn lint              # biome check
 yarn typecheck         # tsc --noEmit
 yarn semantic-checks   # run toolkit-agent semantic checks
+yarn check:orphan-dist # flag dist/ files with no matching src/ source
+yarn smoke:dist        # execute the built dist/ package, not just import it
 ```
 
 ## Development Workflow
@@ -139,9 +141,10 @@ yarn semantic-checks   # run toolkit-agent semantic checks
 ## CI Pipeline
 
 GitHub Actions (`ci.yml`) runs typecheck, lint, test:coverage, semantic-checks
-(its own step), build, a bundle-size check, and a license check; `codeql.yml`
-runs CodeQL for security scanning. See `docs/CODING_PROCESS_AND_STANDARDS.md`
-for the local Every Push / Scheduled / Pre-Commit / Pre-Push breakdown.
+(its own step), build, check:orphan-dist, smoke:dist, prints the `dist/` size
+(no budget or failure condition), and a license check; `codeql.yml` runs
+CodeQL for security scanning. See `docs/CODING_PROCESS_AND_STANDARDS.md` for
+the local Every Push / Scheduled / Pre-Commit / Pre-Push breakdown.
 
 ## Key Decisions
 
