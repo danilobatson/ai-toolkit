@@ -32,6 +32,8 @@ jobs:
       - run: yarn build
       - name: Check dist has no orphans
         run: yarn check:orphan-dist
+      - name: Smoke-test built artifact
+        run: yarn smoke:dist
       - name: Bundle size
         run: du -sh packages/toolkit/dist/
       - name: License check
