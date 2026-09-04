@@ -216,26 +216,7 @@ Every change should be checked for:
 
 ---
 
-## 8. Session Management
-
-### Start of Every Session
-- Read CLAUDE.md (or project context file)
-- Read SESSION_STATE.md (previous session context)
-- Run preflight checks (repo, branch, clean state, baseline tests)
-
-### End of Every Session
-- Update SESSION_STATE.md with: what was done, what's next, test baseline
-- Ensure all work is committed (no uncommitted changes)
-- Push if approved
-
-### Between Sessions
-- SESSION_STATE.md preserves context
-- Each step is independently verifiable
-- Anyone (human or AI) can pick up where the last session left off
-
----
-
-## 9. Architecture Principles
+## 8. Architecture Principles
 
 ### Adapter Pattern
 - Every third-party library wrapped behind project's own interface
@@ -258,7 +239,7 @@ Every change should be checked for:
 
 ---
 
-## 10. Security Principles
+## 9. Security Principles
 
 ### Data Handling
 - Never log PII, PHI, secrets, or tokens
