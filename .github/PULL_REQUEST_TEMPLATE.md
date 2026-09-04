@@ -1,10 +1,13 @@
+<!-- Ceiling: 200 words. Delete any section you would otherwise pad.
+     Only What and Why are required. The diff carries the detail. -->
+
 ## What
 
-<!-- Brief description of the change -->
+<!-- One sentence. -->
 
 ## Why
 
-<!-- Why is this change needed? Link to issue if applicable -->
+<!-- One or two sentences, plus the issue link. -->
 
 ## Reviewer focus
 
