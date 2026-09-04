@@ -40,4 +40,4 @@ Key design choices:
 **Negative:**
 - Requires Inngest dev server for local development (`npx inngest-cli@latest dev`)
 - Production requires Inngest Cloud account or self-hosted setup
-- Vendor coupling (mitigated by adapter pattern — swap to Temporal/BullMQ by changing adapter only)
+- Vendor coupling (mitigated by adapter pattern — swap to Temporal/BullMQ by changing only `workflow.ts`)

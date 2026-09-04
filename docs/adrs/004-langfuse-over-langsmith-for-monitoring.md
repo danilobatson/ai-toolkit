@@ -25,7 +25,7 @@ Use Langfuse as the observability backend for the monitor module.
 - Free cloud tier works for demos and small projects (no billing required)
 - Open-source means users can self-host for privacy-sensitive workloads
 - Vendor-neutral: traces any LLM provider (OpenAI, Anthropic, Groq, etc.)
-- Our adapter pattern means swapping Langfuse for another provider changes one file
+- Our adapter pattern means swapping Langfuse for another provider changes only `monitor.ts`
 - v5 SDK uses OpenTelemetry under the hood, future-proofing for OTel ecosystem
 
 **Negative:**

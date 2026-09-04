@@ -60,7 +60,6 @@ packages/toolkit/src/[module]/
   index.ts              # public exports
   [feature].ts          # implementation
   types.ts              # type definitions
-  adapters/[provider].ts  # provider adapters
   __tests__/[feature].test.ts  # tests
 ```
 
