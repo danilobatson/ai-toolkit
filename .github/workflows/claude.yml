@@ -58,5 +58,15 @@ jobs:
           # gh pr/issue: open and comment on its own work.
           # yarn:        run the checks CONTRIBUTING requires before a PR — it could
           #              not run tests or lint on #13 and had to say so in the body.
-          claude_args: '--allowed-tools "Bash(gh pr:*),Bash(gh issue:*),Bash(yarn:*)"'
+          # --append-system-prompt, not `prompt:` — `prompt:` REPLACES the
+          # triggering comment's task. This adds to it.
+          # CLAUDE.md alone was not enough: it opened the PR on one run (#63) and
+          # handed back a "Create PR" link on two others with the rule in place.
+          claude_args: >-
+            --allowed-tools "Bash(gh pr:*),Bash(gh issue:*),Bash(yarn:*)"
+            --append-system-prompt "Finishing the task means the pull request
+            EXISTS. After you push, run `gh pr create` yourself with a conventional
+            title and the filled .github/PULL_REQUEST_TEMPLATE.md body. Never end by
+            replying with a 'Create PR' link or a bare pushed branch — that is an
+            unfinished task, not a handoff."
 
