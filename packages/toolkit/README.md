@@ -68,6 +68,10 @@ import { createAgent } from '@jamaalbuilds/ai-toolkit/agents';
 | `data` | Shared API types (PaginatedResponse, ErrorResponse) | — | — |
 | `api` | HTTP client with retry | Custom | — |
 
+`observability` is also exported, and is deprecated — it re-exports from
+`monitor`, which is where new code should import from. That is why the
+`exports` map has 19 module subpaths while this table lists 18.
+
 ## AI — Generate, Stream, Structured Output
 
 ```typescript
