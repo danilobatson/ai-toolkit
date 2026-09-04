@@ -54,7 +54,15 @@ jobs:
           # Earlier successes were misleading — #57 reviewed off a human rebase
           # push and #61 was human-authored, so the actor was human both times.
           allowed_bots: 'claude'
-          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
+          # ⚠️ Bash(gh pr comment:*) is what MAKES the "always post a verdict"
+          # instruction above executable. The only other comment tool here is
+          # create_inline_comment, which attaches to a diff line — so with a clean
+          # review there is nothing to attach to and the run posted NOTHING.
+          # Verified on #70/#71/#72: instruction present in the prompt, zero
+          # permission denials, zero comments. It was unexecutable, not ignored.
+          claude_args: >-
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*)"
+
           # ⚠️ track_progress was tried here and reverted. Observed: it flips
           # "Auto-detected mode" from agent to tag, and tag mode waits for an
           # @claude mention rather than auto-reviewing. NOT fully proven — both
