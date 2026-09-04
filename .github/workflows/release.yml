@@ -2,11 +2,16 @@ name: Release
 
 # Publishes packages/toolkit to npm. packages/cli is deliberately NOT published.
 #
-# ⏳ NPM_TOKEN EXPIRES. It was created 2026-09-04 as a 90-day automation token,
-#    so it lapses around 2026-12-03. When this workflow starts failing at the
-#    Publish step with 401 / ENEEDAUTH / E403, an expired token is the first
-#    thing to check — mint a new one at npmjs.com/settings/~/tokens and replace
-#    the NPM_TOKEN repo secret. Nothing else in the repo depends on it.
+# 🔑 NPM_TOKEN must be a GRANULAR ACCESS TOKEN with "bypass 2FA" enabled.
+#    A plain automation token is NOT enough — the account requires 2FA for
+#    publish, and npm rejects it with:
+#      E403 ... Two-factor authentication or granular access token with
+#      bypass 2fa enabled is required to publish packages.
+#    Create one at npmjs.com/settings/~/tokens/granular-access-tokens/new with
+#    Read and write on @jamaalbuilds/ai-toolkit, and the 2FA bypass turned on.
+#
+# ⏳ IT ALSO EXPIRES. Created 2026-09-04 with a 90-day life, so it lapses around
+#    2026-12-03. Nothing else in the repo depends on it.
 on:
   push:
     tags: ['v*']
@@ -80,10 +85,23 @@ jobs:
             exit 1
           fi
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-          npm publish --access public --provenance || {
-            echo "::error::Publish failed. If this is 401/403/ENEEDAUTH, the NPM_TOKEN has most likely expired — see the note at the top of this file."
+          set +e
+          OUT=$(npm publish --access public --provenance 2>&1); CODE=$?
+          echo "$OUT"
+          if [ $CODE -ne 0 ]; then
+            # Distinguish the three failures that look alike. A wrong hint sends
+            # the next person after the wrong cause, which is worse than none.
+            if echo "$OUT" | grep -qi "two-factor\|bypass 2fa"; then
+              echo "::error::NPM_TOKEN is not a granular access token with 2FA bypass. This is NOT expiry — see the key note at the top of this file."
+            elif echo "$OUT" | grep -qi "ENEEDAUTH\|401"; then
+              echo "::error::npm rejected the token as invalid or expired. Mint a new one and replace the NPM_TOKEN secret."
+            elif echo "$OUT" | grep -qi "cannot publish over\|previously published"; then
+              echo "::error::This version already exists on npm. Bump the version in packages/toolkit/package.json and retag."
+            else
+              echo "::error::Publish failed for a reason not seen before — read the npm output above."
+            fi
             exit 1
-          }
+          fi
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
