@@ -409,3 +409,35 @@ describe("stream() — abort signal", () => {
 		);
 	});
 });
+
+describe("generate() — maxTokens option mapping", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockDetectProvider.mockReturnValue("groq");
+		mockGetDefaultModel.mockReturnValue("llama-3.3-70b-versatile");
+		mockGetDefaultFallback.mockReturnValue(undefined);
+		mockLoadModel.mockResolvedValue({ modelId: "test-model" });
+		mockEstimateCost.mockReturnValue({
+			inputCost: 0,
+			outputCost: 0,
+			totalCost: 0,
+		});
+	});
+
+	// AI SDK v5 renamed generateText's maxTokens param to maxOutputTokens —
+	// the toolkit keeps maxTokens as its public option name and must translate it.
+	it("CONTRACT — maps public maxTokens option to the SDK's maxOutputTokens param", async () => {
+		mockGenerateText.mockResolvedValueOnce({
+			text: "ok",
+			usage: { promptTokens: 5, completionTokens: 5 },
+			finishReason: "stop",
+		});
+
+		const ai = createAI({ provider: "groq" });
+		await ai.generate("test", { maxTokens: 500 });
+
+		const passedOpts = mockGenerateText.mock.calls[0][0];
+		expect(passedOpts.maxOutputTokens).toBe(500);
+		expect(passedOpts).not.toHaveProperty("maxTokens");
+	});
+});
