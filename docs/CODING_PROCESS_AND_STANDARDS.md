@@ -12,16 +12,16 @@
 DISCOVER → PLAN → READ → IMPLEMENT → TEST → VERIFY → REVIEW → SHIP
 ```
 
-| Phase         | What Happens                                                                             | Skill                     |
-| ------------- | ---------------------------------------------------------------------------------------- | ------------------------- |
-| **DISCOVER**  | Read all related code. Understand what exists. Identify patterns.                        | `/discovery` `/preflight` |
-| **PLAN**      | If using a new library: spike it first. Check 8 sources. Document decision.              | `/spike` `/adr`           |
-| **READ**      | Read EVERY file you'll touch AND every file that imports from it. Read the library docs. | Built into `/writer`      |
-| **IMPLEMENT** | Follow existing patterns exactly. JSDoc first. Input validation. Error handling.         | `/writer`                 |
-| **TEST**      | Same commit. Test real behavior, not shapes. Cover error paths.                          | Built into `/writer`      |
-| **VERIFY**    | typecheck + lint + test + build. All must pass. No new warnings.                         | `yarn verify`             |
-| **REVIEW**    | Separate session reads all changes. Checks patterns, security, test quality.             | `/auditor`                |
-| **SHIP**      | Push. CI validates. Manual spot-check.                                                   | `git push`                |
+| Phase         | What Happens                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------------ |
+| **DISCOVER**  | Read all related code. Understand what exists. Identify patterns.                                |
+| **PLAN**      | If using a new library: spike it first. Check 8 sources. Document decision.                      |
+| **READ**      | Read EVERY file you'll touch AND every file that imports from it. Read the library docs.         |
+| **IMPLEMENT** | Follow existing patterns exactly. JSDoc first. Input validation. Error handling.                 |
+| **TEST**      | Same commit. Test real behavior, not shapes. Cover error paths.                                  |
+| **VERIFY**    | `yarn verify` — typecheck + lint + test + build. All must pass. No new warnings.                 |
+| **REVIEW**    | Separate session reads all changes. Checks patterns, security, test quality.                     |
+| **SHIP**      | `git push`. CI validates. Manual spot-check.                                                      |
 
 **Never skip a phase.** The order matters. Discovery before planning. Planning before implementing. Testing before reviewing.
 
