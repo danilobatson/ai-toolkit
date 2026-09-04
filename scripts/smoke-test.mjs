@@ -4,20 +4,19 @@
 //
 // Executes the published packages/toolkit/dist artifact instead of just
 // importing it. Importing alone proves nothing: src/storage/blob.ts and
-// src/cache/client.ts call require() inside function bodies, and `require`
-// does not exist in the ESM build this package ships (package.json has
-// "type": "module"). Nothing fails until one of those functions is called.
+// src/cache/client.ts load their optional peer via a dynamic import()
+// inside function bodies, so nothing touches the peer until one of those
+// functions is actually called.
 //
 // This script:
 //   1. Imports every entry in packages/toolkit/package.json's `exports` map.
 //   2. Calls uploadDocument/deleteDocument/listDocuments with @vercel/blob
 //      installed, and constructs a RedisCacheAdapter with ioredis installed.
-//   3. Fails if any call reports the peer dependency as missing, or surfaces
-//      a raw "require is not defined" — both mean require() never reached
-//      the installed package.
+//   3. Fails if any call reports the peer dependency as missing — that
+//      means the dynamic import never reached the installed package.
 //
 // Exits non-zero if dist/ is missing, an entry fails to import, or a call
-// exhibits the require-in-ESM bug.
+// reports its peer dependency as missing.
 // ─────────────────────────────────────────────────────────────────────────────
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -59,8 +58,8 @@ if (failed) {
 	process.exit(1);
 }
 
-// Importing proves nothing on its own — the require() calls below only
-// fail once something actually invokes the function bodies that hold them.
+// Importing proves nothing on its own — the dynamic import() calls below
+// only run once something actually invokes the function bodies that hold them.
 console.log("\nInvoking storage and cache paths (peers must be installed)...");
 
 const MISSING_PEER_CODES = new Set([
@@ -69,11 +68,7 @@ const MISSING_PEER_CODES = new Set([
 ]);
 
 function looksLikeMissingPeer(error) {
-	if (MISSING_PEER_CODES.has(error?.code)) return true;
-	// require() calls that don't set one of the codes above still leak the
-	// raw ReferenceError message through a wrapping error (see deleteDocument
-	// and listDocuments in src/storage/blob.ts).
-	return /require is not defined/i.test(error?.message ?? "");
+	return MISSING_PEER_CODES.has(error?.code);
 }
 
 const { uploadDocument, deleteDocument, listDocuments } = await import(
@@ -132,7 +127,7 @@ for (const check of checks) {
 				`  FAIL  ${check.name} — ${error.code ?? error.name}: ${error.message}`,
 			);
 			console.error(
-				"        The peer dependency IS installed — this call went through require() in the ESM build and failed before ever reaching it.",
+				"        The peer dependency IS installed — this call's dynamic import() failed before ever reaching it.",
 			);
 		} else {
 			console.log(

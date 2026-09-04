@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { StorageError } from "../../errors/types.js";
-import { uploadDocument } from "../blob.js";
+import { deleteDocument, listDocuments, uploadDocument } from "../blob.js";
 
 // Simulates the two ways loading `@vercel/blob` can fail: the package
 // genuinely cannot be resolved, vs. it resolves but throws while loading
@@ -58,6 +58,54 @@ describe("uploadDocument — optional peer load failure", () => {
 			expect((err as StorageError).cause?.message).toMatch(
 				/cannot read properties/i,
 			);
+		}
+	});
+});
+
+describe("deleteDocument — optional peer load failure", () => {
+	it("ENVIRONMENT — reports STORAGE_MISSING_DEPENDENCY when the module cannot be resolved", async () => {
+		vi.doMock("@vercel/blob", () => ({
+			get del(): never {
+				const error = new Error(
+					"Cannot find package '@vercel/blob' imported from blob.js",
+				) as Error & { code: string };
+				error.code = "ERR_MODULE_NOT_FOUND";
+				throw error;
+			},
+		}));
+
+		try {
+			await deleteDocument("https://blob.vercel-storage.com/uploads/doc.pdf");
+			expect.unreachable("should have thrown");
+		} catch (err) {
+			expect(err).toBeInstanceOf(StorageError);
+			expect((err as StorageError).code).toBe("STORAGE_MISSING_DEPENDENCY");
+			expect((err as StorageError).message).toMatch(/not installed/i);
+			expect((err as StorageError).cause).toBeInstanceOf(Error);
+		}
+	});
+});
+
+describe("listDocuments — optional peer load failure", () => {
+	it("ENVIRONMENT — reports STORAGE_MISSING_DEPENDENCY when the module cannot be resolved", async () => {
+		vi.doMock("@vercel/blob", () => ({
+			get list(): never {
+				const error = new Error(
+					"Cannot find package '@vercel/blob' imported from blob.js",
+				) as Error & { code: string };
+				error.code = "ERR_MODULE_NOT_FOUND";
+				throw error;
+			},
+		}));
+
+		try {
+			await listDocuments({ prefix: "uploads/" });
+			expect.unreachable("should have thrown");
+		} catch (err) {
+			expect(err).toBeInstanceOf(StorageError);
+			expect((err as StorageError).code).toBe("STORAGE_MISSING_DEPENDENCY");
+			expect((err as StorageError).message).toMatch(/not installed/i);
+			expect((err as StorageError).cause).toBeInstanceOf(Error);
 		}
 	});
 });

@@ -208,12 +208,15 @@ export async function deleteDocument(url: string): Promise<void> {
 		const blob = await import(VERCEL_BLOB_PATH);
 		await blob.del(url);
 	} catch (error) {
-		if (
-			error instanceof Error &&
-			"code" in error &&
-			(error as { code: string }).code === "STORAGE_MISSING_DEPENDENCY"
-		)
-			throw error;
+		if (isMissingModuleError(error)) {
+			throw new StorageError(
+				"Vercel Blob not installed. Run: yarn add @vercel/blob",
+				{
+					code: "STORAGE_MISSING_DEPENDENCY",
+					cause: error instanceof Error ? error : undefined,
+				},
+			);
+		}
 		throw new StorageError(
 			`Delete failed: ${error instanceof Error ? error.message : "Unknown error"}`,
 			{
@@ -258,6 +261,15 @@ export async function listDocuments(options?: {
 			cursor: result.cursor,
 		};
 	} catch (error) {
+		if (isMissingModuleError(error)) {
+			throw new StorageError(
+				"Vercel Blob not installed. Run: yarn add @vercel/blob",
+				{
+					code: "STORAGE_MISSING_DEPENDENCY",
+					cause: error instanceof Error ? error : undefined,
+				},
+			);
+		}
 		throw new StorageError(
 			`List failed: ${error instanceof Error ? error.message : "Unknown error"}`,
 			{
